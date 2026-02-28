@@ -68,24 +68,48 @@ export default function useProvinceLayer(map) {
     const layer = layerRef.current
     if (!layer) return
 
-    const makeText = (feature) => {
-      if (!showProvinceLabels) return undefined
-      return new Text({
-        text: feature.get('province_name'),
-        font: '11px "IBM Plex Sans", sans-serif',
-        fill: new Fill({ color: '#1a1a2e' }),
-        stroke: new Stroke({ color: '#ffffff', width: 3 }),
-        overflow: true,
+    const makeLabelStyle = (feature) => {
+      if (!showProvinceLabels) return null
+      const geom = feature.getGeometry()
+      let labelPoint
+      if (geom.getType() === 'MultiPolygon') {
+        const polygons = geom.getPolygons()
+        let largest = polygons[0]
+        let maxArea = largest.getArea()
+        for (let i = 1; i < polygons.length; i++) {
+          const area = polygons[i].getArea()
+          if (area > maxArea) {
+            largest = polygons[i]
+            maxArea = area
+          }
+        }
+        labelPoint = largest.getInteriorPoint()
+      } else {
+        labelPoint = geom.getInteriorPoint()
+      }
+      return new Style({
+        geometry: labelPoint,
+        text: new Text({
+          text: feature.get('province_name'),
+          font: '11px "IBM Plex Sans", sans-serif',
+          fill: new Fill({ color: '#1a1a2e' }),
+          stroke: new Stroke({ color: '#ffffff', width: 3 }),
+          overflow: true,
+        }),
       })
     }
 
     if (!joinResult || !joinResult.valueMap) {
       if (showProvinceLabels) {
-        layer.setStyle((feature) => new Style({
-          fill: new Fill({ color: '#d4d0c8' }),
-          stroke: new Stroke({ color: '#ffffff', width: 0.8 }),
-          text: makeText(feature),
-        }))
+        layer.setStyle((feature) => {
+          const styles = [new Style({
+            fill: new Fill({ color: '#d4d0c8' }),
+            stroke: new Stroke({ color: '#ffffff', width: 0.8 }),
+          })]
+          const label = makeLabelStyle(feature)
+          if (label) styles.push(label)
+          return styles
+        })
       } else {
         layer.setStyle(DEFAULT_STYLE)
       }
@@ -100,21 +124,17 @@ export default function useProvinceLayer(map) {
         const pcode = feature.get('ADM1_PCODE')
         const value = valueMap[pcode]
 
-        if (value === undefined || value === null || value === '') {
-          return new Style({
-            fill: new Fill({ color: noDataColor }),
-            stroke: new Stroke({ color: strokeColor, width: strokeWidth }),
-            text: makeText(feature),
-          })
-        }
+        const fillColor = (value === undefined || value === null || value === '')
+          ? noDataColor
+          : (categoryColors[String(value)] || noDataColor)
 
-        const color = categoryColors[String(value)] || noDataColor
-
-        return new Style({
-          fill: new Fill({ color }),
+        const styles = [new Style({
+          fill: new Fill({ color: fillColor }),
           stroke: new Stroke({ color: strokeColor, width: strokeWidth }),
-          text: makeText(feature),
-        })
+        })]
+        const label = makeLabelStyle(feature)
+        if (label) styles.push(label)
+        return styles
       }
 
       layer.setStyle(styleFunction)
@@ -162,22 +182,21 @@ export default function useProvinceLayer(map) {
       const pcode = feature.get('ADM1_PCODE')
       const value = numericMap[pcode]
 
+      let fillColor
       if (value === undefined || value === null || isNaN(value)) {
-        return new Style({
-          fill: new Fill({ color: noDataColor }),
-          stroke: new Stroke({ color: strokeColor, width: strokeWidth }),
-          text: makeText(feature),
-        })
+        fillColor = noDataColor
+      } else {
+        const classIndex = classifyValue(value, breaks)
+        fillColor = classColors[classIndex] || noDataColor
       }
 
-      const classIndex = classifyValue(value, breaks)
-      const color = classColors[classIndex] || noDataColor
-
-      return new Style({
-        fill: new Fill({ color }),
+      const styles = [new Style({
+        fill: new Fill({ color: fillColor }),
         stroke: new Stroke({ color: strokeColor, width: strokeWidth }),
-        text: makeText(feature),
-      })
+      })]
+      const label = makeLabelStyle(feature)
+      if (label) styles.push(label)
+      return styles
     }
 
     layer.setStyle(styleFunction)
