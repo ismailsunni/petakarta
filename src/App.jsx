@@ -1,9 +1,15 @@
+import { useEffect } from 'react'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import MapView from './components/Map/MapView'
 import Sidebar from './components/Sidebar/Sidebar'
+import useAuthStore from './store/authStore'
 
 export default function App() {
+  useEffect(() => {
+    useAuthStore.getState().initialize()
+  }, [])
+
   return (
     <div className="flex flex-col h-full font-sans bg-canvas text-ink">
       <Header />

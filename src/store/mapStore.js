@@ -1,6 +1,7 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 
-const useMapStore = create((set) => ({
+const useMapStore = create(persist((set) => ({
   // Data state
   csvData: null,
   csvColumns: [],
@@ -68,6 +69,32 @@ const useMapStore = create((set) => ({
     valueColumn: '',
     joinResult: null,
     provinceFeatures: [],
+  }),
+}), {
+  name: 'petakarta-store',
+  version: 1,
+  partialize: (state) => ({
+    csvData: state.csvData,
+    csvColumns: state.csvColumns,
+    keyColumn: state.keyColumn,
+    keyType: state.keyType,
+    valueColumn: state.valueColumn,
+    joinResult: state.joinResult,
+    styleMode: state.styleMode,
+    colorPreset: state.colorPreset,
+    colorReversed: state.colorReversed,
+    classMethod: state.classMethod,
+    numClasses: state.numClasses,
+    manualBreaks: state.manualBreaks,
+    categoryColors: state.categoryColors,
+    strokeColor: state.strokeColor,
+    strokeWidth: state.strokeWidth,
+    noDataColor: state.noDataColor,
+    showBasemap: state.showBasemap,
+    showProvinceLabels: state.showProvinceLabels,
+    mapTitle: state.mapTitle,
+    legendTitle: state.legendTitle,
+    legendPosition: state.legendPosition,
   }),
 }))
 

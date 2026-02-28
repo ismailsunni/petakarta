@@ -221,12 +221,23 @@ export default function DataTab() {
             </div>
           )}
 
-          <button
-            onClick={resetData}
-            className="text-xs text-muted hover:text-accent transition-colors"
-          >
-            Clear data
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={resetData}
+              className="text-xs text-muted hover:text-accent transition-colors"
+            >
+              Clear data
+            </button>
+            <button
+              onClick={() => {
+                useMapStore.persist.clearStorage()
+                resetData()
+              }}
+              className="text-xs text-muted hover:text-accent transition-colors"
+            >
+              Clear saved data
+            </button>
+          </div>
         </>
       )}
     </div>
