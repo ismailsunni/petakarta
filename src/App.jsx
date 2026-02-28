@@ -9,7 +9,9 @@ export default function App() {
       <Header />
       <main className="flex flex-1 min-h-0">
         <Sidebar />
-        <MapView />
+        <div className="flex-1 flex items-center justify-center bg-canvas overflow-hidden">
+          <MapView />
+        </div>
       </main>
       <Footer />
     </div>

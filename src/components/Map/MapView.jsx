@@ -30,8 +30,8 @@ export default function MapView() {
   }, [map])
 
   return (
-    <div className="relative flex-1 h-full">
-      <div ref={containerRef} className="w-full h-full" />
+    <div className="relative w-full max-h-full" style={{ aspectRatio: '5 / 2' }}>
+      <div ref={containerRef} className="absolute inset-0" />
       <Legend />
       <Tooltip map={map} />
       <div className="absolute top-3 right-3 flex flex-col gap-1.5 z-10">
