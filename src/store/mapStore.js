@@ -27,6 +27,9 @@ const useMapStore = create((set) => ({
   legendTitle: '',
   legendPosition: 'bottom-right',
 
+  // Map instance refs (set by MapView, used by ExportTab)
+  exportMapFn: null,
+
   // UI state
   activeTab: 'data',
 
@@ -51,6 +54,7 @@ const useMapStore = create((set) => ({
   setLegendPosition: (legendPosition) => set({ legendPosition }),
   setActiveTab: (activeTab) => set({ activeTab }),
   setProvinceFeatures: (provinceFeatures) => set({ provinceFeatures }),
+  setExportMapFn: (exportMapFn) => set({ exportMapFn }),
 
   resetData: () => set({
     csvData: null,
