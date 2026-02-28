@@ -1,16 +1,14 @@
 import { useCallback } from 'react'
 import html2canvas from 'html2canvas'
-import { transformExtent } from 'ol/proj'
 import useMapStore from '../store/mapStore'
-
-const INDONESIA_FIT_EXTENT = transformExtent([94.5, -11.5, 141.5, 6.5], 'EPSG:4326', 'EPSG:3857')
+import { INDONESIA_EXTENT_3857, FIT_PADDING } from '../utils/mapConstants'
 
 export default function useMapExport(map) {
   const exportMap = useCallback(async (resolution = 2) => {
     if (!map) return
 
     // Fit to Indonesia before export
-    map.getView().fit(INDONESIA_FIT_EXTENT, { padding: [20, 20, 20, 20], duration: 0 })
+    map.getView().fit(INDONESIA_EXTENT_3857, { padding: FIT_PADDING, duration: 0 })
 
     // Wait for map render after fit
     await new Promise((resolve) => {

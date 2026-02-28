@@ -3,12 +3,8 @@ import Map from 'ol/Map'
 import View from 'ol/View'
 import TileLayer from 'ol/layer/Tile'
 import OSM from 'ol/source/OSM'
-import { fromLonLat, transformExtent } from 'ol/proj'
+import { INDONESIA_EXTENT_3857, INDONESIA_PAN_EXTENT, FIT_PADDING } from '../utils/mapConstants'
 import 'ol/ol.css'
-
-const INDONESIA_CENTER = fromLonLat([118, -2.5])
-// Padded extent to constrain panning (lon/lat)
-const INDONESIA_EXTENT = transformExtent([90, -15, 145, 10], 'EPSG:4326', 'EPSG:3857')
 
 export default function useMapInstance(targetRef) {
   const mapRef = useRef(null)
@@ -23,13 +19,14 @@ export default function useMapInstance(targetRef) {
         new TileLayer({ source: new OSM() }),
       ],
       view: new View({
-        center: INDONESIA_CENTER,
-        zoom: 5,
         minZoom: 4,
         maxZoom: 12,
-        extent: INDONESIA_EXTENT,
+        extent: INDONESIA_PAN_EXTENT,
       }),
     })
+
+    // Fit to Indonesia on initial load — same extent as Fit button and Export
+    map.getView().fit(INDONESIA_EXTENT_3857, { padding: FIT_PADDING })
 
     mapRef.current = map
     setReady(true)

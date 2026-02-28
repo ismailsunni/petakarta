@@ -5,9 +5,7 @@ import useMapExport from '../../hooks/useMapExport'
 import useMapStore from '../../store/mapStore'
 import Legend from './Legend'
 import Tooltip from './Tooltip'
-import { fromLonLat } from 'ol/proj'
-
-const INDONESIA_BBOX = [94.5, -11.5, 141.5, 6.5]
+import { INDONESIA_EXTENT_3857, FIT_PADDING } from '../../utils/mapConstants'
 
 export default function MapView() {
   const containerRef = useRef(null)
@@ -22,11 +20,7 @@ export default function MapView() {
 
   const fitToIndonesia = useCallback(() => {
     if (!map) return
-    const extent = [
-      ...fromLonLat([INDONESIA_BBOX[0], INDONESIA_BBOX[1]]),
-      ...fromLonLat([INDONESIA_BBOX[2], INDONESIA_BBOX[3]]),
-    ]
-    map.getView().fit(extent, { padding: [20, 20, 20, 20], duration: 500 })
+    map.getView().fit(INDONESIA_EXTENT_3857, { padding: FIT_PADDING, duration: 500 })
   }, [map])
 
   return (
