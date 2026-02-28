@@ -40,6 +40,7 @@ export default function useProvinceLayer(map) {
     const layer = new VectorLayer({
       source,
       style: DEFAULT_STYLE,
+      declutter: true,
     })
 
     source.once('change', () => {
