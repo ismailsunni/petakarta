@@ -1,7 +1,14 @@
-import { useCallback, useRef } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import useMapStore from '../../store/mapStore'
 import { parseCSV } from '../../utils/csvParser'
+import { parseCSVString } from '../../utils/csvParser'
 import { matchProvinces } from '../../utils/provinceMatcher'
+
+const SAMPLES = [
+  { key: 'gdp', label: 'GDP per Capita', file: 'sample_gdp_per_capita.csv', keyCol: 'province_name', keyType: 'name', valueCol: 'gdp_per_capita_2023' },
+  { key: 'hdi', label: 'Human Development Index', file: 'sample_hdi.csv', keyCol: 'pcode', keyType: 'id', valueCol: 'hdi_2023' },
+  { key: 'pop', label: 'Population Density', file: 'sample_population_density.csv', keyCol: 'province_name', keyType: 'name', valueCol: 'pop_density' },
+]
 
 export default function DataTab() {
   const fileInputRef = useRef(null)
@@ -18,6 +25,22 @@ export default function DataTab() {
   const setJoinResult = useMapStore((s) => s.setJoinResult)
   const provinceFeatures = useMapStore((s) => s.provinceFeatures)
   const resetData = useMapStore((s) => s.resetData)
+
+  const [selectedSample, setSelectedSample] = useState('')
+
+  const handleLoadSample = useCallback(async () => {
+    const sample = SAMPLES.find((s) => s.key === selectedSample)
+    if (!sample) return
+    const url = import.meta.env.BASE_URL + 'samples/' + sample.file
+    const response = await fetch(url)
+    const text = await response.text()
+    const { data, columns } = parseCSVString(text)
+    setCsvData(data, columns)
+    setKeyColumn(sample.keyCol)
+    setKeyType(sample.keyType)
+    setValueColumn(sample.valueCol)
+    setJoinResult(null)
+  }, [selectedSample, setCsvData, setKeyColumn, setKeyType, setValueColumn, setJoinResult])
 
   const handleApply = useCallback(() => {
     if (!csvData || !keyColumn || !valueColumn || provinceFeatures.length === 0) return
@@ -61,6 +84,33 @@ export default function DataTab() {
             className="hidden"
             onChange={(e) => handleFile(e.target.files[0])}
           />
+        </div>
+      </div>
+
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <div className="flex-1 h-px bg-border" />
+          <span className="text-xs text-muted">or try sample data</span>
+          <div className="flex-1 h-px bg-border" />
+        </div>
+        <div className="flex gap-2">
+          <select
+            value={selectedSample}
+            onChange={(e) => setSelectedSample(e.target.value)}
+            className="flex-1 rounded border border-border bg-paper px-2 py-1 text-sm"
+          >
+            <option value="">Select sample...</option>
+            {SAMPLES.map((s) => (
+              <option key={s.key} value={s.key}>{s.label}</option>
+            ))}
+          </select>
+          <button
+            onClick={handleLoadSample}
+            disabled={!selectedSample}
+            className="bg-ink text-paper px-3 py-1 rounded text-sm font-medium hover:bg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Load
+          </button>
         </div>
       </div>
 
