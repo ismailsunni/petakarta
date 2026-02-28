@@ -8,8 +8,8 @@ import { buildColorScale } from '../utils/colorUtils'
 import { getBreaks, classifyValue } from '../utils/classificationUtils'
 
 const DEFAULT_STYLE = new Style({
-  fill: new Fill({ color: '#d4d0c8' }),
-  stroke: new Stroke({ color: '#ffffff', width: 0.8 }),
+  fill: new Fill({ color: 'transparent' }),
+  stroke: new Stroke({ color: '#999999', width: 0.5 }),
 })
 
 export default function useProvinceLayer(map) {
@@ -106,7 +106,7 @@ export default function useProvinceLayer(map) {
 
       if (value === undefined || value === null || isNaN(value)) {
         return new Style({
-          fill: new Fill({ color: noDataColor }),
+          fill: new Fill({ color: 'transparent' }),
           stroke: new Stroke({ color: strokeColor, width: strokeWidth }),
         })
       }
