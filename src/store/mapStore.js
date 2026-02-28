@@ -8,6 +8,7 @@ const useMapStore = create((set) => ({
   keyType: 'name',
   valueColumn: '',
   joinResult: null,
+  provinceFeatures: [],
 
   // Style state
   colorPreset: 'Viridis',
@@ -49,6 +50,7 @@ const useMapStore = create((set) => ({
   setLegendTitle: (legendTitle) => set({ legendTitle }),
   setLegendPosition: (legendPosition) => set({ legendPosition }),
   setActiveTab: (activeTab) => set({ activeTab }),
+  setProvinceFeatures: (provinceFeatures) => set({ provinceFeatures }),
 
   resetData: () => set({
     csvData: null,
@@ -57,6 +59,7 @@ const useMapStore = create((set) => ({
     keyType: 'name',
     valueColumn: '',
     joinResult: null,
+    provinceFeatures: [],
   }),
 }))
 
