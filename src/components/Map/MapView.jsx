@@ -25,8 +25,8 @@ export default function MapView() {
   }, [map])
 
   return (
-    <div className="relative w-full max-h-full" style={{ aspectRatio: '5 / 2' }}>
-      <div ref={containerRef} className="absolute inset-0" />
+    <div className="relative flex-1 h-full">
+      <div ref={containerRef} className="w-full h-full" />
       <ExportBounds map={map}>
         <Legend />
       </ExportBounds>
