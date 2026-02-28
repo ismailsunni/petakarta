@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import VectorLayer from 'ol/layer/Vector'
 import VectorSource from 'ol/source/Vector'
 import GeoJSON from 'ol/format/GeoJSON'
-import { Style, Fill, Stroke } from 'ol/style'
+import { Style, Fill, Stroke, Text } from 'ol/style'
 import useMapStore from '../store/mapStore'
 import { buildColorScale } from '../utils/colorUtils'
 import { getBreaks, classifyValue } from '../utils/classificationUtils'
@@ -24,6 +24,7 @@ export default function useProvinceLayer(map) {
   const strokeColor = useMapStore((s) => s.strokeColor)
   const strokeWidth = useMapStore((s) => s.strokeWidth)
   const noDataColor = useMapStore((s) => s.noDataColor)
+  const showProvinceLabels = useMapStore((s) => s.showProvinceLabels)
   const setProvinceFeatures = useMapStore((s) => s.setProvinceFeatures)
 
   useEffect(() => {
@@ -64,8 +65,27 @@ export default function useProvinceLayer(map) {
     const layer = layerRef.current
     if (!layer) return
 
+    const makeText = (feature) => {
+      if (!showProvinceLabels) return undefined
+      return new Text({
+        text: feature.get('province_name'),
+        font: '11px "IBM Plex Sans", sans-serif',
+        fill: new Fill({ color: '#1a1a2e' }),
+        stroke: new Stroke({ color: '#ffffff', width: 3 }),
+        overflow: true,
+      })
+    }
+
     if (!joinResult || !joinResult.valueMap) {
-      layer.setStyle(DEFAULT_STYLE)
+      if (showProvinceLabels) {
+        layer.setStyle((feature) => new Style({
+          fill: new Fill({ color: '#d4d0c8' }),
+          stroke: new Stroke({ color: '#ffffff', width: 0.8 }),
+          text: makeText(feature),
+        }))
+      } else {
+        layer.setStyle(DEFAULT_STYLE)
+      }
       return
     }
 
@@ -108,6 +128,7 @@ export default function useProvinceLayer(map) {
         return new Style({
           fill: new Fill({ color: noDataColor }),
           stroke: new Stroke({ color: strokeColor, width: strokeWidth }),
+          text: makeText(feature),
         })
       }
 
@@ -117,11 +138,12 @@ export default function useProvinceLayer(map) {
       return new Style({
         fill: new Fill({ color }),
         stroke: new Stroke({ color: strokeColor, width: strokeWidth }),
+        text: makeText(feature),
       })
     }
 
     layer.setStyle(styleFunction)
-  }, [joinResult, colorPreset, colorReversed, classMethod, numClasses, manualBreaks, strokeColor, strokeWidth, noDataColor])
+  }, [joinResult, colorPreset, colorReversed, classMethod, numClasses, manualBreaks, strokeColor, strokeWidth, noDataColor, showProvinceLabels])
 
   return { layer: layerRef.current, source: sourceRef.current }
 }

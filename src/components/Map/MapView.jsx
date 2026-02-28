@@ -5,6 +5,7 @@ import useMapExport from '../../hooks/useMapExport'
 import useMapStore from '../../store/mapStore'
 import ExportBounds from './ExportBounds'
 import Legend from './Legend'
+import MapTitle from './MapTitle'
 import Tooltip from './Tooltip'
 import { INDONESIA_EXTENT_3857, FIT_PADDING } from '../../utils/mapConstants'
 
@@ -27,6 +28,7 @@ export default function MapView() {
   return (
     <div className="relative flex-1 h-full">
       <div ref={containerRef} className="w-full h-full" />
+      <MapTitle />
       <ExportBounds map={map}>
         <Legend />
       </ExportBounds>
