@@ -18,11 +18,13 @@ const NEXT_POSITION = {
 
 export default function Legend() {
   const joinResult = useMapStore((s) => s.joinResult)
+  const styleMode = useMapStore((s) => s.styleMode)
   const colorPreset = useMapStore((s) => s.colorPreset)
   const colorReversed = useMapStore((s) => s.colorReversed)
   const classMethod = useMapStore((s) => s.classMethod)
   const numClasses = useMapStore((s) => s.numClasses)
   const manualBreaks = useMapStore((s) => s.manualBreaks)
+  const categoryColors = useMapStore((s) => s.categoryColors)
   const noDataColor = useMapStore((s) => s.noDataColor)
   const legendTitle = useMapStore((s) => s.legendTitle)
   const legendPosition = useMapStore((s) => s.legendPosition)
@@ -30,7 +32,59 @@ export default function Legend() {
 
   if (!joinResult || !joinResult.valueMap) return null
 
-  const values = Object.values(joinResult.valueMap).filter((v) => typeof v === 'number' && !isNaN(v))
+  const hasUnmatched = joinResult.unmatched > 0
+
+  if (styleMode === 'categorized') {
+    const entries = Object.entries(categoryColors).sort(([a], [b]) => a.localeCompare(b))
+    if (entries.length === 0) return null
+
+    return (
+      <div
+        id="map-legend"
+        className={`absolute ${POSITION_CLASSES[legendPosition]} bg-white/90 backdrop-blur-sm border border-border rounded-lg p-3 min-w-[160px] shadow-md z-10 transition-all duration-300`}
+      >
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-medium text-ink">
+            {legendTitle || 'Legend'}
+          </span>
+          <button
+            onClick={() => setLegendPosition(NEXT_POSITION[legendPosition])}
+            className="text-[10px] text-muted hover:text-ink transition-colors ml-2"
+            title="Move legend"
+          >
+            Move
+          </button>
+        </div>
+
+        <div className="space-y-0.5">
+          {entries.map(([value, color]) => (
+            <div key={value} className="flex items-center gap-2">
+              <div
+                className="w-4 h-3 rounded-sm border border-black/10 shrink-0"
+                style={{ backgroundColor: color }}
+              />
+              <span className="text-[10px] text-ink">{value}</span>
+            </div>
+          ))}
+
+          {hasUnmatched && (
+            <div className="flex items-center gap-2 mt-1">
+              <div
+                className="w-4 h-3 rounded-sm border border-black/10 shrink-0"
+                style={{ backgroundColor: noDataColor }}
+              />
+              <span className="text-[10px] text-muted">No data</span>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // Graduated mode
+  const values = Object.values(joinResult.valueMap)
+    .map(Number)
+    .filter((v) => !isNaN(v))
   if (values.length === 0) return null
 
   const effectiveClasses = Math.min(numClasses, values.length)
@@ -55,8 +109,6 @@ export default function Legend() {
     if (Number.isInteger(n)) return n.toString()
     return n.toFixed(1)
   }
-
-  const hasUnmatched = joinResult.unmatched > 0
 
   return (
     <div

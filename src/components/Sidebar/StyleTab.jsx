@@ -1,6 +1,8 @@
+import { useMemo } from 'react'
 import useMapStore from '../../store/mapStore'
 import ColorRampPicker from '../UI/ColorRampPicker'
 import ClassBreakEditor from '../UI/ClassBreakEditor'
+import { getCategoryColor } from '../../utils/colorUtils'
 
 const CLASS_METHODS = [
   { value: 'quantile', label: 'Quantile' },
@@ -10,6 +12,7 @@ const CLASS_METHODS = [
 ]
 
 export default function StyleTab() {
+  const styleMode = useMapStore((s) => s.styleMode)
   const classMethod = useMapStore((s) => s.classMethod)
   const numClasses = useMapStore((s) => s.numClasses)
   const strokeColor = useMapStore((s) => s.strokeColor)
@@ -18,6 +21,9 @@ export default function StyleTab() {
   const mapTitle = useMapStore((s) => s.mapTitle)
   const legendTitle = useMapStore((s) => s.legendTitle)
   const showProvinceLabels = useMapStore((s) => s.showProvinceLabels)
+  const joinResult = useMapStore((s) => s.joinResult)
+  const categoryColors = useMapStore((s) => s.categoryColors)
+  const setStyleMode = useMapStore((s) => s.setStyleMode)
   const setClassMethod = useMapStore((s) => s.setClassMethod)
   const setNumClasses = useMapStore((s) => s.setNumClasses)
   const setStrokeColor = useMapStore((s) => s.setStrokeColor)
@@ -26,49 +32,138 @@ export default function StyleTab() {
   const setMapTitle = useMapStore((s) => s.setMapTitle)
   const setLegendTitle = useMapStore((s) => s.setLegendTitle)
   const setShowProvinceLabels = useMapStore((s) => s.setShowProvinceLabels)
+  const setCategoryColors = useMapStore((s) => s.setCategoryColors)
+
+  // Extract unique values from joinResult for categorized mode
+  const uniqueValues = useMemo(() => {
+    if (!joinResult?.valueMap) return []
+    const vals = [...new Set(Object.values(joinResult.valueMap).map(String))]
+    vals.sort()
+    return vals
+  }, [joinResult])
+
+  // Auto-assign colors when switching to categorized or when values change
+  const effectiveCategoryColors = useMemo(() => {
+    const colors = { ...categoryColors }
+    uniqueValues.forEach((val, i) => {
+      if (!colors[val]) {
+        colors[val] = getCategoryColor(i)
+      }
+    })
+    return colors
+  }, [uniqueValues, categoryColors])
+
+  // Sync auto-assigned colors to store when they differ
+  const handleModeChange = (mode) => {
+    setStyleMode(mode)
+    if (mode === 'categorized') {
+      const colors = {}
+      uniqueValues.forEach((val, i) => {
+        colors[val] = categoryColors[val] || getCategoryColor(i)
+      })
+      setCategoryColors(colors)
+    }
+  }
+
+  const handleCategoryColorChange = (val, color) => {
+    setCategoryColors({ ...effectiveCategoryColors, [val]: color })
+  }
 
   return (
     <div className="space-y-5">
       <div>
-        <h3 className="text-sm font-medium mb-2">Color Ramp</h3>
-        <ColorRampPicker />
-      </div>
-
-      <div>
-        <h3 className="text-sm font-medium mb-2">Classification</h3>
-        <div className="space-y-2">
-          <label className="block">
-            <span className="text-xs text-muted">Method</span>
-            <select
-              value={classMethod}
-              onChange={(e) => setClassMethod(e.target.value)}
-              className="mt-1 block w-full rounded border border-border bg-paper px-2 py-1 text-sm"
-            >
-              {CLASS_METHODS.map((m) => (
-                <option key={m.value} value={m.value}>{m.label}</option>
-              ))}
-            </select>
-          </label>
-
-          <div>
-            <span className="text-xs text-muted">Classes: {numClasses}</span>
-            <input
-              type="range"
-              min={3}
-              max={9}
-              value={numClasses}
-              onChange={(e) => setNumClasses(Number(e.target.value))}
-              className="w-full mt-1 accent-accent"
-            />
-            <div className="flex justify-between text-[10px] text-muted">
-              <span>3</span>
-              <span>9</span>
-            </div>
-          </div>
-
-          {classMethod === 'manual' && <ClassBreakEditor />}
+        <h3 className="text-sm font-medium mb-2">Style Mode</h3>
+        <div className="flex rounded border border-border overflow-hidden">
+          <button
+            onClick={() => handleModeChange('graduated')}
+            className={`flex-1 px-3 py-1.5 text-xs font-medium transition-colors ${
+              styleMode === 'graduated'
+                ? 'bg-accent text-white'
+                : 'bg-paper text-muted hover:text-ink'
+            }`}
+          >
+            Graduated
+          </button>
+          <button
+            onClick={() => handleModeChange('categorized')}
+            className={`flex-1 px-3 py-1.5 text-xs font-medium transition-colors ${
+              styleMode === 'categorized'
+                ? 'bg-accent text-white'
+                : 'bg-paper text-muted hover:text-ink'
+            }`}
+          >
+            Categorized
+          </button>
         </div>
       </div>
+
+      {styleMode === 'graduated' && (
+        <>
+          <div>
+            <h3 className="text-sm font-medium mb-2">Color Ramp</h3>
+            <ColorRampPicker />
+          </div>
+
+          <div>
+            <h3 className="text-sm font-medium mb-2">Classification</h3>
+            <div className="space-y-2">
+              <label className="block">
+                <span className="text-xs text-muted">Method</span>
+                <select
+                  value={classMethod}
+                  onChange={(e) => setClassMethod(e.target.value)}
+                  className="mt-1 block w-full rounded border border-border bg-paper px-2 py-1 text-sm"
+                >
+                  {CLASS_METHODS.map((m) => (
+                    <option key={m.value} value={m.value}>{m.label}</option>
+                  ))}
+                </select>
+              </label>
+
+              <div>
+                <span className="text-xs text-muted">Classes: {numClasses}</span>
+                <input
+                  type="range"
+                  min={3}
+                  max={9}
+                  value={numClasses}
+                  onChange={(e) => setNumClasses(Number(e.target.value))}
+                  className="w-full mt-1 accent-accent"
+                />
+                <div className="flex justify-between text-[10px] text-muted">
+                  <span>3</span>
+                  <span>9</span>
+                </div>
+              </div>
+
+              {classMethod === 'manual' && <ClassBreakEditor />}
+            </div>
+          </div>
+        </>
+      )}
+
+      {styleMode === 'categorized' && (
+        <div>
+          <h3 className="text-sm font-medium mb-2">Category Colors</h3>
+          {uniqueValues.length === 0 ? (
+            <p className="text-xs text-muted">Upload data and join columns to see categories.</p>
+          ) : (
+            <div className="space-y-1.5 max-h-64 overflow-y-auto">
+              {uniqueValues.map((val) => (
+                <div key={val} className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={effectiveCategoryColors[val] || '#e0e0e0'}
+                    onChange={(e) => handleCategoryColorChange(val, e.target.value)}
+                    className="w-6 h-6 rounded border border-border cursor-pointer shrink-0"
+                  />
+                  <span className="text-xs text-ink truncate">{val}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <div>
         <h3 className="text-sm font-medium mb-2">Appearance</h3>

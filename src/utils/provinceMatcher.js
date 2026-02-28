@@ -73,7 +73,7 @@ export function matchProvinces(csvData, keyColumn, keyType, valueColumn, provinc
     }
 
     if (pcode) {
-      valueMap[pcode] = Number(value)
+      valueMap[pcode] = value
     } else {
       unmatchedKeys.push(rawKey)
     }

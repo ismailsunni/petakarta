@@ -36,8 +36,10 @@ export default function Tooltip({ map }) {
   if (!tooltip.visible) return null
 
   const formatValue = (v) => {
-    if (v == null || isNaN(v)) return 'No data'
-    return Number.isInteger(v) ? v.toLocaleString() : v.toFixed(2)
+    if (v == null || v === '') return 'No data'
+    const num = Number(v)
+    if (isNaN(num)) return String(v)
+    return Number.isInteger(num) ? num.toLocaleString() : num.toFixed(2)
   }
 
   return (

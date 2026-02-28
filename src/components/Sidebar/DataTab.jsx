@@ -8,6 +8,7 @@ const SAMPLES = [
   { key: 'gdp', label: 'GDP per Capita', file: 'sample_gdp_per_capita.csv', keyCol: 'province_name', keyType: 'name', valueCol: 'gdp_per_capita_2023' },
   { key: 'hdi', label: 'Human Development Index', file: 'sample_hdi.csv', keyCol: 'pcode', keyType: 'id', valueCol: 'hdi_2023' },
   { key: 'pop', label: 'Population Density', file: 'sample_population_density.csv', keyCol: 'province_name', keyType: 'name', valueCol: 'pop_density' },
+  { key: 'island', label: 'Island Group', file: 'sample_island_group.csv', keyCol: 'province_name', keyType: 'name', valueCol: 'island_group' },
 ]
 
 export default function DataTab() {

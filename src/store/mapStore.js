@@ -11,11 +11,13 @@ const useMapStore = create((set) => ({
   provinceFeatures: [],
 
   // Style state
+  styleMode: 'graduated', // 'graduated' | 'categorized'
   colorPreset: 'Viridis',
   colorReversed: false,
   classMethod: 'quantile',
   numClasses: 5,
   manualBreaks: [],
+  categoryColors: {}, // { value: hexColor } for categorized mode
   strokeColor: '#ffffff',
   strokeWidth: 0.8,
   noDataColor: '#e0e0e0',
@@ -39,11 +41,13 @@ const useMapStore = create((set) => ({
   setKeyType: (keyType) => set({ keyType }),
   setValueColumn: (valueColumn) => set({ valueColumn }),
   setJoinResult: (joinResult) => set({ joinResult }),
+  setStyleMode: (styleMode) => set({ styleMode }),
   setColorPreset: (colorPreset) => set({ colorPreset }),
   setColorReversed: (colorReversed) => set({ colorReversed }),
   setClassMethod: (classMethod) => set({ classMethod }),
   setNumClasses: (numClasses) => set({ numClasses }),
   setManualBreaks: (manualBreaks) => set({ manualBreaks }),
+  setCategoryColors: (categoryColors) => set({ categoryColors }),
   setStrokeColor: (strokeColor) => set({ strokeColor }),
   setStrokeWidth: (strokeWidth) => set({ strokeWidth }),
   setNoDataColor: (noDataColor) => set({ noDataColor }),

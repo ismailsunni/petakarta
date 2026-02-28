@@ -16,11 +16,13 @@ export default function useProvinceLayer(map) {
   const layerRef = useRef(null)
   const sourceRef = useRef(null)
   const joinResult = useMapStore((s) => s.joinResult)
+  const styleMode = useMapStore((s) => s.styleMode)
   const colorPreset = useMapStore((s) => s.colorPreset)
   const colorReversed = useMapStore((s) => s.colorReversed)
   const classMethod = useMapStore((s) => s.classMethod)
   const numClasses = useMapStore((s) => s.numClasses)
   const manualBreaks = useMapStore((s) => s.manualBreaks)
+  const categoryColors = useMapStore((s) => s.categoryColors)
   const strokeColor = useMapStore((s) => s.strokeColor)
   const strokeWidth = useMapStore((s) => s.strokeWidth)
   const noDataColor = useMapStore((s) => s.noDataColor)
@@ -90,7 +92,42 @@ export default function useProvinceLayer(map) {
     }
 
     const { valueMap } = joinResult
-    const values = Object.values(valueMap).filter((v) => typeof v === 'number' && !isNaN(v))
+
+    if (styleMode === 'categorized') {
+      // Categorized: use raw string values and categoryColors map
+      const styleFunction = (feature) => {
+        const pcode = feature.get('ADM1_PCODE')
+        const value = valueMap[pcode]
+
+        if (value === undefined || value === null || value === '') {
+          return new Style({
+            fill: new Fill({ color: noDataColor }),
+            stroke: new Stroke({ color: strokeColor, width: strokeWidth }),
+            text: makeText(feature),
+          })
+        }
+
+        const color = categoryColors[String(value)] || noDataColor
+
+        return new Style({
+          fill: new Fill({ color }),
+          stroke: new Stroke({ color: strokeColor, width: strokeWidth }),
+          text: makeText(feature),
+        })
+      }
+
+      layer.setStyle(styleFunction)
+      return
+    }
+
+    // Graduated: parse values to numbers
+    const numericMap = {}
+    for (const [pcode, raw] of Object.entries(valueMap)) {
+      const n = Number(raw)
+      if (!isNaN(n)) numericMap[pcode] = n
+    }
+
+    const values = Object.values(numericMap)
 
     if (values.length === 0) {
       layer.setStyle(DEFAULT_STYLE)
@@ -122,7 +159,7 @@ export default function useProvinceLayer(map) {
 
     const styleFunction = (feature) => {
       const pcode = feature.get('ADM1_PCODE')
-      const value = valueMap[pcode]
+      const value = numericMap[pcode]
 
       if (value === undefined || value === null || isNaN(value)) {
         return new Style({
@@ -143,7 +180,7 @@ export default function useProvinceLayer(map) {
     }
 
     layer.setStyle(styleFunction)
-  }, [joinResult, colorPreset, colorReversed, classMethod, numClasses, manualBreaks, strokeColor, strokeWidth, noDataColor, showProvinceLabels])
+  }, [joinResult, styleMode, colorPreset, colorReversed, classMethod, numClasses, manualBreaks, categoryColors, strokeColor, strokeWidth, noDataColor, showProvinceLabels])
 
   return { layer: layerRef.current, source: sourceRef.current }
 }
