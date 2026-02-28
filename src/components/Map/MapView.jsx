@@ -50,6 +50,9 @@ export default function MapView() {
           Export
         </button>
       </div>
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 md:hidden bg-ink/80 text-paper text-xs px-3 py-1.5 rounded-full">
+        Use desktop for full editing features
+      </div>
     </div>
   )
 }
