@@ -7,3 +7,38 @@ html, body, #root {
   margin: 0;
   padding: 0;
 }
+
+/* Smooth transitions for interactive elements */
+select, input[type="text"], input[type="number"] {
+  @apply transition-colors duration-150;
+}
+
+select:focus, input[type="text"]:focus, input[type="number"]:focus {
+  @apply outline-none ring-1 ring-accent border-accent;
+}
+
+/* OL map overrides */
+.ol-control button {
+  @apply bg-paper text-ink border border-border rounded shadow-sm;
+}
+
+.ol-control button:hover {
+  @apply bg-canvas;
+}
+
+.ol-attribution {
+  @apply text-[10px];
+}
+
+/* Scrollbar styling for sidebar */
+aside::-webkit-scrollbar {
+  width: 4px;
+}
+
+aside::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+aside::-webkit-scrollbar-thumb {
+  @apply bg-border rounded-full;
+}

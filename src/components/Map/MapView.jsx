@@ -34,23 +34,23 @@ export default function MapView() {
       <div ref={containerRef} className="w-full h-full" />
       <Legend />
       <Tooltip map={map} />
-      <div className="absolute top-3 right-3 flex flex-col gap-1">
+      <div className="absolute top-3 right-3 flex flex-col gap-1.5 z-10">
         <button
           onClick={fitToIndonesia}
-          className="bg-paper border border-border rounded px-2 py-1 text-sm hover:bg-canvas transition-colors shadow-sm"
+          className="bg-paper/90 backdrop-blur-sm border border-border rounded-lg px-2.5 py-1.5 text-xs font-medium hover:bg-paper transition-all shadow-md"
           title="Fit to Indonesia"
         >
           Fit
         </button>
         <button
           onClick={() => exportMap(2)}
-          className="bg-paper border border-border rounded px-2 py-1 text-sm hover:bg-canvas transition-colors shadow-sm"
+          className="bg-paper/90 backdrop-blur-sm border border-border rounded-lg px-2.5 py-1.5 text-xs font-medium hover:bg-paper transition-all shadow-md"
           title="Export as PNG"
         >
           Export
         </button>
       </div>
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 md:hidden bg-ink/80 text-paper text-xs px-3 py-1.5 rounded-full">
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 md:hidden bg-ink/80 backdrop-blur-sm text-paper text-xs px-4 py-2 rounded-full shadow-lg">
         Use desktop for full editing features
       </div>
     </div>

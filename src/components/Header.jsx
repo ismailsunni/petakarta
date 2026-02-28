@@ -1,15 +1,17 @@
 export default function Header() {
   return (
-    <header className="h-[52px] bg-ink text-paper flex items-center justify-between px-5 shrink-0">
+    <header className="h-[52px] bg-ink text-paper flex items-center justify-between px-5 shrink-0 border-b border-ink/20">
       <div className="flex items-center gap-3">
-        <h1 className="font-display text-xl">PetaKarta</h1>
-        <span className="text-sm text-muted hidden sm:inline">Visualize Indonesia, Province by Province</span>
+        <h1 className="font-display text-xl tracking-tight">PetaKarta</h1>
+        <span className="text-sm text-paper/50 hidden sm:inline font-light">
+          Visualize Indonesia, Province by Province
+        </span>
       </div>
       <a
         href="https://github.com/ismailsunni/petakarta"
         target="_blank"
         rel="noopener noreferrer"
-        className="text-paper hover:text-accentMuted transition-colors"
+        className="text-paper/70 hover:text-paper transition-colors"
         aria-label="GitHub repository"
       >
         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">

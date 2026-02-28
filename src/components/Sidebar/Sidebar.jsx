@@ -20,10 +20,10 @@ export default function Sidebar() {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`flex-1 py-2 text-sm font-medium transition-colors ${
+            className={`flex-1 py-2.5 text-sm font-medium transition-all duration-150 ${
               activeTab === tab.key
                 ? 'text-accent border-b-2 border-accent'
-                : 'text-muted hover:text-ink'
+                : 'text-muted hover:text-ink border-b-2 border-transparent'
             }`}
           >
             {tab.label}

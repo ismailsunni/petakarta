@@ -49,9 +49,9 @@ export default function Tooltip({ map }) {
         transform: 'translateY(-100%)',
       }}
     >
-      <div className="bg-ink text-paper rounded-md px-3 py-2 shadow-lg whitespace-nowrap">
-        <div className="text-xs font-medium">{tooltip.name}</div>
-        <div className={`text-sm font-mono ${tooltip.value == null ? 'text-muted' : ''}`}>
+      <div className="bg-ink/95 text-paper rounded-md px-3 py-2 shadow-lg whitespace-nowrap backdrop-blur-sm">
+        <div className="text-xs font-medium leading-tight">{tooltip.name}</div>
+        <div className={`text-sm font-mono leading-tight mt-0.5 ${tooltip.value == null ? 'text-paper/50' : ''}`}>
           {formatValue(tooltip.value)}
         </div>
       </div>

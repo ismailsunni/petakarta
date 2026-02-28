@@ -61,7 +61,7 @@ export default function Legend() {
   return (
     <div
       id="map-legend"
-      className={`absolute ${POSITION_CLASSES[legendPosition]} bg-white/90 border border-border rounded p-3 min-w-[160px] shadow-sm z-10`}
+      className={`absolute ${POSITION_CLASSES[legendPosition]} bg-white/90 backdrop-blur-sm border border-border rounded-lg p-3 min-w-[160px] shadow-md z-10 transition-all duration-300`}
     >
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-medium text-ink">
