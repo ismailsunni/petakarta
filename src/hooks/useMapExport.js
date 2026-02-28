@@ -16,32 +16,47 @@ export default function useMapExport(map) {
       map.renderSync()
     })
 
-    const size = map.getSize()
-    const titleHeight = useMapStore.getState().mapTitle ? 40 * resolution : 0
-    const mapCanvas = document.createElement('canvas')
-    mapCanvas.width = size[0] * resolution
-    mapCanvas.height = size[1] * resolution + titleHeight
-    const ctx = mapCanvas.getContext('2d')
+    // Get the export bounds rectangle (pixel coordinates of Indonesia extent)
+    const tl = map.getPixelFromCoordinate([INDONESIA_EXTENT_3857[0], INDONESIA_EXTENT_3857[3]])
+    const br = map.getPixelFromCoordinate([INDONESIA_EXTENT_3857[2], INDONESIA_EXTENT_3857[1]])
+    const cropX = Math.round(tl[0])
+    const cropY = Math.round(tl[1])
+    const cropW = Math.round(br[0] - tl[0])
+    const cropH = Math.round(br[1] - tl[1])
+
+    const mapTitle = useMapStore.getState().mapTitle
+    const titleHeight = mapTitle ? 40 * resolution : 0
+
+    // Output canvas sized to the cropped region
+    const outCanvas = document.createElement('canvas')
+    outCanvas.width = cropW * resolution
+    outCanvas.height = cropH * resolution + titleHeight
+    const ctx = outCanvas.getContext('2d')
 
     // Fill background
     ctx.fillStyle = '#edeae3'
-    ctx.fillRect(0, 0, mapCanvas.width, mapCanvas.height)
+    ctx.fillRect(0, 0, outCanvas.width, outCanvas.height)
 
     // Draw title if set
-    const mapTitle = useMapStore.getState().mapTitle
     if (mapTitle) {
       ctx.fillStyle = '#1a1a2e'
       ctx.font = `bold ${18 * resolution}px "IBM Plex Sans", sans-serif`
       ctx.textAlign = 'center'
-      ctx.fillText(mapTitle, mapCanvas.width / 2, 28 * resolution)
+      ctx.fillText(mapTitle, outCanvas.width / 2, 28 * resolution)
     }
 
-    // Composite all OL canvas layers
+    // First, composite full map into a temp canvas
+    const mapSize = map.getSize()
+    const tmpCanvas = document.createElement('canvas')
+    tmpCanvas.width = mapSize[0]
+    tmpCanvas.height = mapSize[1]
+    const tmpCtx = tmpCanvas.getContext('2d')
+
     const canvases = map.getViewport().querySelectorAll('.ol-layer canvas, canvas.ol-layer')
     canvases.forEach((canvas) => {
       if (canvas.width > 0) {
         const opacity = canvas.parentNode.style.opacity || canvas.style.opacity
-        ctx.globalAlpha = opacity === '' ? 1 : Number(opacity)
+        tmpCtx.globalAlpha = opacity === '' ? 1 : Number(opacity)
 
         const transform = canvas.style.transform
         const matrix = transform
@@ -50,24 +65,21 @@ export default function useMapExport(map) {
           .map(Number)
 
         if (matrix) {
-          ctx.setTransform(
-            matrix[0] * resolution,
-            matrix[1] * resolution,
-            matrix[2] * resolution,
-            matrix[3] * resolution,
-            matrix[4] * resolution,
-            matrix[5] * resolution + titleHeight
-          )
+          tmpCtx.setTransform(matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5])
         } else {
-          ctx.setTransform(resolution, 0, 0, resolution, 0, titleHeight)
+          tmpCtx.setTransform(1, 0, 0, 1, 0, 0)
         }
 
-        ctx.drawImage(canvas, 0, 0)
+        tmpCtx.drawImage(canvas, 0, 0)
       }
     })
 
-    ctx.setTransform(1, 0, 0, 1, 0, 0)
-    ctx.globalAlpha = 1
+    // Draw cropped region from temp canvas onto output
+    ctx.drawImage(
+      tmpCanvas,
+      cropX, cropY, cropW, cropH,
+      0, titleHeight, outCanvas.width, outCanvas.height - titleHeight
+    )
 
     // Composite legend using html2canvas
     const legendEl = document.getElementById('map-legend')
@@ -78,19 +90,21 @@ export default function useMapExport(map) {
           scale: resolution,
         })
 
-        // Position legend on the export canvas matching its visual position
-        const legendRect = legendEl.getBoundingClientRect()
-        const mapRect = map.getTargetElement().getBoundingClientRect()
-        const offsetX = (legendRect.left - mapRect.left) * resolution
-        const offsetY = (legendRect.top - mapRect.top) * resolution + titleHeight
-
-        ctx.drawImage(legendCanvas, offsetX, offsetY)
+        // Legend is positioned relative to export-bounds, so get its offset within bounds
+        const boundsEl = document.getElementById('export-bounds')
+        if (boundsEl) {
+          const boundsRect = boundsEl.getBoundingClientRect()
+          const legendRect = legendEl.getBoundingClientRect()
+          const offsetX = (legendRect.left - boundsRect.left) * resolution
+          const offsetY = (legendRect.top - boundsRect.top) * resolution + titleHeight
+          ctx.drawImage(legendCanvas, offsetX, offsetY)
+        }
       } catch {
-        // Legend compositing failed silently — export map without legend
+        // Legend compositing failed silently
       }
     }
 
-    mapCanvas.toBlob((blob) => {
+    outCanvas.toBlob((blob) => {
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url

@@ -3,6 +3,7 @@ import useMapInstance from '../../hooks/useMapInstance'
 import useProvinceLayer from '../../hooks/useProvinceLayer'
 import useMapExport from '../../hooks/useMapExport'
 import useMapStore from '../../store/mapStore'
+import ExportBounds from './ExportBounds'
 import Legend from './Legend'
 import Tooltip from './Tooltip'
 import { INDONESIA_EXTENT_3857, FIT_PADDING } from '../../utils/mapConstants'
@@ -26,7 +27,9 @@ export default function MapView() {
   return (
     <div className="relative w-full max-h-full" style={{ aspectRatio: '5 / 2' }}>
       <div ref={containerRef} className="absolute inset-0" />
-      <Legend />
+      <ExportBounds map={map}>
+        <Legend />
+      </ExportBounds>
       <Tooltip map={map} />
       <div className="absolute top-3 right-3 flex flex-col gap-1.5 z-10">
         <button
