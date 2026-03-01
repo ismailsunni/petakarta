@@ -29,12 +29,13 @@ export default function App() {
       useMapStore.getState().setViewMode('view')
       setShareLoading(true)
       loadProject(projectId).then(({ data, error }) => {
-        setShareLoading(false)
         if (error || !data?.state_json) {
           setShareError(error?.message || 'Project not found or is private.')
+          setShareLoading(false)
           return
         }
         useMapStore.setState(data.state_json)
+        setShareLoading(false)
       })
     }
   }, [])
