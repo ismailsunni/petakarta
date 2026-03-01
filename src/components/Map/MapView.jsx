@@ -15,6 +15,7 @@ export default function MapView() {
   useProvinceLayer(map)
   const { exportMap } = useMapExport(map)
   const setExportMapFn = useMapStore((s) => s.setExportMapFn)
+  const viewMode = useMapStore((s) => s.viewMode)
 
   useEffect(() => {
     if (exportMap) setExportMapFn(exportMap)
@@ -32,22 +33,34 @@ export default function MapView() {
       <ExportBounds map={map} />
       <Legend />
       <Tooltip map={map} />
-      <div className="absolute top-3 right-3 flex flex-col gap-1.5 z-10">
-        <button
-          onClick={fitToIndonesia}
-          className="bg-paper/90 backdrop-blur-sm border border-border rounded-lg px-2.5 py-1.5 text-xs font-medium hover:bg-paper transition-all shadow-md"
-          title="Fit to Indonesia"
+      {viewMode === 'edit' && (
+        <div className="absolute top-3 right-3 flex flex-col gap-1.5 z-10">
+          <button
+            onClick={fitToIndonesia}
+            className="bg-paper/90 backdrop-blur-sm border border-border rounded-lg px-2.5 py-1.5 text-xs font-medium hover:bg-paper transition-all shadow-md"
+            title="Fit to Indonesia"
+          >
+            Fit
+          </button>
+          <button
+            onClick={() => exportMap(2)}
+            className="bg-paper/90 backdrop-blur-sm border border-border rounded-lg px-2.5 py-1.5 text-xs font-medium hover:bg-paper transition-all shadow-md"
+            title="Export as PNG"
+          >
+            Export
+          </button>
+        </div>
+      )}
+      {viewMode === 'view' && (
+        <a
+          href={import.meta.env.BASE_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute bottom-2 right-2 z-10 bg-paper/80 backdrop-blur-sm text-xs text-muted hover:text-ink px-2 py-1 rounded shadow-sm transition-colors"
         >
-          Fit
-        </button>
-        <button
-          onClick={() => exportMap(2)}
-          className="bg-paper/90 backdrop-blur-sm border border-border rounded-lg px-2.5 py-1.5 text-xs font-medium hover:bg-paper transition-all shadow-md"
-          title="Export as PNG"
-        >
-          Export
-        </button>
-      </div>
+          Made with PetaKarta
+        </a>
+      )}
       <div className="absolute bottom-3 left-1/2 -translate-x-1/2 md:hidden bg-ink/80 backdrop-blur-sm text-paper text-xs px-4 py-2 rounded-full shadow-lg">
         Use desktop for full editing features
       </div>
