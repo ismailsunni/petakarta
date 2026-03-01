@@ -19,7 +19,7 @@ export async function listProjects(userId) {
   if (!supabase) return { data: [], error: null }
   const { data, error } = await supabase
     .from('projects')
-    .select('id, name, created_at, updated_at')
+    .select('id, name, is_public, created_at, updated_at')
     .eq('user_id', userId)
     .order('updated_at', { ascending: false })
   return { data: data ?? [], error }
@@ -35,21 +35,21 @@ export async function loadProject(id) {
   return { data, error }
 }
 
-export async function saveProject(userId, name, stateJson) {
+export async function saveProject(userId, name, stateJson, isPublic = false) {
   if (!supabase) return { data: null, error: null }
   const { data, error } = await supabase
     .from('projects')
-    .insert({ user_id: userId, name, state_json: stateJson })
+    .insert({ user_id: userId, name, state_json: stateJson, is_public: isPublic })
     .select()
     .single()
   return { data, error }
 }
 
-export async function updateProject(id, name, stateJson) {
+export async function updateProject(id, updates) {
   if (!supabase) return { data: null, error: null }
   const { data, error } = await supabase
     .from('projects')
-    .update({ name, state_json: stateJson, updated_at: new Date().toISOString() })
+    .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('id', id)
     .select()
     .single()
