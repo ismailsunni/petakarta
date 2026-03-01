@@ -17,6 +17,7 @@ export default function ProjectsPanel({ onClose }) {
   const [saveName, setSaveName] = useState('')
   const [activeProjectId, setActiveProjectId] = useState(null)
   const [error, setError] = useState('')
+  const [copied, setCopied] = useState(null)
 
   const fetchProjects = useCallback(async () => {
     if (!user) return
@@ -48,7 +49,10 @@ export default function ProjectsPanel({ onClose }) {
     setError('')
     const state = extractProjectState(useMapStore.getState())
     const project = projects.find((p) => p.id === activeProjectId)
-    const { error: updateError } = await updateProject(activeProjectId, project?.name, state)
+    const { error: updateError } = await updateProject(activeProjectId, {
+      name: project?.name,
+      state_json: state,
+    })
     if (updateError) {
       setError(updateError.message)
     } else {
@@ -79,6 +83,26 @@ export default function ProjectsPanel({ onClose }) {
       if (activeProjectId === id) setActiveProjectId(null)
       fetchProjects()
     }
+  }
+
+  const handleTogglePublic = async (project) => {
+    setError('')
+    const { error: toggleError } = await updateProject(project.id, {
+      is_public: !project.is_public,
+    })
+    if (toggleError) {
+      setError(toggleError.message)
+    } else {
+      fetchProjects()
+    }
+  }
+
+  const handleCopyLink = (id) => {
+    const base = import.meta.env.BASE_URL
+    const url = `${window.location.origin}${base}?project=${id}`
+    navigator.clipboard.writeText(url)
+    setCopied(id)
+    setTimeout(() => setCopied(null), 2000)
   }
 
   return (
@@ -129,29 +153,49 @@ export default function ProjectsPanel({ onClose }) {
             {projects.map((p) => (
               <li
                 key={p.id}
-                className={`flex items-center justify-between rounded border px-3 py-2 text-sm ${
+                className={`rounded border px-3 py-2 text-sm ${
                   p.id === activeProjectId ? 'border-accent bg-accent/5' : 'border-border'
                 }`}
               >
-                <div className="min-w-0">
-                  <p className="font-medium truncate">{p.name}</p>
-                  <p className="text-xs text-muted">
-                    {new Date(p.updated_at).toLocaleDateString()}
-                  </p>
+                <div className="flex items-center justify-between">
+                  <div className="min-w-0">
+                    <p className="font-medium truncate">{p.name}</p>
+                    <p className="text-xs text-muted">
+                      {new Date(p.updated_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="flex gap-2 shrink-0 ml-2">
+                    <button
+                      onClick={() => handleLoad(p.id)}
+                      className="text-xs text-accent hover:underline"
+                    >
+                      Load
+                    </button>
+                    <button
+                      onClick={() => handleDelete(p.id)}
+                      className="text-xs text-red-500 hover:underline"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
-                <div className="flex gap-2 shrink-0 ml-2">
+                <div className="flex items-center gap-2 mt-1.5 pt-1.5 border-t border-border/50">
                   <button
-                    onClick={() => handleLoad(p.id)}
-                    className="text-xs text-accent hover:underline"
+                    onClick={() => handleTogglePublic(p)}
+                    className="flex items-center gap-1 text-xs text-muted hover:text-ink transition-colors"
+                    title={p.is_public ? 'Make private' : 'Make public'}
                   >
-                    Load
+                    <span>{p.is_public ? '\u{1F310}' : '\u{1F512}'}</span>
+                    <span>{p.is_public ? 'Public' : 'Private'}</span>
                   </button>
-                  <button
-                    onClick={() => handleDelete(p.id)}
-                    className="text-xs text-red-500 hover:underline"
-                  >
-                    Delete
-                  </button>
+                  {p.is_public && (
+                    <button
+                      onClick={() => handleCopyLink(p.id)}
+                      className="text-xs text-accent hover:underline"
+                    >
+                      {copied === p.id ? 'Copied!' : 'Copy share link'}
+                    </button>
+                  )}
                 </div>
               </li>
             ))}
