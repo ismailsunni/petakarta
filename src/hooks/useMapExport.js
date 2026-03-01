@@ -90,15 +90,27 @@ export default function useMapExport(map) {
           scale: resolution,
         })
 
-        // Compute legend offset relative to the cropped export region
-        const mapContainer = map.getTargetElement()
-        const mapRect = mapContainer.getBoundingClientRect()
-        const legendRect = legendEl.getBoundingClientRect()
-        const legendPixelX = legendRect.left - mapRect.left
-        const legendPixelY = legendRect.top - mapRect.top
-        const offsetX = (legendPixelX - cropX) * resolution
-        const offsetY = (legendPixelY - cropY) * resolution + titleHeight
-        ctx.drawImage(legendCanvas, offsetX, offsetY)
+        // Position legend in the output image based on its legendPosition setting
+        const legendPosition = useMapStore.getState().legendPosition
+        const pad = 12 * resolution
+        const lw = legendCanvas.width
+        const lh = legendCanvas.height
+        const ow = outCanvas.width
+        const oh = outCanvas.height
+
+        let lx, ly
+        if (legendPosition.includes('right')) {
+          lx = ow - lw - pad
+        } else {
+          lx = pad
+        }
+        if (legendPosition.includes('bottom')) {
+          ly = oh - lh - pad
+        } else {
+          ly = titleHeight + pad
+        }
+
+        ctx.drawImage(legendCanvas, lx, ly)
       } catch {
         // Legend compositing failed silently
       }
