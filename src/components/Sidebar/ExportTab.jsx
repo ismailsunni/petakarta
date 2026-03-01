@@ -3,10 +3,58 @@ import useMapStore from '../../store/mapStore'
 
 export default function ExportTab() {
   const exportMapFn = useMapStore((s) => s.exportMapFn)
+  const activeProjectId = useMapStore((s) => s.activeProjectId)
+  const activeProjectPublic = useMapStore((s) => s.activeProjectPublic)
   const [resolution, setResolution] = useState(2)
+  const [copied, setCopied] = useState(false)
 
   const handleExport = () => {
     exportMapFn?.(resolution)
+  }
+
+  const canShare = activeProjectId && activeProjectPublic
+  const shareUrl = canShare
+    ? `${window.location.origin}${import.meta.env.BASE_URL}?project=${activeProjectId}`
+    : null
+
+  const handleCopyLink = () => {
+    if (!shareUrl) return
+    navigator.clipboard.writeText(shareUrl)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleShare = (platform) => {
+    if (!shareUrl) return
+    const text = 'Check out this map made with PetaKarta!'
+    const encoded = encodeURIComponent(shareUrl)
+    const encodedText = encodeURIComponent(text)
+    let url
+    switch (platform) {
+      case 'twitter':
+        url = `https://twitter.com/intent/tweet?text=${encodedText}&url=${encoded}`
+        break
+      case 'facebook':
+        url = `https://www.facebook.com/sharer/sharer.php?u=${encoded}`
+        break
+      case 'linkedin':
+        url = `https://www.linkedin.com/sharing/share-offsite/?url=${encoded}`
+        break
+    }
+    if (url) window.open(url, '_blank', 'width=600,height=400')
+  }
+
+  const handleNativeShare = async () => {
+    if (!shareUrl || !navigator.share) return
+    try {
+      await navigator.share({
+        title: 'PetaKarta Map',
+        text: 'Check out this map made with PetaKarta!',
+        url: shareUrl,
+      })
+    } catch {
+      // User cancelled or share failed
+    }
   }
 
   return (
@@ -46,9 +94,55 @@ export default function ExportTab() {
         Download PNG
       </button>
 
-      <p className="text-xs text-muted">
-        Legend and title will be included in export in a future update.
-      </p>
+      <div className="border-t border-border pt-4">
+        <h3 className="text-sm font-medium mb-2">Share Map</h3>
+        {canShare ? (
+          <div className="space-y-2">
+            <button
+              onClick={handleCopyLink}
+              className="w-full flex items-center justify-center gap-2 border border-border rounded py-1.5 text-sm hover:bg-canvas transition-colors"
+            >
+              {copied ? 'Copied!' : 'Copy link'}
+            </button>
+
+            {navigator.share && (
+              <button
+                onClick={handleNativeShare}
+                className="w-full flex items-center justify-center gap-2 border border-border rounded py-1.5 text-sm hover:bg-canvas transition-colors"
+              >
+                Share...
+              </button>
+            )}
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleShare('twitter')}
+                className="flex-1 border border-border rounded py-1.5 text-xs hover:bg-canvas transition-colors"
+              >
+                X / Twitter
+              </button>
+              <button
+                onClick={() => handleShare('facebook')}
+                className="flex-1 border border-border rounded py-1.5 text-xs hover:bg-canvas transition-colors"
+              >
+                Facebook
+              </button>
+              <button
+                onClick={() => handleShare('linkedin')}
+                className="flex-1 border border-border rounded py-1.5 text-xs hover:bg-canvas transition-colors"
+              >
+                LinkedIn
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-xs text-muted">
+            {activeProjectId
+              ? 'Make your project public to enable sharing.'
+              : 'Save your project and make it public to enable sharing.'}
+          </p>
+        )}
+      </div>
     </div>
   )
 }
