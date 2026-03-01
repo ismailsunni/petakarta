@@ -4,7 +4,7 @@ const PERSIST_KEYS = [
   'csvData', 'csvColumns', 'keyColumn', 'keyType', 'valueColumn', 'joinResult',
   'styleMode', 'colorPreset', 'colorReversed', 'classMethod', 'numClasses',
   'manualBreaks', 'categoryColors', 'strokeColor', 'strokeWidth', 'noDataColor',
-  'showBasemap', 'showProvinceLabels', 'mapTitle', 'legendTitle', 'legendPosition',
+  'showBasemap', 'showProvinceLabels', 'mapTitle', 'legendTitle', 'legendPosition', 'attribution',
 ]
 
 export function extractProjectState(storeState) {

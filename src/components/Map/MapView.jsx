@@ -5,6 +5,7 @@ import useMapExport from '../../hooks/useMapExport'
 import useMapStore from '../../store/mapStore'
 import ExportBounds from './ExportBounds'
 import Legend from './Legend'
+import MapAttribution from './MapAttribution'
 import MapTitle from './MapTitle'
 import Tooltip from './Tooltip'
 import { INDONESIA_EXTENT_3857, FIT_PADDING } from '../../utils/mapConstants'
@@ -32,6 +33,7 @@ export default function MapView() {
       <MapTitle />
       <ExportBounds map={map} />
       <Legend />
+      <MapAttribution />
       <Tooltip map={map} />
       {viewMode === 'edit' && (
         <div className="absolute top-3 right-3 flex flex-col gap-1.5 z-10">

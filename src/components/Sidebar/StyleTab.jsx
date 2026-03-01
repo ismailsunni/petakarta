@@ -20,6 +20,7 @@ export default function StyleTab() {
   const noDataColor = useMapStore((s) => s.noDataColor)
   const mapTitle = useMapStore((s) => s.mapTitle)
   const legendTitle = useMapStore((s) => s.legendTitle)
+  const attribution = useMapStore((s) => s.attribution)
   const showProvinceLabels = useMapStore((s) => s.showProvinceLabels)
   const joinResult = useMapStore((s) => s.joinResult)
   const categoryColors = useMapStore((s) => s.categoryColors)
@@ -31,6 +32,7 @@ export default function StyleTab() {
   const setNoDataColor = useMapStore((s) => s.setNoDataColor)
   const setMapTitle = useMapStore((s) => s.setMapTitle)
   const setLegendTitle = useMapStore((s) => s.setLegendTitle)
+  const setAttribution = useMapStore((s) => s.setAttribution)
   const setShowProvinceLabels = useMapStore((s) => s.setShowProvinceLabels)
   const setCategoryColors = useMapStore((s) => s.setCategoryColors)
 
@@ -224,6 +226,16 @@ export default function StyleTab() {
               value={legendTitle}
               onChange={(e) => setLegendTitle(e.target.value)}
               placeholder="e.g. Million IDR"
+              className="mt-1 block w-full rounded border border-border bg-paper px-2 py-1 text-sm"
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs text-muted">Attribution / Source</span>
+            <input
+              type="text"
+              value={attribution}
+              onChange={(e) => setAttribution(e.target.value)}
+              placeholder="e.g. Source: BPS 2023"
               className="mt-1 block w-full rounded border border-border bg-paper px-2 py-1 text-sm"
             />
           </label>

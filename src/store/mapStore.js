@@ -29,9 +29,14 @@ const useMapStore = create(persist((set) => ({
   mapTitle: '',
   legendTitle: '',
   legendPosition: 'bottom-right',
+  attribution: '',
 
   // Map instance refs (set by MapView, used by ExportTab)
   exportMapFn: null,
+
+  // Project state (set when loading/saving projects)
+  activeProjectId: null,
+  activeProjectPublic: false,
 
   // UI state
   activeTab: 'data',
@@ -58,6 +63,9 @@ const useMapStore = create(persist((set) => ({
   setMapTitle: (mapTitle) => set({ mapTitle }),
   setLegendTitle: (legendTitle) => set({ legendTitle }),
   setLegendPosition: (legendPosition) => set({ legendPosition }),
+  setAttribution: (attribution) => set({ attribution }),
+  setActiveProjectId: (activeProjectId) => set({ activeProjectId }),
+  setActiveProjectPublic: (activeProjectPublic) => set({ activeProjectPublic }),
   setActiveTab: (activeTab) => set({ activeTab }),
   setProvinceFeatures: (provinceFeatures) => set({ provinceFeatures }),
   setExportMapFn: (exportMapFn) => set({ exportMapFn }),
@@ -97,6 +105,7 @@ const useMapStore = create(persist((set) => ({
     mapTitle: state.mapTitle,
     legendTitle: state.legendTitle,
     legendPosition: state.legendPosition,
+    attribution: state.attribution,
   }),
 }))
 

@@ -25,12 +25,14 @@ export default function useMapExport(map) {
     const cropH = Math.round(br[1] - tl[1])
 
     const mapTitle = useMapStore.getState().mapTitle
+    const attribution = useMapStore.getState().attribution
     const titleHeight = mapTitle ? 40 * resolution : 0
+    const attributionHeight = attribution ? 24 * resolution : 0
 
     // Output canvas sized to the cropped region
     const outCanvas = document.createElement('canvas')
     outCanvas.width = cropW * resolution
-    outCanvas.height = cropH * resolution + titleHeight
+    outCanvas.height = cropH * resolution + titleHeight + attributionHeight
     const ctx = outCanvas.getContext('2d')
 
     // Fill background
@@ -114,6 +116,14 @@ export default function useMapExport(map) {
       } catch {
         // Legend compositing failed silently
       }
+    }
+
+    // Draw attribution text at bottom-left
+    if (attribution) {
+      ctx.fillStyle = '#666666'
+      ctx.font = `${12 * resolution}px "IBM Plex Sans", sans-serif`
+      ctx.textAlign = 'left'
+      ctx.fillText(attribution, 8 * resolution, outCanvas.height - 8 * resolution)
     }
 
     outCanvas.toBlob((blob) => {

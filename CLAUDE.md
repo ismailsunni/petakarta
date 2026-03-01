@@ -61,6 +61,15 @@ Follow milestones strictly: P1 (core map + data join) → P2 (styling + classifi
 
 Custom colors defined in `tailwind.config.js`: `ink` (#1a1a2e), `paper` (#f8f6f1), `canvas` (#edeae3), `accent` (#e63946). Typography: Playfair Display (headings), IBM Plex Sans (body), IBM Plex Mono (numbers/values).
 
+## Open Tasks (Beads)
+
+- `petakarta-03s` — Add attribution/source field to map
+- `petakarta-8ea` — Improve color ramp picker with grouped dropdown
+- `petakarta-zx4` — Investigate inkmap for print-quality map export
+- `petakarta-cax` — Add share to social media buttons
+
+Run `bd list` to see current status. Close beads with `bd close <id>` after completing.
+
 ## Key Constraints
 
 - No backend — everything runs in the browser; no API calls except OSM tile fetching
