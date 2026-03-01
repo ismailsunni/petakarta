@@ -200,7 +200,7 @@ export default function useProvinceLayer(map) {
     }
 
     layer.setStyle(styleFunction)
-  }, [joinResult, styleMode, colorPreset, colorReversed, classMethod, numClasses, manualBreaks, categoryColors, strokeColor, strokeWidth, noDataColor, showProvinceLabels])
+  }, [map, joinResult, styleMode, colorPreset, colorReversed, classMethod, numClasses, manualBreaks, categoryColors, strokeColor, strokeWidth, noDataColor, showProvinceLabels])
 
   return { layer: layerRef.current, source: sourceRef.current }
 }
