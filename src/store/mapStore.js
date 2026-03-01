@@ -35,6 +35,7 @@ const useMapStore = create(persist((set) => ({
 
   // UI state
   activeTab: 'data',
+  viewMode: 'edit', // 'edit' | 'view'
 
   // Actions
   setCsvData: (data, columns) => set({ csvData: data, csvColumns: columns }),
@@ -60,6 +61,7 @@ const useMapStore = create(persist((set) => ({
   setActiveTab: (activeTab) => set({ activeTab }),
   setProvinceFeatures: (provinceFeatures) => set({ provinceFeatures }),
   setExportMapFn: (exportMapFn) => set({ exportMapFn }),
+  setViewMode: (viewMode) => set({ viewMode }),
 
   resetData: () => set({
     csvData: null,
