@@ -90,15 +90,15 @@ export default function useMapExport(map) {
           scale: resolution,
         })
 
-        // Legend is positioned relative to export-bounds, so get its offset within bounds
-        const boundsEl = document.getElementById('export-bounds')
-        if (boundsEl) {
-          const boundsRect = boundsEl.getBoundingClientRect()
-          const legendRect = legendEl.getBoundingClientRect()
-          const offsetX = (legendRect.left - boundsRect.left) * resolution
-          const offsetY = (legendRect.top - boundsRect.top) * resolution + titleHeight
-          ctx.drawImage(legendCanvas, offsetX, offsetY)
-        }
+        // Compute legend offset relative to the cropped export region
+        const mapContainer = map.getTargetElement()
+        const mapRect = mapContainer.getBoundingClientRect()
+        const legendRect = legendEl.getBoundingClientRect()
+        const legendPixelX = legendRect.left - mapRect.left
+        const legendPixelY = legendRect.top - mapRect.top
+        const offsetX = (legendPixelX - cropX) * resolution
+        const offsetY = (legendPixelY - cropY) * resolution + titleHeight
+        ctx.drawImage(legendCanvas, offsetX, offsetY)
       } catch {
         // Legend compositing failed silently
       }

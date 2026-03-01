@@ -1,54 +1,38 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useEffect, useRef } from 'react'
+import VectorLayer from 'ol/layer/Vector'
+import VectorSource from 'ol/source/Vector'
+import Feature from 'ol/Feature'
+import { fromExtent } from 'ol/geom/Polygon'
+import { Style, Stroke, Fill } from 'ol/style'
 import { INDONESIA_EXTENT_3857 } from '../../utils/mapConstants'
 
-export default function ExportBounds({ map, children }) {
-  const [rect, setRect] = useState(null)
+const boundsStyle = new Style({
+  stroke: new Stroke({ color: 'rgba(26, 26, 46, 0.3)', width: 2, lineDash: [8, 6] }),
+  fill: new Fill({ color: 'transparent' }),
+})
 
-  const updateRect = useCallback(() => {
-    if (!map) return
-    const tl = map.getPixelFromCoordinate([INDONESIA_EXTENT_3857[0], INDONESIA_EXTENT_3857[3]])
-    const br = map.getPixelFromCoordinate([INDONESIA_EXTENT_3857[2], INDONESIA_EXTENT_3857[1]])
-    if (!tl || !br) return
-    setRect({
-      left: Math.round(tl[0]),
-      top: Math.round(tl[1]),
-      width: Math.round(br[0] - tl[0]),
-      height: Math.round(br[1] - tl[1]),
-    })
-  }, [map])
+export default function ExportBounds({ map }) {
+  const layerRef = useRef(null)
 
   useEffect(() => {
     if (!map) return
-    updateRect()
-    map.on('moveend', updateRect)
-    map.on('change:size', updateRect)
-    map.getView().on('change:resolution', updateRect)
+
+    const feature = new Feature(fromExtent(INDONESIA_EXTENT_3857))
+    const source = new VectorSource({ features: [feature] })
+    const layer = new VectorLayer({
+      source,
+      style: boundsStyle,
+      zIndex: 100,
+    })
+
+    map.addLayer(layer)
+    layerRef.current = layer
+
     return () => {
-      map.un('moveend', updateRect)
-      map.un('change:size', updateRect)
-      map.getView().un('change:resolution', updateRect)
+      map.removeLayer(layer)
+      layerRef.current = null
     }
-  }, [map, updateRect])
+  }, [map])
 
-  if (!rect || rect.width <= 0 || rect.height <= 0) return null
-
-  return (
-    <div
-      id="export-bounds"
-      className="absolute pointer-events-none z-[5]"
-      style={{
-        left: rect.left,
-        top: rect.top,
-        width: rect.width,
-        height: rect.height,
-      }}
-    >
-      {/* Border rectangle */}
-      <div className="absolute inset-0 border-2 border-ink/30 border-dashed rounded" />
-      {/* Legend and other children go inside the bounds */}
-      <div className="absolute inset-0 pointer-events-auto">
-        {children}
-      </div>
-    </div>
-  )
+  return null
 }

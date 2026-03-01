@@ -22,6 +22,7 @@ export default function useMapInstance(targetRef) {
         minZoom: 4,
         maxZoom: 12,
         extent: INDONESIA_PAN_EXTENT,
+        constrainOnlyCenter: true,
       }),
     })
 

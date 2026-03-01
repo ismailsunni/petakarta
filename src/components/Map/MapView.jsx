@@ -29,9 +29,8 @@ export default function MapView() {
     <div className="relative flex-1 h-full">
       <div ref={containerRef} className="w-full h-full" />
       <MapTitle />
-      <ExportBounds map={map}>
-        <Legend />
-      </ExportBounds>
+      <ExportBounds map={map} />
+      <Legend />
       <Tooltip map={map} />
       <div className="absolute top-3 right-3 flex flex-col gap-1.5 z-10">
         <button

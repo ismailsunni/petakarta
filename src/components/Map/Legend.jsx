@@ -41,7 +41,7 @@ export default function Legend() {
     return (
       <div
         id="map-legend"
-        className={`absolute ${POSITION_CLASSES[legendPosition]} bg-white/90 backdrop-blur-sm border border-border rounded-lg p-3 min-w-[160px] shadow-md z-10 transition-all duration-300`}
+        className={`absolute ${POSITION_CLASSES[legendPosition]} bg-white/90 backdrop-blur-sm border border-border rounded-lg p-3 min-w-[160px] shadow-md z-10 transition-all duration-300 pointer-events-auto`}
       >
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-medium text-ink">
@@ -113,7 +113,7 @@ export default function Legend() {
   return (
     <div
       id="map-legend"
-      className={`absolute ${POSITION_CLASSES[legendPosition]} bg-white/90 backdrop-blur-sm border border-border rounded-lg p-3 min-w-[160px] shadow-md z-10 transition-all duration-300`}
+      className={`absolute ${POSITION_CLASSES[legendPosition]} bg-white/90 backdrop-blur-sm border border-border rounded-lg p-3 min-w-[160px] shadow-md z-10 transition-all duration-300 pointer-events-auto`}
     >
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-medium text-ink">
