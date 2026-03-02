@@ -4,8 +4,16 @@ const PERSIST_KEYS = [
   'csvData', 'csvColumns', 'keyColumn', 'keyType', 'valueColumn', 'joinResult',
   'styleMode', 'colorPreset', 'colorReversed', 'classMethod', 'numClasses',
   'manualBreaks', 'categoryColors', 'strokeColor', 'strokeWidth', 'noDataColor',
-  'showBasemap', 'showProvinceLabels', 'mapTitle', 'legendTitle', 'legendPosition', 'attribution',
+  'basemap', 'showProvinceLabels', 'mapTitle', 'legendTitle', 'legendPosition', 'attribution',
 ]
+
+export function normalizeProjectState(state) {
+  if (state && 'showBasemap' in state && !('basemap' in state)) {
+    const { showBasemap, ...rest } = state
+    return { ...rest, basemap: showBasemap === false ? 'none' : 'osm' }
+  }
+  return state
+}
 
 export function extractProjectState(storeState) {
   const state = {}

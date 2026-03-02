@@ -3,6 +3,7 @@ import useMapStore from '../../store/mapStore'
 import ColorRampPicker from '../UI/ColorRampPicker'
 import ClassBreakEditor from '../UI/ClassBreakEditor'
 import { getCategoryColor } from '../../utils/colorUtils'
+import { BASEMAP_OPTIONS } from '../../utils/basemapSources'
 
 const CLASS_METHODS = [
   { value: 'quantile', label: 'Quantile' },
@@ -21,6 +22,7 @@ export default function StyleTab() {
   const mapTitle = useMapStore((s) => s.mapTitle)
   const legendTitle = useMapStore((s) => s.legendTitle)
   const attribution = useMapStore((s) => s.attribution)
+  const basemap = useMapStore((s) => s.basemap)
   const showProvinceLabels = useMapStore((s) => s.showProvinceLabels)
   const joinResult = useMapStore((s) => s.joinResult)
   const categoryColors = useMapStore((s) => s.categoryColors)
@@ -33,6 +35,7 @@ export default function StyleTab() {
   const setMapTitle = useMapStore((s) => s.setMapTitle)
   const setLegendTitle = useMapStore((s) => s.setLegendTitle)
   const setAttribution = useMapStore((s) => s.setAttribution)
+  const setBasemap = useMapStore((s) => s.setBasemap)
   const setShowProvinceLabels = useMapStore((s) => s.setShowProvinceLabels)
   const setCategoryColors = useMapStore((s) => s.setCategoryColors)
 
@@ -170,6 +173,19 @@ export default function StyleTab() {
       <div>
         <h3 className="text-sm font-medium mb-2">Appearance</h3>
         <div className="space-y-2">
+          <label className="block">
+            <span className="text-xs text-muted">Basemap</span>
+            <select
+              value={basemap}
+              onChange={(e) => setBasemap(e.target.value)}
+              className="mt-1 block w-full rounded border border-border bg-paper px-2 py-1 text-sm"
+            >
+              {BASEMAP_OPTIONS.map((opt) => (
+                <option key={opt.key} value={opt.key}>{opt.label}</option>
+              ))}
+            </select>
+          </label>
+
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-2 text-sm flex-1">
               <span className="text-xs text-muted">Stroke</span>

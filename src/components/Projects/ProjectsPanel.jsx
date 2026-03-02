@@ -8,6 +8,7 @@ import {
   updateProject,
   deleteProject,
   extractProjectState,
+  normalizeProjectState,
 } from '../../lib/projectsService'
 
 export default function ProjectsPanel({ onClose }) {
@@ -68,7 +69,7 @@ export default function ProjectsPanel({ onClose }) {
       return
     }
     if (data?.state_json) {
-      useMapStore.setState(data.state_json)
+      useMapStore.setState(normalizeProjectState(data.state_json))
       setActiveProjectId(id)
       useMapStore.getState().setActiveProjectId(id)
       useMapStore.getState().setActiveProjectPublic(data.is_public ?? false)

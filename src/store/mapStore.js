@@ -22,7 +22,7 @@ const useMapStore = create(persist((set) => ({
   strokeColor: '#ffffff',
   strokeWidth: 0.8,
   noDataColor: '#e0e0e0',
-  showBasemap: true,
+  basemap: 'osm',
   showProvinceLabels: false,
 
   // Annotation state
@@ -58,7 +58,7 @@ const useMapStore = create(persist((set) => ({
   setStrokeColor: (strokeColor) => set({ strokeColor }),
   setStrokeWidth: (strokeWidth) => set({ strokeWidth }),
   setNoDataColor: (noDataColor) => set({ noDataColor }),
-  setShowBasemap: (showBasemap) => set({ showBasemap }),
+  setBasemap: (basemap) => set({ basemap }),
   setShowProvinceLabels: (showProvinceLabels) => set({ showProvinceLabels }),
   setMapTitle: (mapTitle) => set({ mapTitle }),
   setLegendTitle: (legendTitle) => set({ legendTitle }),
@@ -82,7 +82,14 @@ const useMapStore = create(persist((set) => ({
   }),
 }), {
   name: 'petakarta-store',
-  version: 1,
+  version: 2,
+  migrate: (persisted, version) => {
+    if (version < 2) {
+      const { showBasemap, ...rest } = persisted
+      return { ...rest, basemap: showBasemap === false ? 'none' : 'osm' }
+    }
+    return persisted
+  },
   partialize: (state) => ({
     csvData: state.csvData,
     csvColumns: state.csvColumns,
@@ -100,7 +107,7 @@ const useMapStore = create(persist((set) => ({
     strokeColor: state.strokeColor,
     strokeWidth: state.strokeWidth,
     noDataColor: state.noDataColor,
-    showBasemap: state.showBasemap,
+    basemap: state.basemap,
     showProvinceLabels: state.showProvinceLabels,
     mapTitle: state.mapTitle,
     legendTitle: state.legendTitle,

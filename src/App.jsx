@@ -5,7 +5,7 @@ import MapView from './components/Map/MapView'
 import Sidebar from './components/Sidebar/Sidebar'
 import useAuthStore from './store/authStore'
 import useMapStore from './store/mapStore'
-import { loadProject } from './lib/projectsService'
+import { loadProject, normalizeProjectState } from './lib/projectsService'
 
 export default function App() {
   const viewMode = useMapStore((s) => s.viewMode)
@@ -34,7 +34,7 @@ export default function App() {
           setShareLoading(false)
           return
         }
-        useMapStore.setState(data.state_json)
+        useMapStore.setState(normalizeProjectState(data.state_json))
         setShareLoading(false)
       })
     }
