@@ -12,6 +12,7 @@ import {
 
 function SaveAsDialog({ onSave, onCancel }) {
   const [name, setName] = useState('')
+  const [isPublic, setIsPublic] = useState(false)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onCancel}>
@@ -25,16 +26,25 @@ function SaveAsDialog({ onSave, onCancel }) {
           placeholder="Project name..."
           value={name}
           onChange={(e) => setName(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && name.trim() && onSave(name.trim())}
+          onKeyDown={(e) => e.key === 'Enter' && name.trim() && onSave(name.trim(), isPublic)}
           autoFocus
           className="w-full rounded border border-border bg-canvas px-3 py-1.5 text-sm mb-3"
         />
+        <label className="flex items-center gap-2 text-sm text-ink mb-4 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={isPublic}
+            onChange={(e) => setIsPublic(e.target.checked)}
+            className="accent-accent"
+          />
+          Make public (shareable via link)
+        </label>
         <div className="flex justify-end gap-2">
           <button onClick={onCancel} className="text-sm text-muted hover:text-ink transition-colors px-2 py-1">
             Cancel
           </button>
           <button
-            onClick={() => name.trim() && onSave(name.trim())}
+            onClick={() => name.trim() && onSave(name.trim(), isPublic)}
             disabled={!name.trim()}
             className="bg-accent text-paper px-3 py-1 rounded text-sm font-medium hover:bg-accentMuted transition-colors disabled:opacity-40"
           >
@@ -52,6 +62,7 @@ export default function Header() {
   const signOut = useAuthStore((s) => s.signOut)
   const activeProjectId = useMapStore((s) => s.activeProjectId)
   const activeProjectName = useMapStore((s) => s.activeProjectName)
+  const activeProjectPublic = useMapStore((s) => s.activeProjectPublic)
   const [showAuth, setShowAuth] = useState(false)
   const [showProjects, setShowProjects] = useState(false)
   const [showSaveAs, setShowSaveAs] = useState(false)
@@ -94,11 +105,11 @@ export default function Header() {
     setSaving(false)
   }, [user, activeProjectId])
 
-  const handleSaveAs = useCallback(async (name) => {
+  const handleSaveAs = useCallback(async (name, isPublic) => {
     if (!user) return
     setSaving(true)
     const state = extractProjectState(useMapStore.getState())
-    const { data } = await saveProject(user.id, name, state)
+    const { data } = await saveProject(user.id, name, state, isPublic)
     if (data) {
       useMapStore.getState().setActiveProjectId(data.id)
       useMapStore.getState().setActiveProjectName(data.name)
@@ -107,6 +118,13 @@ export default function Header() {
     setSaving(false)
     setShowSaveAs(false)
   }, [user])
+
+  const handleTogglePublic = useCallback(async () => {
+    if (!activeProjectId) return
+    const next = !activeProjectPublic
+    await updateProject(activeProjectId, { is_public: next })
+    useMapStore.getState().setActiveProjectPublic(next)
+  }, [activeProjectId, activeProjectPublic])
 
   const handleRenameSubmit = useCallback(async () => {
     const trimmed = renameValue.trim()
@@ -176,10 +194,19 @@ export default function Header() {
                   {activeProjectName || 'Untitled'}
                 </button>
               )}
+              {activeProjectId && (
+                <button
+                  onClick={handleTogglePublic}
+                  title={activeProjectPublic ? 'Public — click to make private' : 'Private — click to make public'}
+                  className="text-paper/60 hover:text-paper transition-colors text-base leading-none"
+                >
+                  {activeProjectPublic ? '🌐' : '🔒'}
+                </button>
+              )}
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="text-sm text-paper/80 hover:text-paper transition-colors ml-2 bg-paper/10 px-2.5 py-1 rounded hover:bg-paper/20 disabled:opacity-40"
+                className="text-sm text-paper/80 hover:text-paper transition-colors ml-1 bg-paper/10 px-2.5 py-1 rounded hover:bg-paper/20 disabled:opacity-40"
               >
                 {saving ? 'Saving...' : 'Save'}
               </button>
