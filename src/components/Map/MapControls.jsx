@@ -20,7 +20,7 @@ export default function MapControls({ onFit, onExport, editMode }) {
   }, [showBasemaps])
 
   return (
-    <div ref={containerRef} className="absolute top-3 right-3 z-10 flex flex-col items-end gap-1.5">
+    <div ref={containerRef} className="absolute top-3 right-3 z-10 flex items-start gap-1.5">
       {editMode && (
         <>
           <button onClick={onFit} className={BTN} title="Fit to Indonesia">Fit</button>
@@ -36,7 +36,7 @@ export default function MapControls({ onFit, onExport, editMode }) {
           🗺 Basemap
         </button>
         {showBasemaps && (
-          <div className="absolute top-0 right-full mr-2 bg-paper/95 backdrop-blur-sm border border-border rounded-lg shadow-lg py-1 min-w-[160px]">
+          <div className="absolute top-full mt-1 right-0 bg-paper/95 backdrop-blur-sm border border-border rounded-lg shadow-lg py-1 min-w-[160px]">
             {BASEMAP_OPTIONS.map((opt) => (
               <button
                 key={opt.key}
