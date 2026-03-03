@@ -36,6 +36,7 @@ const useMapStore = create(persist((set) => ({
 
   // Project state (set when loading/saving projects)
   activeProjectId: null,
+  activeProjectName: '',
   activeProjectPublic: false,
 
   // UI state
@@ -65,6 +66,7 @@ const useMapStore = create(persist((set) => ({
   setLegendPosition: (legendPosition) => set({ legendPosition }),
   setAttribution: (attribution) => set({ attribution }),
   setActiveProjectId: (activeProjectId) => set({ activeProjectId }),
+  setActiveProjectName: (activeProjectName) => set({ activeProjectName }),
   setActiveProjectPublic: (activeProjectPublic) => set({ activeProjectPublic }),
   setActiveTab: (activeTab) => set({ activeTab }),
   setProvinceFeatures: (provinceFeatures) => set({ provinceFeatures }),
@@ -79,6 +81,9 @@ const useMapStore = create(persist((set) => ({
     valueColumn: '',
     joinResult: null,
     provinceFeatures: [],
+    activeProjectId: null,
+    activeProjectName: '',
+    activeProjectPublic: false,
   }),
 }), {
   name: 'petakarta-store',

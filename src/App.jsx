@@ -35,6 +35,9 @@ export default function App() {
           return
         }
         useMapStore.setState(normalizeProjectState(data.state_json))
+        useMapStore.getState().setActiveProjectId(data.id)
+        useMapStore.getState().setActiveProjectName(data.name || '')
+        useMapStore.getState().setActiveProjectPublic(data.is_public ?? false)
         setShareLoading(false)
       })
     }
