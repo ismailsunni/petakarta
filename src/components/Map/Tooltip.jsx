@@ -1,17 +1,52 @@
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useRef, useCallback } from 'react'
+import Overlay from 'ol/Overlay'
 import useMapStore from '../../store/mapStore'
 
+const formatValue = (v) => {
+  if (v == null || v === '') return 'No data'
+  const num = Number(v)
+  if (isNaN(num)) return String(v)
+  return Number.isInteger(num) ? num.toLocaleString() : num.toFixed(2)
+}
+
 export default function Tooltip({ map }) {
-  const [hover, setHover] = useState({ visible: false, x: 0, y: 0, name: '', value: null })
-  const [clicked, setClicked] = useState(null) // { name, value, pcode }
-  const joinResultRef = useRef(null)
+  const hoverRef = useRef(null)
+  const clickRef = useRef(null)
+  const hoverOverlayRef = useRef(null)
+  const clickOverlayRef = useRef(null)
 
-  // Keep a ref to joinResult so event handlers always see the latest
-  const joinResult = useMapStore((s) => s.joinResult)
+  // Set up OL Overlays once the map is ready
   useEffect(() => {
-    joinResultRef.current = joinResult
-  }, [joinResult])
+    if (!map) return
 
+    const hoverOverlay = new Overlay({
+      element: hoverRef.current,
+      positioning: 'bottom-left',
+      offset: [12, -10],
+      stopEvent: false,
+    })
+
+    const clickOverlay = new Overlay({
+      element: clickRef.current,
+      positioning: 'top-left',
+      offset: [0, 10],
+      stopEvent: true,
+    })
+
+    map.addOverlay(hoverOverlay)
+    map.addOverlay(clickOverlay)
+    hoverOverlayRef.current = hoverOverlay
+    clickOverlayRef.current = clickOverlay
+
+    return () => {
+      map.removeOverlay(hoverOverlay)
+      map.removeOverlay(clickOverlay)
+      hoverOverlayRef.current = null
+      clickOverlayRef.current = null
+    }
+  }, [map])
+
+  // Event handlers
   useEffect(() => {
     if (!map) return
 
@@ -20,15 +55,37 @@ export default function Tooltip({ map }) {
       map.forEachFeatureAtPixel(pixel, (f) => {
         if (f.get('ADM1_PCODE')) {
           found = f
-          return true // stop iteration
+          return true
         }
       })
       return found
     }
 
+    const updateTooltipContent = (el, name, value, pcode) => {
+      const nameEl = el.querySelector('[data-name]')
+      const valueEl = el.querySelector('[data-value]')
+      if (nameEl) nameEl.textContent = name
+      if (valueEl) {
+        valueEl.textContent = formatValue(value)
+        valueEl.className = `text-sm font-mono leading-tight mt-0.5 ${value == null ? 'text-paper/50' : ''}`
+      }
+    }
+
+    const updateClickContent = (el, name, value, pcode) => {
+      const nameEl = el.querySelector('[data-click-name]')
+      const pcodeEl = el.querySelector('[data-click-pcode]')
+      const valueEl = el.querySelector('[data-click-value]')
+      if (nameEl) nameEl.textContent = name
+      if (pcodeEl) pcodeEl.textContent = pcode
+      if (valueEl) valueEl.textContent = formatValue(value)
+    }
+
     const handlePointerMove = (evt) => {
+      const hoverOverlay = hoverOverlayRef.current
+      if (!hoverOverlay) return
+
       if (evt.dragging) {
-        setHover((prev) => prev.visible ? { ...prev, visible: false } : prev)
+        hoverOverlay.setPosition(undefined)
         return
       }
 
@@ -36,24 +93,31 @@ export default function Tooltip({ map }) {
       if (feature) {
         const name = feature.get('province_name')
         const pcode = feature.get('ADM1_PCODE')
-        const value = joinResultRef.current?.valueMap?.[pcode]
-        setHover({ visible: true, x: evt.pixel[0], y: evt.pixel[1], name, value })
+        const joinResult = useMapStore.getState().joinResult
+        const value = joinResult?.valueMap?.[pcode]
+        updateTooltipContent(hoverRef.current, name, value, pcode)
+        hoverOverlay.setPosition(evt.coordinate)
         map.getTargetElement().style.cursor = 'pointer'
       } else {
-        setHover({ visible: false, x: 0, y: 0, name: '', value: null })
+        hoverOverlay.setPosition(undefined)
         map.getTargetElement().style.cursor = ''
       }
     }
 
     const handleClick = (evt) => {
+      const clickOverlay = clickOverlayRef.current
+      if (!clickOverlay) return
+
       const feature = getProvinceFeature(evt.pixel)
       if (feature) {
         const name = feature.get('province_name')
         const pcode = feature.get('ADM1_PCODE')
-        const value = joinResultRef.current?.valueMap?.[pcode]
-        setClicked({ name, value, pcode })
+        const joinResult = useMapStore.getState().joinResult
+        const value = joinResult?.valueMap?.[pcode]
+        updateClickContent(clickRef.current, name, value, pcode)
+        clickOverlay.setPosition(evt.coordinate)
       } else {
-        setClicked(null)
+        clickOverlay.setPosition(undefined)
       }
     }
 
@@ -65,52 +129,38 @@ export default function Tooltip({ map }) {
     }
   }, [map])
 
-  const formatValue = (v) => {
-    if (v == null || v === '') return 'No data'
-    const num = Number(v)
-    if (isNaN(num)) return String(v)
-    return Number.isInteger(num) ? num.toLocaleString() : num.toFixed(2)
-  }
+  const dismissClick = useCallback(() => {
+    clickOverlayRef.current?.setPosition(undefined)
+  }, [])
 
   return (
     <>
-      {/* Hover tooltip */}
-      {hover.visible && (
-        <div
-          className="absolute pointer-events-none z-20"
-          style={{
-            left: hover.x + 12,
-            top: hover.y - 10,
-            transform: 'translateY(-100%)',
-          }}
-        >
-          <div className="bg-ink/95 text-paper rounded-md px-3 py-2 shadow-lg whitespace-nowrap backdrop-blur-sm">
-            <div className="text-xs font-medium leading-tight">{hover.name}</div>
-            <div className={`text-sm font-mono leading-tight mt-0.5 ${hover.value == null ? 'text-paper/50' : ''}`}>
-              {formatValue(hover.value)}
-            </div>
-          </div>
+      {/* Hover tooltip — OL Overlay element */}
+      <div ref={hoverRef} className="pointer-events-none">
+        <div className="bg-ink/95 text-paper rounded-md px-3 py-2 shadow-lg whitespace-nowrap backdrop-blur-sm">
+          <div data-name className="text-xs font-medium leading-tight" />
+          <div data-value className="text-sm font-mono leading-tight mt-0.5" />
         </div>
-      )}
+      </div>
 
-      {/* Click info panel */}
-      {clicked && (
-        <div className="absolute bottom-3 left-3 z-20 bg-paper/95 backdrop-blur-sm border border-border rounded-lg px-4 py-3 shadow-lg max-w-xs">
+      {/* Click info panel — OL Overlay element */}
+      <div ref={clickRef}>
+        <div className="bg-paper/95 backdrop-blur-sm border border-border rounded-lg px-4 py-3 shadow-lg max-w-xs">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="text-sm font-medium">{clicked.name}</div>
-              <div className="text-xs text-muted mt-0.5">{clicked.pcode}</div>
-              <div className="text-lg font-mono mt-1">{formatValue(clicked.value)}</div>
+              <div data-click-name className="text-sm font-medium" />
+              <div data-click-pcode className="text-xs text-muted mt-0.5" />
+              <div data-click-value className="text-lg font-mono mt-1" />
             </div>
             <button
-              onClick={() => setClicked(null)}
+              onClick={dismissClick}
               className="text-muted hover:text-ink text-sm leading-none"
             >
               &times;
             </button>
           </div>
         </div>
-      )}
+      </div>
     </>
   )
 }
