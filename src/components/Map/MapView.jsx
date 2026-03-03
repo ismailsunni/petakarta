@@ -8,6 +8,7 @@ import Legend from './Legend'
 import MapAttribution from './MapAttribution'
 import MapTitle from './MapTitle'
 import Tooltip from './Tooltip'
+import MapControls from './MapControls'
 import { INDONESIA_EXTENT_3857, FIT_PADDING } from '../../utils/mapConstants'
 
 export default function MapView() {
@@ -35,24 +36,11 @@ export default function MapView() {
       <Legend />
       <MapAttribution />
       <Tooltip map={map} />
-      {viewMode === 'edit' && (
-        <div className="absolute top-3 right-3 flex flex-col gap-1.5 z-10">
-          <button
-            onClick={fitToIndonesia}
-            className="bg-paper/90 backdrop-blur-sm border border-border rounded-lg px-2.5 py-1.5 text-xs font-medium hover:bg-paper transition-all shadow-md"
-            title="Fit to Indonesia"
-          >
-            Fit
-          </button>
-          <button
-            onClick={() => exportMap(2)}
-            className="bg-paper/90 backdrop-blur-sm border border-border rounded-lg px-2.5 py-1.5 text-xs font-medium hover:bg-paper transition-all shadow-md"
-            title="Export as PNG"
-          >
-            Export
-          </button>
-        </div>
-      )}
+      <MapControls
+        editMode={viewMode === 'edit'}
+        onFit={fitToIndonesia}
+        onExport={() => exportMap(2)}
+      />
       {viewMode === 'view' && (
         <a
           href={import.meta.env.BASE_URL}

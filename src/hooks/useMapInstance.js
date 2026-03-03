@@ -30,13 +30,9 @@ export default function useMapInstance(targetRef) {
       }),
     })
 
-    // Fit to Indonesia on initial load — same extent as Fit button and Export
     map.getView().fit(INDONESIA_EXTENT_3857, { padding: FIT_PADDING })
 
-    mapRef.current = map
-    setReady(true)
-
-    // Apply the current basemap from store (may differ from default 'osm')
+    // Apply stored basemap (may differ from default 'osm')
     const currentBasemap = useMapStore.getState().basemap
     if (currentBasemap !== 'osm') {
       if (currentBasemap === 'none') {
@@ -45,6 +41,9 @@ export default function useMapInstance(targetRef) {
         tileLayer.setSource(createBasemapSource(currentBasemap))
       }
     }
+
+    mapRef.current = map
+    setReady(true)
 
     return () => {
       map.setTarget(undefined)
@@ -56,7 +55,6 @@ export default function useMapInstance(targetRef) {
   useEffect(() => {
     const layer = tileLayerRef.current
     if (!layer) return
-
     if (basemap === 'none') {
       layer.setVisible(false)
     } else {
