@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import useMapStore from '../../store/mapStore'
 import ColorRampPicker from '../UI/ColorRampPicker'
 import ClassBreakEditor from '../UI/ClassBreakEditor'
@@ -35,6 +35,16 @@ export default function StyleTab() {
   const setAttribution = useMapStore((s) => s.setAttribution)
   const setShowProvinceLabels = useMapStore((s) => s.setShowProvinceLabels)
   const setCategoryColors = useMapStore((s) => s.setCategoryColors)
+
+  // Local state for text inputs — avoids serializing large csvData on every keystroke
+  const [localMapTitle, setLocalMapTitle] = useState(mapTitle)
+  const [localLegendTitle, setLocalLegendTitle] = useState(legendTitle)
+  const [localAttribution, setLocalAttribution] = useState(attribution)
+
+  // Sync store → local when a project is loaded externally
+  useEffect(() => { setLocalMapTitle(mapTitle) }, [mapTitle])
+  useEffect(() => { setLocalLegendTitle(legendTitle) }, [legendTitle])
+  useEffect(() => { setLocalAttribution(attribution) }, [attribution])
 
   // Extract unique values from joinResult for categorized mode
   const uniqueValues = useMemo(() => {
@@ -213,8 +223,10 @@ export default function StyleTab() {
             <span className="text-xs text-muted">Map title</span>
             <input
               type="text"
-              value={mapTitle}
-              onChange={(e) => setMapTitle(e.target.value)}
+              value={localMapTitle}
+              onChange={(e) => setLocalMapTitle(e.target.value)}
+              onBlur={() => setMapTitle(localMapTitle)}
+              onKeyDown={(e) => e.key === 'Enter' && setMapTitle(localMapTitle)}
               placeholder="e.g. GDP per Capita 2023"
               className="mt-1 block w-full rounded border border-border bg-paper px-2 py-1 text-sm"
             />
@@ -223,8 +235,10 @@ export default function StyleTab() {
             <span className="text-xs text-muted">Legend title</span>
             <input
               type="text"
-              value={legendTitle}
-              onChange={(e) => setLegendTitle(e.target.value)}
+              value={localLegendTitle}
+              onChange={(e) => setLocalLegendTitle(e.target.value)}
+              onBlur={() => setLegendTitle(localLegendTitle)}
+              onKeyDown={(e) => e.key === 'Enter' && setLegendTitle(localLegendTitle)}
               placeholder="e.g. Million IDR"
               className="mt-1 block w-full rounded border border-border bg-paper px-2 py-1 text-sm"
             />
@@ -233,8 +247,10 @@ export default function StyleTab() {
             <span className="text-xs text-muted">Attribution / Source</span>
             <input
               type="text"
-              value={attribution}
-              onChange={(e) => setAttribution(e.target.value)}
+              value={localAttribution}
+              onChange={(e) => setLocalAttribution(e.target.value)}
+              onBlur={() => setAttribution(localAttribution)}
+              onKeyDown={(e) => e.key === 'Enter' && setAttribution(localAttribution)}
               placeholder="e.g. Source: BPS 2023"
               className="mt-1 block w-full rounded border border-border bg-paper px-2 py-1 text-sm"
             />
