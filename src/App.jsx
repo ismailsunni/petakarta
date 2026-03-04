@@ -1,20 +1,18 @@
 import { useEffect, useState } from 'react'
+import { Routes, Route } from 'react-router-dom'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import MapView from './components/Map/MapView'
 import Sidebar from './components/Sidebar/Sidebar'
+import GalleryPage from './components/Gallery/GalleryPage'
 import useAuthStore from './store/authStore'
 import useMapStore from './store/mapStore'
 import { loadProject, normalizeProjectState } from './lib/projectsService'
 
-export default function App() {
+function MapEditor() {
   const viewMode = useMapStore((s) => s.viewMode)
   const [shareLoading, setShareLoading] = useState(false)
   const [shareError, setShareError] = useState('')
-
-  useEffect(() => {
-    useAuthStore.getState().initialize()
-  }, [])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -76,5 +74,18 @@ export default function App() {
       </main>
       {viewMode === 'edit' && <Footer />}
     </div>
+  )
+}
+
+export default function App() {
+  useEffect(() => {
+    useAuthStore.getState().initialize()
+  }, [])
+
+  return (
+    <Routes>
+      <Route path="/" element={<MapEditor />} />
+      <Route path="/gallery" element={<GalleryPage />} />
+    </Routes>
   )
 }

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import useAuthStore from '../store/authStore'
 import useMapStore from '../store/mapStore'
 import { supabase } from '../lib/supabase'
@@ -250,6 +251,12 @@ export default function Header() {
           )}
         </div>
         <div className="flex items-center gap-3">
+          <Link
+            to="/gallery"
+            className="text-sm text-paper/80 hover:text-paper transition-colors"
+          >
+            Gallery
+          </Link>
           {supabase && !loading && (
             user ? (
               <>
