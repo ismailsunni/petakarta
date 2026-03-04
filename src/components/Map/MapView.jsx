@@ -37,7 +37,6 @@ export default function MapView() {
       <MapAttribution />
       <Tooltip map={map} />
       <MapControls
-        editMode={viewMode === 'edit'}
         onFit={fitToIndonesia}
         onExport={() => exportMap(2)}
       />
