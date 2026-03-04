@@ -84,6 +84,8 @@ const useMapStore = create(persist((set) => ({
     activeProjectId: null,
     activeProjectName: '',
     activeProjectPublic: false,
+    mapTitle: '',
+    legendTitle: '',
   }),
 }), {
   name: 'petakarta-store',

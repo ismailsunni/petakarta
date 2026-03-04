@@ -49,14 +49,6 @@ function MapEditor() {
     }
   }, [])
 
-  if (shareLoading) {
-    return (
-      <div className="flex items-center justify-center h-full font-sans bg-canvas text-ink">
-        <p className="text-sm text-muted">Loading shared project...</p>
-      </div>
-    )
-  }
-
   if (shareError) {
     return (
       <div className="flex items-center justify-center h-full font-sans bg-canvas text-ink">
@@ -73,14 +65,24 @@ function MapEditor() {
     )
   }
 
+  // While loading a shared project, hide the editor chrome but keep MapView
+  // mounted so OL initialises in the background — prevents a blank flash when
+  // the loading overlay is dismissed.
+  const showEditor = viewMode === 'edit' && !shareLoading
+
   return (
     <div className="flex flex-col h-full font-sans bg-canvas text-ink">
-      {viewMode === 'edit' && <Header />}
-      <main className="flex flex-1 min-h-0">
-        {viewMode === 'edit' && <Sidebar />}
+      {showEditor && <Header />}
+      <main className="relative flex flex-1 min-h-0">
+        {showEditor && <Sidebar />}
         <MapView />
+        {shareLoading && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-canvas">
+            <p className="text-sm text-muted">Loading shared project...</p>
+          </div>
+        )}
       </main>
-      {viewMode === 'edit' && <Footer />}
+      {showEditor && <Footer />}
     </div>
   )
 }
