@@ -3,8 +3,8 @@ import { buildColorScale } from '../../utils/colorUtils'
 import { getBreaks, classifyValue } from '../../utils/classificationUtils'
 
 const POSITION_CLASSES = {
-  'top-left': 'top-3 left-3',
-  'top-right': 'top-3 right-14',
+  'top-left': 'top-12 left-3',
+  'top-right': 'top-12 right-3',
   'bottom-left': 'bottom-3 left-3',
   'bottom-right': 'bottom-3 right-3',
 }
