@@ -10,11 +10,14 @@ export default function GalleryPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const offsetRef = useRef(0)
+  const fetchingRef = useRef(false)
+  const countRef = useRef(null)
   const sentinelRef = useRef(null)
 
   const fetchPage = useCallback(async () => {
-    if (loading) return
-    if (totalCount !== null && offsetRef.current >= totalCount) return
+    if (fetchingRef.current) return
+    if (countRef.current !== null && offsetRef.current >= countRef.current) return
+    fetchingRef.current = true
     setLoading(true)
     const { data, error: err, count } = await listPublicProjects({
       limit: PAGE_SIZE,
@@ -23,20 +26,18 @@ export default function GalleryPage() {
     if (err) {
       setError(err.message || 'Failed to load projects.')
       setLoading(false)
+      fetchingRef.current = false
       return
     }
     setProjects((prev) => [...prev, ...data])
     setTotalCount(count)
+    countRef.current = count
     offsetRef.current += data.length
     setLoading(false)
-  }, [loading, totalCount])
+    fetchingRef.current = false
+  }, [])
 
-  // Initial fetch
-  useEffect(() => {
-    fetchPage()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Infinite scroll via IntersectionObserver
+  // Infinite scroll via IntersectionObserver (also handles initial fetch)
   useEffect(() => {
     const sentinel = sentinelRef.current
     if (!sentinel) return
