@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import useMapStore from '../../store/mapStore'
 import { buildColorScale } from '../../utils/colorUtils'
 import { getBreaks, classifyValue } from '../../utils/classificationUtils'
@@ -16,7 +17,20 @@ const NEXT_POSITION = {
   'top-right': 'bottom-right',
 }
 
+const SMALL_THRESHOLD = 400
+
 export default function Legend() {
+  const [tooSmall, setTooSmall] = useState(
+    () => window.innerHeight < SMALL_THRESHOLD || window.innerWidth < SMALL_THRESHOLD
+  )
+
+  useEffect(() => {
+    const check = () =>
+      setTooSmall(window.innerHeight < SMALL_THRESHOLD || window.innerWidth < SMALL_THRESHOLD)
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+
   const joinResult = useMapStore((s) => s.joinResult)
   const styleMode = useMapStore((s) => s.styleMode)
   const colorPreset = useMapStore((s) => s.colorPreset)
@@ -31,6 +45,7 @@ export default function Legend() {
   const setLegendPosition = useMapStore((s) => s.setLegendPosition)
 
   if (!joinResult || !joinResult.valueMap) return null
+  if (tooSmall) return null
 
   const hasUnmatched = joinResult.unmatched > 0
 

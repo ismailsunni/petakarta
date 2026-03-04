@@ -73,18 +73,15 @@ export default function GalleryPage() {
         )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {projects.map((project) => (
-            <a
+            <div
               key={project.id}
-              href={`${baseUrl}?project=${project.id}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block rounded-lg border border-border bg-paper shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+              className="rounded-lg border border-border bg-paper shadow-sm overflow-hidden"
             >
               <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
                 <iframe
                   src={`${baseUrl}?project=${project.id}&embed=true`}
                   title={project.name || 'Untitled'}
-                  className="absolute inset-0 w-full h-full pointer-events-none"
+                  className="absolute inset-0 w-full h-full"
                   loading="lazy"
                 />
               </div>
@@ -93,7 +90,7 @@ export default function GalleryPage() {
                   {project.name || 'Untitled'}
                 </p>
               </div>
-            </a>
+            </div>
           ))}
         </div>
 
