@@ -86,9 +86,14 @@ export default function GalleryPage() {
                 />
               </div>
               <div className="px-4 py-3">
-                <p className="text-sm font-medium truncate">
+                <a
+                  href={`${baseUrl}?project=${project.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm font-medium truncate hover:text-accent transition-colors block"
+                >
                   {project.name || 'Untitled'}
-                </p>
+                </a>
               </div>
             </div>
           ))}

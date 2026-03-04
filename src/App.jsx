@@ -9,15 +9,22 @@ import useAuthStore from './store/authStore'
 import useMapStore from './store/mapStore'
 import { loadProject, normalizeProjectState } from './lib/projectsService'
 
+function getInitialParams() {
+  const params = new URLSearchParams(window.location.search)
+  return { projectId: params.get('project'), embed: params.get('embed') }
+}
+
 function MapEditor() {
   const viewMode = useMapStore((s) => s.viewMode)
-  const [shareLoading, setShareLoading] = useState(false)
+  // Start in loading state immediately if a project ID is in the URL,
+  // so there's no flash of stale localStorage data before the fetch completes.
+  const [shareLoading, setShareLoading] = useState(
+    () => !!getInitialParams().projectId
+  )
   const [shareError, setShareError] = useState('')
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const projectId = params.get('project')
-    const embed = params.get('embed')
+    const { projectId, embed } = getInitialParams()
 
     if (embed === 'true') {
       useMapStore.getState().setViewMode('view')
@@ -25,7 +32,6 @@ function MapEditor() {
 
     if (projectId) {
       useMapStore.getState().setViewMode('view')
-      setShareLoading(true)
       loadProject(projectId).then(({ data, error }) => {
         if (error || !data?.state_json) {
           setShareError(error?.message || 'Project not found or is private.')
@@ -33,6 +39,8 @@ function MapEditor() {
           return
         }
         useMapStore.setState(normalizeProjectState(data.state_json))
+        // Re-assert view mode in case state_json contained a stale viewMode value
+        useMapStore.getState().setViewMode('view')
         useMapStore.getState().setActiveProjectId(data.id)
         useMapStore.getState().setActiveProjectName(data.name || '')
         useMapStore.getState().setActiveProjectPublic(data.is_public ?? false)
