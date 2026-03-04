@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Routes, Route } from 'react-router-dom'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import MapView from './components/Map/MapView'
@@ -11,13 +10,11 @@ import { loadProject, normalizeProjectState } from './lib/projectsService'
 
 function getInitialParams() {
   const params = new URLSearchParams(window.location.search)
-  return { projectId: params.get('project'), embed: params.get('embed') }
+  return { projectId: params.get('project'), embed: params.get('embed'), page: params.get('page') }
 }
 
 function MapEditor() {
   const viewMode = useMapStore((s) => s.viewMode)
-  // Start in loading state immediately if a project ID is in the URL,
-  // so there's no flash of stale localStorage data before the fetch completes.
   const [shareLoading, setShareLoading] = useState(
     () => !!getInitialParams().projectId
   )
@@ -39,7 +36,6 @@ function MapEditor() {
           return
         }
         useMapStore.setState(normalizeProjectState(data.state_json))
-        // Re-assert view mode in case state_json contained a stale viewMode value
         useMapStore.getState().setViewMode('view')
         useMapStore.getState().setActiveProjectId(data.id)
         useMapStore.getState().setActiveProjectName(data.name || '')
@@ -65,9 +61,6 @@ function MapEditor() {
     )
   }
 
-  // While loading a shared project, hide the editor chrome but keep MapView
-  // mounted so OL initialises in the background — prevents a blank flash when
-  // the loading overlay is dismissed.
   const showEditor = viewMode === 'edit' && !shareLoading
 
   return (
@@ -92,10 +85,7 @@ export default function App() {
     useAuthStore.getState().initialize()
   }, [])
 
-  return (
-    <Routes>
-      <Route path="/" element={<MapEditor />} />
-      <Route path="/gallery" element={<GalleryPage />} />
-    </Routes>
-  )
+  const { page } = getInitialParams()
+  if (page === 'gallery') return <GalleryPage />
+  return <MapEditor />
 }

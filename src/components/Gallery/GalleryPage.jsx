@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { listPublicProjects } from '../../lib/projectsService'
 
 const PAGE_SIZE = 10
@@ -58,12 +57,12 @@ export default function GalleryPage() {
       {/* Header */}
       <header className="h-[52px] bg-ink text-paper flex items-center justify-between px-5 shrink-0 border-b border-ink/20">
         <h1 className="font-display text-xl tracking-tight">PetaKarta Gallery</h1>
-        <Link
-          to="/"
+        <a
+          href={import.meta.env.BASE_URL}
           className="text-sm text-paper/80 hover:text-paper transition-colors"
         >
           Open Editor
-        </Link>
+        </a>
       </header>
 
       {/* Grid */}
