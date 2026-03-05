@@ -1,15 +1,24 @@
 import { useCallback, useRef, useState } from 'react'
 import useMapStore from '../../store/mapStore'
-import { parseCSV } from '../../utils/csvParser'
-import { parseCSVString } from '../../utils/csvParser'
-import { matchProvinces } from '../../utils/provinceMatcher'
+import { parseCSV, parseCSVString, downloadTemplateCsv } from '../../utils/csvParser'
+import { matchFeatures } from '../../utils/featureMatcher'
+import { ADMIN_LAYERS, getLayer } from '../../utils/adminLayers'
 
-const SAMPLES = [
+const PROVINCE_SAMPLES = [
   { key: 'gdp', label: 'GDP per Capita', file: 'sample_gdp_per_capita.csv', keyCol: 'province_name', keyType: 'name', valueCol: 'gdp_per_capita_2023' },
   { key: 'hdi', label: 'Human Development Index', file: 'sample_hdi.csv', keyCol: 'pcode', keyType: 'id', valueCol: 'hdi_2023' },
   { key: 'pop', label: 'Population Density', file: 'sample_population_density.csv', keyCol: 'province_name', keyType: 'name', valueCol: 'pop_density' },
   { key: 'island', label: 'Island Group', file: 'sample_island_group.csv', keyCol: 'province_name', keyType: 'name', valueCol: 'island_group' },
 ]
+
+const YOGYAKARTA_SAMPLES = [
+  { key: 'yogya_hdi', label: 'HDI', file: 'yogyakarta_hdi.csv', keyCol: 'ADM2_PCODE', keyType: 'id', valueCol: 'hdi' },
+]
+
+function getSamples(layerId) {
+  if (layerId === 'idn-yogyakarta-city') return YOGYAKARTA_SAMPLES
+  return PROVINCE_SAMPLES
+}
 
 export default function DataTab() {
   const fileInputRef = useRef(null)
@@ -19,18 +28,33 @@ export default function DataTab() {
   const keyType = useMapStore((s) => s.keyType)
   const valueColumn = useMapStore((s) => s.valueColumn)
   const joinResult = useMapStore((s) => s.joinResult)
+  const adminLayerId = useMapStore((s) => s.adminLayerId)
+  const adminFeatures = useMapStore((s) => s.adminFeatures)
   const setCsvData = useMapStore((s) => s.setCsvData)
   const setKeyColumn = useMapStore((s) => s.setKeyColumn)
   const setKeyType = useMapStore((s) => s.setKeyType)
   const setValueColumn = useMapStore((s) => s.setValueColumn)
   const setJoinResult = useMapStore((s) => s.setJoinResult)
-  const provinceFeatures = useMapStore((s) => s.provinceFeatures)
+  const setAdminLayerId = useMapStore((s) => s.setAdminLayerId)
   const resetData = useMapStore((s) => s.resetData)
 
   const [selectedSample, setSelectedSample] = useState('')
 
+  const layerConfig = getLayer(adminLayerId)
+  const samples = getSamples(adminLayerId)
+
+  const handleLayerChange = useCallback((e) => {
+    const newLayerId = e.target.value
+    if (csvData) {
+      const ok = window.confirm('Changing the admin layer will reset your column mapping. Continue?')
+      if (!ok) return
+    }
+    setAdminLayerId(newLayerId)
+    setSelectedSample('')
+  }, [csvData, setAdminLayerId])
+
   const handleLoadSample = useCallback(async () => {
-    const sample = SAMPLES.find((s) => s.key === selectedSample)
+    const sample = samples.find((s) => s.key === selectedSample)
     if (!sample) return
     const url = import.meta.env.BASE_URL + 'samples/' + sample.file
     const response = await fetch(url)
@@ -41,13 +65,13 @@ export default function DataTab() {
     setKeyType(sample.keyType)
     setValueColumn(sample.valueCol)
     setJoinResult(null)
-  }, [selectedSample, setCsvData, setKeyColumn, setKeyType, setValueColumn, setJoinResult])
+  }, [selectedSample, samples, setCsvData, setKeyColumn, setKeyType, setValueColumn, setJoinResult])
 
   const handleApply = useCallback(() => {
-    if (!csvData || !keyColumn || !valueColumn || provinceFeatures.length === 0) return
-    const result = matchProvinces(csvData, keyColumn, keyType, valueColumn, provinceFeatures)
+    if (!csvData || !keyColumn || !valueColumn || adminFeatures.length === 0) return
+    const result = matchFeatures(csvData, keyColumn, keyType, valueColumn, adminFeatures, layerConfig)
     setJoinResult(result)
-  }, [csvData, keyColumn, keyType, valueColumn, provinceFeatures, setJoinResult])
+  }, [csvData, keyColumn, keyType, valueColumn, adminFeatures, layerConfig, setJoinResult])
 
   const handleFile = useCallback(async (file) => {
     if (!file || !file.name.endsWith('.csv')) return
@@ -66,8 +90,34 @@ export default function DataTab() {
     e.preventDefault()
   }, [])
 
+  const handleDownloadTemplate = useCallback(() => {
+    downloadTemplateCsv(adminFeatures, layerConfig, adminLayerId)
+  }, [adminFeatures, layerConfig, adminLayerId])
+
+  const featuresLoaded = adminFeatures.length > 0
+
   return (
     <div className="space-y-4">
+      <div>
+        <h3 className="text-sm font-medium mb-2">Admin Layer</h3>
+        <select
+          value={adminLayerId}
+          onChange={handleLayerChange}
+          className="block w-full rounded border border-border bg-paper px-2 py-1 text-sm"
+        >
+          {ADMIN_LAYERS.map((l) => (
+            <option key={l.id} value={l.id}>{l.name}</option>
+          ))}
+        </select>
+        <button
+          onClick={handleDownloadTemplate}
+          disabled={!featuresLoaded}
+          className="mt-1.5 text-xs text-accent hover:underline disabled:opacity-40 disabled:cursor-not-allowed disabled:no-underline"
+        >
+          Download template CSV
+        </button>
+      </div>
+
       <div>
         <h3 className="text-sm font-medium mb-2">Upload CSV</h3>
         <div
@@ -101,7 +151,7 @@ export default function DataTab() {
             className="flex-1 rounded border border-border bg-paper px-2 py-1 text-sm"
           >
             <option value="">Select sample...</option>
-            {SAMPLES.map((s) => (
+            {samples.map((s) => (
               <option key={s.key} value={s.key}>{s.label}</option>
             ))}
           </select>
@@ -121,7 +171,7 @@ export default function DataTab() {
             <h3 className="text-sm font-medium mb-2">Column Mapping</h3>
             <div className="space-y-2">
               <label className="block">
-                <span className="text-xs text-muted">Province Key Column</span>
+                <span className="text-xs text-muted">Area Key Column</span>
                 <select
                   value={keyColumn}
                   onChange={(e) => setKeyColumn(e.target.value)}
@@ -145,7 +195,7 @@ export default function DataTab() {
                       checked={keyType === 'id'}
                       onChange={() => setKeyType('id')}
                     />
-                    ID (e.g. ID-AC)
+                    ID (e.g. {layerConfig.featureIdField})
                   </label>
                   <label className="flex items-center gap-1 text-sm">
                     <input
@@ -185,8 +235,8 @@ export default function DataTab() {
           </div>
 
           {joinResult && (
-            <div className={`rounded p-3 text-sm ${joinResult.matched < 19 ? 'bg-red-50 border border-red-200' : 'bg-green-50 border border-green-200'}`}>
-              <p>{joinResult.matched} provinces matched</p>
+            <div className={`rounded p-3 text-sm ${joinResult.matched < Math.ceil(adminFeatures.length / 2) ? 'bg-red-50 border border-red-200' : 'bg-green-50 border border-green-200'}`}>
+              <p>{joinResult.matched} areas matched</p>
               {joinResult.unmatched > 0 && (
                 <p className="text-muted text-xs mt-1">
                   {joinResult.unmatched} unmatched: {joinResult.unmatchedKeys.join(', ')}
