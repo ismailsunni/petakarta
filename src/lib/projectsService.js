@@ -2,17 +2,27 @@ import { supabase } from './supabase'
 
 const PERSIST_KEYS = [
   'csvData', 'csvColumns', 'keyColumn', 'keyType', 'valueColumn', 'joinResult',
+  'adminLayerId',
   'styleMode', 'colorPreset', 'colorReversed', 'classMethod', 'numClasses',
   'manualBreaks', 'categoryColors', 'strokeColor', 'strokeWidth', 'noDataColor',
-  'basemap', 'showProvinceLabels', 'mapTitle', 'legendTitle', 'legendPosition', 'attribution',
+  'basemap', 'showFeatureLabels', 'mapTitle', 'legendTitle', 'legendPosition', 'attribution',
 ]
 
 export function normalizeProjectState(state) {
-  if (state && 'showBasemap' in state && !('basemap' in state)) {
-    const { showBasemap, ...rest } = state
-    return { ...rest, basemap: showBasemap === false ? 'none' : 'osm' }
+  if (!state) return state
+  let s = state
+  if ('showBasemap' in s && !('basemap' in s)) {
+    const { showBasemap, ...rest } = s
+    s = { ...rest, basemap: showBasemap === false ? 'none' : 'osm' }
   }
-  return state
+  if (!('adminLayerId' in s)) {
+    s = { ...s, adminLayerId: 'idn-province' }
+  }
+  if ('showProvinceLabels' in s && !('showFeatureLabels' in s)) {
+    const { showProvinceLabels, ...rest } = s
+    s = { ...rest, showFeatureLabels: showProvinceLabels }
+  }
+  return s
 }
 
 export function extractProjectState(storeState) {
