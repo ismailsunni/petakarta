@@ -42,7 +42,7 @@ export default function Legend() {
   const noDataColor = useMapStore((s) => s.noDataColor)
   const legendTitle = useMapStore((s) => s.legendTitle)
   const legendPosition = useMapStore((s) => s.legendPosition)
-  const setLegendPosition = useMapStore((s) => s.setLegendPosition)
+  const update = useMapStore((s) => s.update)
 
   if (!joinResult || !joinResult.valueMap) return null
   if (tooSmall) return null
@@ -63,7 +63,7 @@ export default function Legend() {
             {legendTitle || 'Legend'}
           </span>
           <button
-            onClick={() => setLegendPosition(NEXT_POSITION[legendPosition])}
+            onClick={() => update({ legendPosition: NEXT_POSITION[legendPosition] })}
             className="text-[10px] text-muted hover:text-ink transition-colors ml-2"
             title="Move legend"
           >
@@ -135,7 +135,7 @@ export default function Legend() {
           {legendTitle || 'Legend'}
         </span>
         <button
-          onClick={() => setLegendPosition(NEXT_POSITION[legendPosition])}
+          onClick={() => update({ legendPosition: NEXT_POSITION[legendPosition] })}
           className="text-[10px] text-muted hover:text-ink transition-colors ml-2"
           title="Move legend"
         >

@@ -18,22 +18,24 @@ function MapEditor() {
 
   useEffect(() => {
     if (embed) {
-      useMapStore.getState().setViewMode('view')
+      useMapStore.setState({ viewMode: 'view' })
     }
 
     if (projectId) {
-      useMapStore.getState().setViewMode('view')
+      useMapStore.setState({ viewMode: 'view' })
       loadProject(projectId).then(({ data, error }) => {
         if (error || !data?.state_json) {
           setShareError(error?.message || 'Project not found or is private.')
           setShareLoading(false)
           return
         }
-        useMapStore.setState(normalizeProjectState(data.state_json))
-        useMapStore.getState().setViewMode('view')
-        useMapStore.getState().setActiveProjectId(data.id)
-        useMapStore.getState().setActiveProjectName(data.name || '')
-        useMapStore.getState().setActiveProjectPublic(data.is_public ?? false)
+        useMapStore.setState({
+          ...normalizeProjectState(data.state_json),
+          viewMode: 'view',
+          activeProjectId: data.id,
+          activeProjectName: data.name || '',
+          activeProjectPublic: data.is_public ?? false,
+        })
         setShareLoading(false)
       })
     }

@@ -39,10 +39,12 @@ export default function ProjectsPanel({ onClose }) {
       return
     }
     if (data?.state_json) {
-      useMapStore.setState(normalizeProjectState(data.state_json))
-      useMapStore.getState().setActiveProjectId(id)
-      useMapStore.getState().setActiveProjectName(data.name || '')
-      useMapStore.getState().setActiveProjectPublic(data.is_public ?? false)
+      useMapStore.setState({
+        ...normalizeProjectState(data.state_json),
+        activeProjectId: id,
+        activeProjectName: data.name || '',
+        activeProjectPublic: data.is_public ?? false,
+      })
       onClose()
     }
   }
@@ -54,9 +56,7 @@ export default function ProjectsPanel({ onClose }) {
       setError(delError.message)
     } else {
       if (storeActiveId === id) {
-        useMapStore.getState().setActiveProjectId(null)
-        useMapStore.getState().setActiveProjectName('')
-        useMapStore.getState().setActiveProjectPublic(false)
+        useMapStore.setState({ activeProjectId: null, activeProjectName: '', activeProjectPublic: false })
       }
       fetchProjects()
     }
@@ -71,7 +71,7 @@ export default function ProjectsPanel({ onClose }) {
       setError(toggleError.message)
     } else {
       if (project.id === storeActiveId) {
-        useMapStore.getState().setActiveProjectPublic(!project.is_public)
+        useMapStore.setState({ activeProjectPublic: !project.is_public })
       }
       fetchProjects()
     }
@@ -88,7 +88,7 @@ export default function ProjectsPanel({ onClose }) {
       setError(renameError.message)
     } else {
       if (id === storeActiveId) {
-        useMapStore.getState().setActiveProjectName(trimmed)
+        useMapStore.setState({ activeProjectName: trimmed })
       }
       fetchProjects()
     }

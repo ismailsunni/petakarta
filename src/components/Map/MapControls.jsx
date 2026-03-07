@@ -55,7 +55,7 @@ export default function MapControls({ onFit, onExport }) {
   const [showBasemaps, setShowBasemaps] = useState(false)
   const [copied, setCopied] = useState(false)
   const basemap = useMapStore((s) => s.basemap)
-  const setBasemap = useMapStore((s) => s.setBasemap)
+  const update = useMapStore((s) => s.update)
   const activeProjectId = useMapStore((s) => s.activeProjectId)
 
   useEffect(() => {
@@ -109,7 +109,7 @@ export default function MapControls({ onFit, onExport }) {
             {BASEMAP_OPTIONS.map((opt) => (
               <button
                 key={opt.key}
-                onClick={() => { setBasemap(opt.key); setShowBasemaps(false) }}
+                onClick={() => { update({ basemap: opt.key }); setShowBasemaps(false) }}
                 className={`w-full text-left px-3 py-1.5 text-xs hover:bg-canvas transition-colors ${
                   opt.key === basemap ? 'font-semibold text-accent' : 'text-ink'
                 }`}

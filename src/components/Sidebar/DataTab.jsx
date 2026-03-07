@@ -14,11 +14,8 @@ export default function DataTab() {
   const joinResult = useMapStore((s) => s.joinResult)
   const adminLayerId = useMapStore((s) => s.adminLayerId)
   const adminFeatures = useMapStore((s) => s.adminFeatures)
+  const update = useMapStore((s) => s.update)
   const setCsvData = useMapStore((s) => s.setCsvData)
-  const setKeyColumn = useMapStore((s) => s.setKeyColumn)
-  const setKeyType = useMapStore((s) => s.setKeyType)
-  const setValueColumn = useMapStore((s) => s.setValueColumn)
-  const setJoinResult = useMapStore((s) => s.setJoinResult)
   const setAdminLayerId = useMapStore((s) => s.setAdminLayerId)
   const resetData = useMapStore((s) => s.resetData)
 
@@ -45,24 +42,21 @@ export default function DataTab() {
     const text = await response.text()
     const { data, columns } = parseCSVString(text)
     setCsvData(data, columns)
-    setKeyColumn(sample.keyCol)
-    setKeyType(sample.keyType)
-    setValueColumn(sample.valueCol)
-    setJoinResult(null)
-  }, [selectedSample, samples, setCsvData, setKeyColumn, setKeyType, setValueColumn, setJoinResult])
+    update({ keyColumn: sample.keyCol, keyType: sample.keyType, valueColumn: sample.valueCol, joinResult: null })
+  }, [selectedSample, samples, setCsvData, update])
 
   const handleApply = useCallback(() => {
     if (!csvData || !keyColumn || !valueColumn || adminFeatures.length === 0) return
     const result = matchFeatures(csvData, keyColumn, keyType, valueColumn, adminFeatures, layerConfig)
-    setJoinResult(result)
-  }, [csvData, keyColumn, keyType, valueColumn, adminFeatures, layerConfig, setJoinResult])
+    update({ joinResult: result })
+  }, [csvData, keyColumn, keyType, valueColumn, adminFeatures, layerConfig, update])
 
   const handleFile = useCallback(async (file) => {
     if (!file || !file.name.endsWith('.csv')) return
     const { data, columns } = await parseCSV(file)
     setCsvData(data, columns)
-    setJoinResult(null)
-  }, [setCsvData, setJoinResult])
+    update({ joinResult: null })
+  }, [setCsvData, update])
 
   const handleDrop = useCallback((e) => {
     e.preventDefault()
@@ -158,7 +152,7 @@ export default function DataTab() {
                 <span className="text-xs text-muted">Area Key Column</span>
                 <select
                   value={keyColumn}
-                  onChange={(e) => setKeyColumn(e.target.value)}
+                  onChange={(e) => update({ keyColumn: e.target.value })}
                   className="mt-1 block w-full rounded border border-border bg-paper px-2 py-1 text-sm"
                 >
                   <option value="">Select column...</option>
@@ -177,7 +171,7 @@ export default function DataTab() {
                       name="keyType"
                       value="id"
                       checked={keyType === 'id'}
-                      onChange={() => setKeyType('id')}
+                      onChange={() => update({ keyType: 'id' })}
                     />
                     ID (e.g. {layerConfig.featureIdField})
                   </label>
@@ -187,7 +181,7 @@ export default function DataTab() {
                       name="keyType"
                       value="name"
                       checked={keyType === 'name'}
-                      onChange={() => setKeyType('name')}
+                      onChange={() => update({ keyType: 'name' })}
                     />
                     Name
                   </label>
@@ -198,7 +192,7 @@ export default function DataTab() {
                 <span className="text-xs text-muted">Value Column</span>
                 <select
                   value={valueColumn}
-                  onChange={(e) => setValueColumn(e.target.value)}
+                  onChange={(e) => update({ valueColumn: e.target.value })}
                   className="mt-1 block w-full rounded border border-border bg-paper px-2 py-1 text-sm"
                 >
                   <option value="">Select column...</option>

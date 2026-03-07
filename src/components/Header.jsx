@@ -111,9 +111,7 @@ export default function Header() {
     const state = extractProjectState(useMapStore.getState())
     const { data } = await saveProject(user.id, name, state, isPublic)
     if (data) {
-      useMapStore.getState().setActiveProjectId(data.id)
-      useMapStore.getState().setActiveProjectName(data.name)
-      useMapStore.getState().setActiveProjectPublic(data.is_public ?? false)
+      useMapStore.setState({ activeProjectId: data.id, activeProjectName: data.name, activeProjectPublic: data.is_public ?? false })
     }
     setSaving(false)
     setShowSaveAs(false)
@@ -123,7 +121,7 @@ export default function Header() {
     if (!activeProjectId) return
     const next = !activeProjectPublic
     await updateProject(activeProjectId, { is_public: next })
-    useMapStore.getState().setActiveProjectPublic(next)
+    useMapStore.setState({ activeProjectPublic: next })
   }, [activeProjectId, activeProjectPublic])
 
   const handleRenameSubmit = useCallback(async () => {
@@ -133,7 +131,7 @@ export default function Header() {
       return
     }
     await updateProject(activeProjectId, { name: trimmed })
-    useMapStore.getState().setActiveProjectName(trimmed)
+    useMapStore.setState({ activeProjectName: trimmed })
     setRenaming(false)
   }, [renameValue, activeProjectId, activeProjectName])
 

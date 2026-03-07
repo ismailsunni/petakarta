@@ -7,7 +7,7 @@ export default function BasemapControl({ map }) {
   const containerRef = useRef(null)
   const [open, setOpen] = useState(false)
   const basemap = useMapStore((s) => s.basemap)
-  const setBasemap = useMapStore((s) => s.setBasemap)
+  const update = useMapStore((s) => s.update)
 
   useEffect(() => {
     if (!map || !containerRef.current) return
@@ -40,7 +40,7 @@ export default function BasemapControl({ map }) {
             {BASEMAP_OPTIONS.map((opt) => (
               <button
                 key={opt.key}
-                onClick={() => { setBasemap(opt.key); setOpen(false) }}
+                onClick={() => { update({ basemap: opt.key }); setOpen(false) }}
                 className={`w-full text-left px-3 py-1.5 text-xs hover:bg-canvas transition-colors ${
                   opt.key === basemap ? 'font-semibold text-accent' : 'text-ink'
                 }`}

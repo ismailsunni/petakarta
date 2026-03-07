@@ -18,7 +18,7 @@ export default function useAdminLayer(map) {
   const layerRef = useRef(null)
   const sourceRef = useRef(null)
   const adminLayerId = useMapStore((s) => s.adminLayerId)
-  const setAdminFeatures = useMapStore((s) => s.setAdminFeatures)
+  const update = useMapStore((s) => s.update)
   const joinResult = useMapStore((s) => s.joinResult)
   const styleMode = useMapStore((s) => s.styleMode)
   const colorPreset = useMapStore((s) => s.colorPreset)
@@ -56,7 +56,7 @@ export default function useAdminLayer(map) {
           featureId: f.get(layerConfig.featureIdField),
           featureName: f.get(layerConfig.featureNameField),
         }))
-        setAdminFeatures(featureData)
+        update({ adminFeatures: featureData })
 
         const extent3857 = transformExtent(layerConfig.bbox, 'EPSG:4326', 'EPSG:3857')
         map.getView().fit(extent3857, { padding: FIT_PADDING, duration: 400 })
@@ -70,7 +70,7 @@ export default function useAdminLayer(map) {
     return () => {
       map.removeLayer(layer)
     }
-  }, [map, adminLayerId, setAdminFeatures])
+  }, [map, adminLayerId, update])
 
   // Update styles when any style-related state changes
   useEffect(() => {

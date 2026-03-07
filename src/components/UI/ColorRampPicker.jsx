@@ -16,8 +16,7 @@ function SwatchBar({ presetKey, count = 7 }) {
 export default function ColorRampPicker() {
   const colorPreset = useMapStore((s) => s.colorPreset)
   const colorReversed = useMapStore((s) => s.colorReversed)
-  const setColorPreset = useMapStore((s) => s.setColorPreset)
-  const setColorReversed = useMapStore((s) => s.setColorReversed)
+  const update = useMapStore((s) => s.update)
   const [open, setOpen] = useState(false)
   const containerRef = useRef(null)
 
@@ -34,7 +33,7 @@ export default function ColorRampPicker() {
   }, [open])
 
   const handleSelect = (key) => {
-    setColorPreset(key)
+    update({ colorPreset: key })
     setOpen(false)
   }
 
@@ -86,7 +85,7 @@ export default function ColorRampPicker() {
         <input
           type="checkbox"
           checked={colorReversed}
-          onChange={(e) => setColorReversed(e.target.checked)}
+          onChange={(e) => update({ colorReversed: e.target.checked })}
         />
         Reverse colors
       </label>

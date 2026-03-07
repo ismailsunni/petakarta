@@ -24,17 +24,7 @@ export default function StyleTab() {
   const showFeatureLabels = useMapStore((s) => s.showFeatureLabels)
   const joinResult = useMapStore((s) => s.joinResult)
   const categoryColors = useMapStore((s) => s.categoryColors)
-  const setStyleMode = useMapStore((s) => s.setStyleMode)
-  const setClassMethod = useMapStore((s) => s.setClassMethod)
-  const setNumClasses = useMapStore((s) => s.setNumClasses)
-  const setStrokeColor = useMapStore((s) => s.setStrokeColor)
-  const setStrokeWidth = useMapStore((s) => s.setStrokeWidth)
-  const setNoDataColor = useMapStore((s) => s.setNoDataColor)
-  const setMapTitle = useMapStore((s) => s.setMapTitle)
-  const setLegendTitle = useMapStore((s) => s.setLegendTitle)
-  const setAttribution = useMapStore((s) => s.setAttribution)
-  const setShowFeatureLabels = useMapStore((s) => s.setShowFeatureLabels)
-  const setCategoryColors = useMapStore((s) => s.setCategoryColors)
+  const update = useMapStore((s) => s.update)
 
   // Local state for text inputs — avoids serializing large csvData on every keystroke
   const [localMapTitle, setLocalMapTitle] = useState(mapTitle)
@@ -45,6 +35,10 @@ export default function StyleTab() {
   useEffect(() => { setLocalMapTitle(mapTitle) }, [mapTitle])
   useEffect(() => { setLocalLegendTitle(legendTitle) }, [legendTitle])
   useEffect(() => { setLocalAttribution(attribution) }, [attribution])
+
+  const setMapTitle = (v) => update({ mapTitle: v })
+  const setLegendTitle = (v) => update({ legendTitle: v })
+  const setAttribution = (v) => update({ attribution: v })
 
   // Extract unique values from joinResult for categorized mode
   const uniqueValues = useMemo(() => {
@@ -67,18 +61,19 @@ export default function StyleTab() {
 
   // Sync auto-assigned colors to store when they differ
   const handleModeChange = (mode) => {
-    setStyleMode(mode)
     if (mode === 'categorized') {
       const colors = {}
       uniqueValues.forEach((val, i) => {
         colors[val] = categoryColors[val] || getCategoryColor(i)
       })
-      setCategoryColors(colors)
+      update({ styleMode: mode, categoryColors: colors })
+    } else {
+      update({ styleMode: mode })
     }
   }
 
   const handleCategoryColorChange = (val, color) => {
-    setCategoryColors({ ...effectiveCategoryColors, [val]: color })
+    update({ categoryColors: { ...effectiveCategoryColors, [val]: color } })
   }
 
   return (
@@ -123,7 +118,7 @@ export default function StyleTab() {
                 <span className="text-xs text-muted">Method</span>
                 <select
                   value={classMethod}
-                  onChange={(e) => setClassMethod(e.target.value)}
+                  onChange={(e) => update({ classMethod: e.target.value })}
                   className="mt-1 block w-full rounded border border-border bg-paper px-2 py-1 text-sm"
                 >
                   {CLASS_METHODS.map((m) => (
@@ -139,7 +134,7 @@ export default function StyleTab() {
                   min={3}
                   max={9}
                   value={numClasses}
-                  onChange={(e) => setNumClasses(Number(e.target.value))}
+                  onChange={(e) => update({ numClasses: Number(e.target.value) })}
                   className="w-full mt-1 accent-accent"
                 />
                 <div className="flex justify-between text-[10px] text-muted">
@@ -186,7 +181,7 @@ export default function StyleTab() {
               <input
                 type="color"
                 value={strokeColor}
-                onChange={(e) => setStrokeColor(e.target.value)}
+                onChange={(e) => update({ strokeColor: e.target.value })}
                 className="w-6 h-6 rounded border border-border cursor-pointer"
               />
             </label>
@@ -195,7 +190,7 @@ export default function StyleTab() {
               <input
                 type="number"
                 value={strokeWidth}
-                onChange={(e) => setStrokeWidth(Number(e.target.value))}
+                onChange={(e) => update({ strokeWidth: Number(e.target.value) })}
                 min={0}
                 max={5}
                 step={0.1}
@@ -209,7 +204,7 @@ export default function StyleTab() {
             <input
               type="color"
               value={noDataColor}
-              onChange={(e) => setNoDataColor(e.target.value)}
+              onChange={(e) => update({ noDataColor: e.target.value })}
               className="w-6 h-6 rounded border border-border cursor-pointer"
             />
           </label>
@@ -259,7 +254,7 @@ export default function StyleTab() {
             <input
               type="checkbox"
               checked={showFeatureLabels}
-              onChange={(e) => setShowFeatureLabels(e.target.checked)}
+              onChange={(e) => update({ showFeatureLabels: e.target.checked })}
             />
             Show area names
           </label>

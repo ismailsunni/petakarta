@@ -11,7 +11,7 @@ const TABS = [
 
 export default function Sidebar() {
   const activeTab = useMapStore((s) => s.activeTab)
-  const setActiveTab = useMapStore((s) => s.setActiveTab)
+  const update = useMapStore((s) => s.update)
 
   return (
     <aside className="w-80 bg-paper border-r border-border flex flex-col shrink-0 hidden md:flex">
@@ -19,7 +19,7 @@ export default function Sidebar() {
         {TABS.map((tab) => (
           <button
             key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
+            onClick={() => update({ activeTab: tab.key })}
             className={`flex-1 py-2.5 text-sm font-medium transition-all duration-150 ${
               activeTab === tab.key
                 ? 'text-accent border-b-2 border-accent'

@@ -5,7 +5,7 @@ export default function ClassBreakEditor() {
   const numClasses = useMapStore((s) => s.numClasses)
   const manualBreaks = useMapStore((s) => s.manualBreaks)
   const joinResult = useMapStore((s) => s.joinResult)
-  const setManualBreaks = useMapStore((s) => s.setManualBreaks)
+  const update = useMapStore((s) => s.update)
 
   const [inputs, setInputs] = useState([])
 
@@ -39,7 +39,7 @@ export default function ClassBreakEditor() {
     for (let i = 1; i < parsed.length; i++) {
       if (parsed[i] <= parsed[i - 1]) return
     }
-    setManualBreaks(parsed)
+    update({ manualBreaks: parsed })
   }
 
   return (
