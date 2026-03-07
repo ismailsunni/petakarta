@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { applyAllMigrations } from '../utils/stateMigrations'
 
 const PERSIST_KEYS = [
   'csvData', 'csvColumns', 'keyColumn', 'keyType', 'valueColumn', 'joinResult',
@@ -10,19 +11,7 @@ const PERSIST_KEYS = [
 
 export function normalizeProjectState(state) {
   if (!state) return state
-  let s = state
-  if ('showBasemap' in s && !('basemap' in s)) {
-    const { showBasemap, ...rest } = s
-    s = { ...rest, basemap: showBasemap === false ? 'none' : 'osm' }
-  }
-  if (!('adminLayerId' in s)) {
-    s = { ...s, adminLayerId: 'idn-province' }
-  }
-  if ('showProvinceLabels' in s && !('showFeatureLabels' in s)) {
-    const { showProvinceLabels, ...rest } = s
-    s = { ...rest, showFeatureLabels: showProvinceLabels }
-  }
-  return s
+  return applyAllMigrations(state)
 }
 
 export function extractProjectState(storeState) {

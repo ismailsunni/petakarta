@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { DEFAULT_LAYER_ID } from '../utils/adminLayers'
+import { migrateShowBasemap, migrateProvinceLabels } from '../utils/stateMigrations'
 
 const useMapStore = create(persist((set) => ({
   // Data state
@@ -91,18 +92,8 @@ const useMapStore = create(persist((set) => ({
   name: 'petakarta-store',
   version: 3,
   migrate: (persisted, version) => {
-    if (version < 2) {
-      const { showBasemap, ...rest } = persisted
-      persisted = { ...rest, basemap: showBasemap === false ? 'none' : 'osm' }
-    }
-    if (version < 3) {
-      const { showProvinceLabels, provinceFeatures, ...rest } = persisted
-      persisted = {
-        ...rest,
-        showFeatureLabels: showProvinceLabels ?? false,
-        adminLayerId: DEFAULT_LAYER_ID,
-      }
-    }
+    if (version < 2) persisted = migrateShowBasemap(persisted)
+    if (version < 3) persisted = migrateProvinceLabels({ ...persisted, adminLayerId: persisted.adminLayerId ?? DEFAULT_LAYER_ID })
     return persisted
   },
   partialize: (state) => ({
