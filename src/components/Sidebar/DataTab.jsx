@@ -4,22 +4,6 @@ import { parseCSV, parseCSVString, downloadTemplateCsv } from '../../utils/csvPa
 import { matchFeatures } from '../../utils/featureMatcher'
 import { ADMIN_LAYERS, getLayer } from '../../utils/adminLayers'
 
-const PROVINCE_SAMPLES = [
-  { key: 'gdp', label: 'GDP per Capita', file: 'sample_gdp_per_capita.csv', keyCol: 'province_name', keyType: 'name', valueCol: 'gdp_per_capita_2023' },
-  { key: 'hdi', label: 'Human Development Index', file: 'sample_hdi.csv', keyCol: 'pcode', keyType: 'id', valueCol: 'hdi_2023' },
-  { key: 'pop', label: 'Population Density', file: 'sample_population_density.csv', keyCol: 'province_name', keyType: 'name', valueCol: 'pop_density' },
-  { key: 'island', label: 'Island Group', file: 'sample_island_group.csv', keyCol: 'province_name', keyType: 'name', valueCol: 'island_group' },
-]
-
-const YOGYAKARTA_SAMPLES = [
-  { key: 'yogya_hdi', label: 'HDI', file: 'yogyakarta_hdi.csv', keyCol: 'ADM2_PCODE', keyType: 'id', valueCol: 'hdi' },
-]
-
-function getSamples(layerId) {
-  if (layerId === 'idn-yogyakarta-city') return YOGYAKARTA_SAMPLES
-  return PROVINCE_SAMPLES
-}
-
 export default function DataTab() {
   const fileInputRef = useRef(null)
   const csvData = useMapStore((s) => s.csvData)
@@ -41,7 +25,7 @@ export default function DataTab() {
   const [selectedSample, setSelectedSample] = useState('')
 
   const layerConfig = getLayer(adminLayerId)
-  const samples = getSamples(adminLayerId)
+  const samples = layerConfig.samples
 
   const handleLayerChange = useCallback((e) => {
     const newLayerId = e.target.value

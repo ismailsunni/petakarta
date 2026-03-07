@@ -6,6 +6,12 @@ export const ADMIN_LAYERS = [
     featureIdField: 'ADM1_PCODE',
     featureNameField: 'province_name',
     bbox: [94.5, -11.5, 141.5, 6.5],
+    samples: [
+      { key: 'gdp', label: 'GDP per Capita', file: 'sample_gdp_per_capita.csv', keyCol: 'province_name', keyType: 'name', valueCol: 'gdp_per_capita_2023' },
+      { key: 'hdi', label: 'Human Development Index', file: 'sample_hdi.csv', keyCol: 'pcode', keyType: 'id', valueCol: 'hdi_2023' },
+      { key: 'pop', label: 'Population Density', file: 'sample_population_density.csv', keyCol: 'province_name', keyType: 'name', valueCol: 'pop_density' },
+      { key: 'island', label: 'Island Group', file: 'sample_island_group.csv', keyCol: 'province_name', keyType: 'name', valueCol: 'island_group' },
+    ],
     aliases: {
       'yogyakarta': 'ID-YO',
       'di yogyakarta': 'ID-YO',
@@ -44,6 +50,9 @@ export const ADMIN_LAYERS = [
     featureIdField: 'ADM2_PCODE',
     featureNameField: 'city_name',
     bbox: [110.0, -8.2, 110.8, -7.6],
+    samples: [
+      { key: 'yogya_hdi', label: 'HDI', file: 'yogyakarta_hdi.csv', keyCol: 'ADM2_PCODE', keyType: 'id', valueCol: 'hdi' },
+    ],
     aliases: {},
     level: 'city',
   },
