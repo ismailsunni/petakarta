@@ -2,12 +2,11 @@ import { useEffect, useRef } from 'react'
 import VectorLayer from 'ol/layer/Vector'
 import VectorSource from 'ol/source/Vector'
 import GeoJSON from 'ol/format/GeoJSON'
-import { Style, Fill, Stroke, Text } from 'ol/style'
+import { Style, Fill, Stroke } from 'ol/style'
 import { transformExtent } from 'ol/proj'
 import useMapStore from '../store/mapStore'
 import { getLayer } from '../utils/adminLayers'
-import { buildColorScale } from '../utils/colorUtils'
-import { getBreaks, classifyValue } from '../utils/classificationUtils'
+import { makeLabelStyle, buildGraduatedStyleFn, buildCategorizedStyleFn } from '../utils/styleUtils'
 import { FIT_PADDING } from '../utils/mapConstants'
 
 const DEFAULT_STYLE = new Style({
@@ -59,7 +58,6 @@ export default function useAdminLayer(map) {
         }))
         setAdminFeatures(featureData)
 
-        // Fit map to this layer's extent
         const extent3857 = transformExtent(layerConfig.bbox, 'EPSG:4326', 'EPSG:3857')
         map.getView().fit(extent3857, { padding: FIT_PADDING, duration: 400 })
       }
@@ -81,48 +79,12 @@ export default function useAdminLayer(map) {
 
     const layerConfig = getLayer(adminLayerId)
 
-    const makeLabelStyle = (feature) => {
-      if (!showFeatureLabels) return null
-      const geom = feature.getGeometry()
-      let labelPoint
-      if (geom.getType() === 'MultiPolygon') {
-        const polygons = geom.getPolygons()
-        let largest = polygons[0]
-        let maxArea = largest.getArea()
-        for (let i = 1; i < polygons.length; i++) {
-          const area = polygons[i].getArea()
-          if (area > maxArea) {
-            largest = polygons[i]
-            maxArea = area
-          }
-        }
-        labelPoint = largest.getInteriorPoint()
-      } else {
-        labelPoint = geom.getInteriorPoint()
-      }
-      return new Style({
-        geometry: labelPoint,
-        text: new Text({
-          text: feature.get(layerConfig.featureNameField),
-          font: '11px "IBM Plex Sans", sans-serif',
-          fill: new Fill({ color: '#1a1a2e' }),
-          stroke: new Stroke({ color: '#ffffff', width: 3 }),
-          overflow: true,
-        }),
-      })
-    }
-
-    if (!joinResult || !joinResult.valueMap) {
+    if (!joinResult?.valueMap) {
       if (showFeatureLabels) {
-        layer.setStyle((feature) => {
-          const styles = [new Style({
-            fill: new Fill({ color: '#d4d0c8' }),
-            stroke: new Stroke({ color: '#ffffff', width: 0.8 }),
-          })]
-          const label = makeLabelStyle(feature)
-          if (label) styles.push(label)
-          return styles
-        })
+        layer.setStyle((feature) => [
+          new Style({ fill: new Fill({ color: '#d4d0c8' }), stroke: new Stroke({ color: '#ffffff', width: 0.8 }) }),
+          makeLabelStyle(feature, layerConfig),
+        ])
       } else {
         layer.setStyle(DEFAULT_STYLE)
       }
@@ -130,85 +92,11 @@ export default function useAdminLayer(map) {
     }
 
     const { valueMap } = joinResult
+    const styleFunction = styleMode === 'categorized'
+      ? buildCategorizedStyleFn({ valueMap, layerConfig, categoryColors, strokeColor, strokeWidth, noDataColor, showFeatureLabels })
+      : buildGraduatedStyleFn({ valueMap, layerConfig, numClasses, classMethod, manualBreaks, colorPreset, colorReversed, strokeColor, strokeWidth, noDataColor, showFeatureLabels })
 
-    if (styleMode === 'categorized') {
-      const styleFunction = (feature) => {
-        const featureCode = feature.get(layerConfig.featureIdField)
-        const value = valueMap[featureCode]
-
-        const fillColor = (value === undefined || value === null || value === '')
-          ? noDataColor
-          : (categoryColors[String(value)] || noDataColor)
-
-        const styles = [new Style({
-          fill: new Fill({ color: fillColor }),
-          stroke: new Stroke({ color: strokeColor, width: strokeWidth }),
-        })]
-        const label = makeLabelStyle(feature)
-        if (label) styles.push(label)
-        return styles
-      }
-
-      layer.setStyle(styleFunction)
-      return
-    }
-
-    // Graduated: parse values to numbers
-    const numericMap = {}
-    for (const [code, raw] of Object.entries(valueMap)) {
-      const n = Number(raw)
-      if (!isNaN(n)) numericMap[code] = n
-    }
-
-    const values = Object.values(numericMap)
-
-    if (values.length === 0) {
-      layer.setStyle(DEFAULT_STYLE)
-      return
-    }
-
-    const effectiveClasses = Math.min(numClasses, values.length)
-    let breaks
-    if (classMethod === 'manual' && manualBreaks.length === effectiveClasses + 1) {
-      breaks = manualBreaks
-    } else {
-      breaks = getBreaks(values, classMethod, effectiveClasses)
-    }
-
-    const scale = buildColorScale(colorPreset, effectiveClasses, colorReversed)
-    if (!scale || breaks.length < 2) {
-      layer.setStyle(DEFAULT_STYLE)
-      return
-    }
-
-    const classColors = []
-    for (let i = 0; i < effectiveClasses; i++) {
-      const t = effectiveClasses === 1 ? 0.5 : i / (effectiveClasses - 1)
-      classColors.push(scale(t).hex())
-    }
-
-    const styleFunction = (feature) => {
-      const featureCode = feature.get(layerConfig.featureIdField)
-      const value = numericMap[featureCode]
-
-      let fillColor
-      if (value === undefined || value === null || isNaN(value)) {
-        fillColor = noDataColor
-      } else {
-        const classIndex = classifyValue(value, breaks)
-        fillColor = classColors[classIndex] || noDataColor
-      }
-
-      const styles = [new Style({
-        fill: new Fill({ color: fillColor }),
-        stroke: new Stroke({ color: strokeColor, width: strokeWidth }),
-      })]
-      const label = makeLabelStyle(feature)
-      if (label) styles.push(label)
-      return styles
-    }
-
-    layer.setStyle(styleFunction)
+    layer.setStyle(styleFunction || DEFAULT_STYLE)
   }, [map, adminLayerId, joinResult, styleMode, colorPreset, colorReversed, classMethod, numClasses, manualBreaks, categoryColors, strokeColor, strokeWidth, noDataColor, showFeatureLabels])
 
   return { layer: layerRef.current, source: sourceRef.current }
