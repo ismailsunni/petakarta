@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import useMapStore from '../../store/mapStore'
 import { buildColorScale } from '../../utils/colorUtils'
-import { getBreaks, classifyValue } from '../../utils/classificationUtils'
+import { getBreaks } from '../../utils/classificationUtils'
 
 const POSITION_CLASSES = {
   'top-left': 'top-12 left-3',
