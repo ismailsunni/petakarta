@@ -1,6 +1,6 @@
 import { useRef, useCallback, useEffect } from 'react'
 import useMapInstance from '../../hooks/useMapInstance'
-import useProvinceLayer from '../../hooks/useProvinceLayer'
+import useAdminLayer from '../../hooks/useAdminLayer'
 import useMapExport from '../../hooks/useMapExport'
 import useMapStore from '../../store/mapStore'
 import ExportBounds from './ExportBounds'
@@ -14,7 +14,7 @@ import { INDONESIA_EXTENT_3857, FIT_PADDING } from '../../utils/mapConstants'
 export default function MapView() {
   const containerRef = useRef(null)
   const { map } = useMapInstance(containerRef)
-  useProvinceLayer(map)
+  useAdminLayer(map)
   const { exportMap } = useMapExport(map)
   const setExportMapFn = useMapStore((s) => s.setExportMapFn)
   const viewMode = useMapStore((s) => s.viewMode)

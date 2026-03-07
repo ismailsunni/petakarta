@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import Overlay from 'ol/Overlay'
 import useMapStore from '../../store/mapStore'
 
@@ -133,9 +134,9 @@ export default function Tooltip({ map }) {
     clickOverlayRef.current?.setPosition(undefined)
   }, [])
 
-  return (
+  return createPortal(
     <>
-      {/* Hover tooltip — OL Overlay element */}
+      {/* Hover tooltip — OL Overlay element, portaled to body so OL can move it without breaking React's DOM tree */}
       <div ref={hoverRef} className="pointer-events-none">
         <div className="bg-ink/95 text-paper rounded-md px-3 py-2 shadow-lg whitespace-nowrap backdrop-blur-sm">
           <div data-name className="text-xs font-medium leading-tight" />
@@ -161,6 +162,7 @@ export default function Tooltip({ map }) {
           </div>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   )
 }

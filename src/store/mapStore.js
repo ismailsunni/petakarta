@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { DEFAULT_LAYER_ID } from '../utils/adminLayers'
 
 const useMapStore = create(persist((set) => ({
   // Data state
@@ -9,7 +10,8 @@ const useMapStore = create(persist((set) => ({
   keyType: 'name',
   valueColumn: '',
   joinResult: null,
-  provinceFeatures: [],
+  adminLayerId: DEFAULT_LAYER_ID,
+  adminFeatures: [], // [{ featureId, featureName }] — derived from GeoJSON, not persisted
 
   // Style state
   styleMode: 'graduated', // 'graduated' | 'categorized'
@@ -23,7 +25,7 @@ const useMapStore = create(persist((set) => ({
   strokeWidth: 0.8,
   noDataColor: '#e0e0e0',
   basemap: 'osm',
-  showProvinceLabels: false,
+  showFeatureLabels: false,
 
   // Annotation state
   mapTitle: '',
@@ -49,6 +51,8 @@ const useMapStore = create(persist((set) => ({
   setKeyType: (keyType) => set({ keyType }),
   setValueColumn: (valueColumn) => set({ valueColumn }),
   setJoinResult: (joinResult) => set({ joinResult }),
+  setAdminLayerId: (adminLayerId) => set({ adminLayerId, adminFeatures: [], joinResult: null }),
+  setAdminFeatures: (adminFeatures) => set({ adminFeatures }),
   setStyleMode: (styleMode) => set({ styleMode }),
   setColorPreset: (colorPreset) => set({ colorPreset }),
   setColorReversed: (colorReversed) => set({ colorReversed }),
@@ -60,7 +64,7 @@ const useMapStore = create(persist((set) => ({
   setStrokeWidth: (strokeWidth) => set({ strokeWidth }),
   setNoDataColor: (noDataColor) => set({ noDataColor }),
   setBasemap: (basemap) => set({ basemap }),
-  setShowProvinceLabels: (showProvinceLabels) => set({ showProvinceLabels }),
+  setShowFeatureLabels: (showFeatureLabels) => set({ showFeatureLabels }),
   setMapTitle: (mapTitle) => set({ mapTitle }),
   setLegendTitle: (legendTitle) => set({ legendTitle }),
   setLegendPosition: (legendPosition) => set({ legendPosition }),
@@ -69,7 +73,6 @@ const useMapStore = create(persist((set) => ({
   setActiveProjectName: (activeProjectName) => set({ activeProjectName }),
   setActiveProjectPublic: (activeProjectPublic) => set({ activeProjectPublic }),
   setActiveTab: (activeTab) => set({ activeTab }),
-  setProvinceFeatures: (provinceFeatures) => set({ provinceFeatures }),
   setExportMapFn: (exportMapFn) => set({ exportMapFn }),
   setViewMode: (viewMode) => set({ viewMode }),
 
@@ -80,7 +83,8 @@ const useMapStore = create(persist((set) => ({
     keyType: 'name',
     valueColumn: '',
     joinResult: null,
-    provinceFeatures: [],
+    adminLayerId: DEFAULT_LAYER_ID,
+    adminFeatures: [],
     activeProjectId: null,
     activeProjectName: '',
     activeProjectPublic: false,
@@ -89,11 +93,19 @@ const useMapStore = create(persist((set) => ({
   }),
 }), {
   name: 'petakarta-store',
-  version: 2,
+  version: 3,
   migrate: (persisted, version) => {
     if (version < 2) {
       const { showBasemap, ...rest } = persisted
-      return { ...rest, basemap: showBasemap === false ? 'none' : 'osm' }
+      persisted = { ...rest, basemap: showBasemap === false ? 'none' : 'osm' }
+    }
+    if (version < 3) {
+      const { showProvinceLabels, provinceFeatures, ...rest } = persisted
+      persisted = {
+        ...rest,
+        showFeatureLabels: showProvinceLabels ?? false,
+        adminLayerId: DEFAULT_LAYER_ID,
+      }
     }
     return persisted
   },
@@ -104,6 +116,7 @@ const useMapStore = create(persist((set) => ({
     keyType: state.keyType,
     valueColumn: state.valueColumn,
     joinResult: state.joinResult,
+    adminLayerId: state.adminLayerId,
     styleMode: state.styleMode,
     colorPreset: state.colorPreset,
     colorReversed: state.colorReversed,
@@ -115,7 +128,7 @@ const useMapStore = create(persist((set) => ({
     strokeWidth: state.strokeWidth,
     noDataColor: state.noDataColor,
     basemap: state.basemap,
-    showProvinceLabels: state.showProvinceLabels,
+    showFeatureLabels: state.showFeatureLabels,
     mapTitle: state.mapTitle,
     legendTitle: state.legendTitle,
     legendPosition: state.legendPosition,

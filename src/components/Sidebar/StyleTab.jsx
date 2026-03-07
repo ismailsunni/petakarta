@@ -21,7 +21,7 @@ export default function StyleTab() {
   const mapTitle = useMapStore((s) => s.mapTitle)
   const legendTitle = useMapStore((s) => s.legendTitle)
   const attribution = useMapStore((s) => s.attribution)
-  const showProvinceLabels = useMapStore((s) => s.showProvinceLabels)
+  const showFeatureLabels = useMapStore((s) => s.showFeatureLabels)
   const joinResult = useMapStore((s) => s.joinResult)
   const categoryColors = useMapStore((s) => s.categoryColors)
   const setStyleMode = useMapStore((s) => s.setStyleMode)
@@ -33,7 +33,7 @@ export default function StyleTab() {
   const setMapTitle = useMapStore((s) => s.setMapTitle)
   const setLegendTitle = useMapStore((s) => s.setLegendTitle)
   const setAttribution = useMapStore((s) => s.setAttribution)
-  const setShowProvinceLabels = useMapStore((s) => s.setShowProvinceLabels)
+  const setShowFeatureLabels = useMapStore((s) => s.setShowFeatureLabels)
   const setCategoryColors = useMapStore((s) => s.setCategoryColors)
 
   // Local state for text inputs — avoids serializing large csvData on every keystroke
@@ -258,10 +258,10 @@ export default function StyleTab() {
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
-              checked={showProvinceLabels}
-              onChange={(e) => setShowProvinceLabels(e.target.checked)}
+              checked={showFeatureLabels}
+              onChange={(e) => setShowFeatureLabels(e.target.checked)}
             />
-            Show province names
+            Show area names
           </label>
         </div>
       </div>
