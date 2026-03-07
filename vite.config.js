@@ -4,4 +4,8 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   base: '/petakarta/',
+  test: {
+    environment: 'node',
+    globals: true,
+  },
 })
