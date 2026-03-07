@@ -42,15 +42,23 @@ export default function DataTab() {
     setPendingLayerId(null)
   }, [pendingLayerId, setAdminLayerId])
 
+  const [sampleError, setSampleError] = useState('')
+
   const handleLoadSample = useCallback(async () => {
     const sample = samples.find((s) => s.key === selectedSample)
     if (!sample) return
-    const url = import.meta.env.BASE_URL + 'samples/' + sample.file
-    const response = await fetch(url)
-    const text = await response.text()
-    const { data, columns } = parseCSVString(text)
-    setCsvData(data, columns)
-    update({ keyColumn: sample.keyCol, keyType: sample.keyType, valueColumn: sample.valueCol, joinResult: null })
+    setSampleError('')
+    try {
+      const url = import.meta.env.BASE_URL + 'samples/' + sample.file
+      const response = await fetch(url)
+      if (!response.ok) throw new Error(`Failed to load sample (${response.status})`)
+      const text = await response.text()
+      const { data, columns } = parseCSVString(text)
+      setCsvData(data, columns)
+      update({ keyColumn: sample.keyCol, keyType: sample.keyType, valueColumn: sample.valueCol, joinResult: null })
+    } catch (err) {
+      setSampleError(err.message)
+    }
   }, [selectedSample, samples, setCsvData, update])
 
   const handleApply = useCallback(() => {
@@ -168,6 +176,7 @@ export default function DataTab() {
             Load
           </button>
         </div>
+        {sampleError && <p className="mt-1 text-xs text-red-600">{sampleError}</p>}
       </div>
 
       {csvData && (
