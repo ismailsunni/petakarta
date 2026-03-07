@@ -33,9 +33,6 @@ const useMapStore = create(persist((set) => ({
   legendPosition: 'bottom-right',
   attribution: '',
 
-  // Map instance refs (set by MapView, used by ExportTab)
-  exportMapFn: null,
-
   // Project state (set when loading/saving projects)
   activeProjectId: null,
   activeProjectName: '',
@@ -73,7 +70,6 @@ const useMapStore = create(persist((set) => ({
   setActiveProjectName: (activeProjectName) => set({ activeProjectName }),
   setActiveProjectPublic: (activeProjectPublic) => set({ activeProjectPublic }),
   setActiveTab: (activeTab) => set({ activeTab }),
-  setExportMapFn: (exportMapFn) => set({ exportMapFn }),
   setViewMode: (viewMode) => set({ viewMode }),
 
   resetData: () => set({

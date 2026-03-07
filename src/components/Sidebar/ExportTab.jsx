@@ -1,15 +1,16 @@
 import { useState } from 'react'
 import useMapStore from '../../store/mapStore'
+import { useExportContext } from '../../contexts/ExportContext'
 
 export default function ExportTab() {
-  const exportMapFn = useMapStore((s) => s.exportMapFn)
+  const exportFnRef = useExportContext()
   const activeProjectId = useMapStore((s) => s.activeProjectId)
   const activeProjectPublic = useMapStore((s) => s.activeProjectPublic)
   const [resolution, setResolution] = useState(2)
   const [copied, setCopied] = useState(false)
 
   const handleExport = () => {
-    exportMapFn?.(resolution)
+    exportFnRef.current?.(resolution)
   }
 
   const canShare = activeProjectId && activeProjectPublic

@@ -3,6 +3,7 @@ import useMapInstance from '../../hooks/useMapInstance'
 import useAdminLayer from '../../hooks/useAdminLayer'
 import useMapExport from '../../hooks/useMapExport'
 import useMapStore from '../../store/mapStore'
+import { useExportContext } from '../../contexts/ExportContext'
 import ExportBounds from './ExportBounds'
 import Legend from './Legend'
 import MapAttribution from './MapAttribution'
@@ -16,12 +17,12 @@ export default function MapView() {
   const { map } = useMapInstance(containerRef)
   useAdminLayer(map)
   const { exportMap } = useMapExport(map)
-  const setExportMapFn = useMapStore((s) => s.setExportMapFn)
+  const exportFnRef = useExportContext()
   const viewMode = useMapStore((s) => s.viewMode)
 
   useEffect(() => {
-    if (exportMap) setExportMapFn(exportMap)
-  }, [exportMap, setExportMapFn])
+    exportFnRef.current = exportMap
+  }, [exportMap, exportFnRef])
 
   const fitToIndonesia = useCallback(() => {
     if (!map) return

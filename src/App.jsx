@@ -7,6 +7,7 @@ import GalleryPage from './components/Gallery/GalleryPage'
 import useAuthStore from './store/authStore'
 import useMapStore from './store/mapStore'
 import { loadProject, normalizeProjectState } from './lib/projectsService'
+import { ExportProvider } from './contexts/ExportContext'
 
 function getInitialParams() {
   const params = new URLSearchParams(window.location.search)
@@ -64,19 +65,21 @@ function MapEditor() {
   const showEditor = viewMode === 'edit' && !shareLoading
 
   return (
-    <div className="flex flex-col h-full font-sans bg-canvas text-ink">
-      {showEditor && <Header />}
-      <main className="relative flex flex-1 min-h-0">
-        {showEditor && <Sidebar />}
-        <MapView />
-        {shareLoading && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center bg-canvas">
-            <p className="text-sm text-muted">Loading shared project...</p>
-          </div>
-        )}
-      </main>
-      {showEditor && <Footer />}
-    </div>
+    <ExportProvider>
+      <div className="flex flex-col h-full font-sans bg-canvas text-ink">
+        {showEditor && <Header />}
+        <main className="relative flex flex-1 min-h-0">
+          {showEditor && <Sidebar />}
+          <MapView />
+          {shareLoading && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-canvas">
+              <p className="text-sm text-muted">Loading shared project...</p>
+            </div>
+          )}
+        </main>
+        {showEditor && <Footer />}
+      </div>
+    </ExportProvider>
   )
 }
 
