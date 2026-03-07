@@ -3,6 +3,7 @@ import useMapStore from '../../store/mapStore'
 import { parseCSV, parseCSVString, downloadTemplateCsv } from '../../utils/csvParser'
 import { matchFeatures } from '../../utils/featureMatcher'
 import { ADMIN_LAYERS, getLayer } from '../../utils/adminLayers'
+import ManualDataTable from './ManualDataTable'
 
 export default function DataTab() {
   const fileInputRef = useRef(null)
@@ -14,6 +15,8 @@ export default function DataTab() {
   const joinResult = useMapStore((s) => s.joinResult)
   const adminLayerId = useMapStore((s) => s.adminLayerId)
   const adminFeatures = useMapStore((s) => s.adminFeatures)
+  const dataInputMode = useMapStore((s) => s.dataInputMode)
+  const manualValues = useMapStore((s) => s.manualValues)
   const update = useMapStore((s) => s.update)
   const setCsvData = useMapStore((s) => s.setCsvData)
   const setAdminLayerId = useMapStore((s) => s.setAdminLayerId)
@@ -21,19 +24,22 @@ export default function DataTab() {
 
   const [selectedSample, setSelectedSample] = useState('')
   const [pendingLayerId, setPendingLayerId] = useState(null)
+  const [pendingMode, setPendingMode] = useState(null)
 
   const layerConfig = getLayer(adminLayerId)
   const samples = layerConfig.samples
 
+  const hasData = dataInputMode === 'csv' ? !!csvData : Object.values(manualValues).some((v) => v !== '')
+
   const handleLayerChange = useCallback((e) => {
     const newLayerId = e.target.value
-    if (csvData) {
+    if (hasData) {
       setPendingLayerId(newLayerId)
     } else {
       setAdminLayerId(newLayerId)
       setSelectedSample('')
     }
-  }, [csvData, setAdminLayerId])
+  }, [hasData, setAdminLayerId])
 
   const confirmLayerChange = useCallback(() => {
     if (!pendingLayerId) return
@@ -88,10 +94,73 @@ export default function DataTab() {
     downloadTemplateCsv(adminFeatures, layerConfig, adminLayerId)
   }, [adminFeatures, layerConfig, adminLayerId])
 
+  const handleModeSwitch = useCallback((newMode) => {
+    if (newMode === dataInputMode) return
+    if (hasData) {
+      setPendingMode(newMode)
+    } else {
+      update({ dataInputMode: newMode })
+    }
+  }, [dataInputMode, hasData, update])
+
+  const confirmModeSwitch = useCallback(() => {
+    if (!pendingMode) return
+    update({
+      dataInputMode: pendingMode,
+      csvData: null,
+      csvColumns: [],
+      keyColumn: '',
+      keyType: 'name',
+      valueColumn: '',
+      joinResult: null,
+      manualValues: {},
+      manualValueLabel: 'value',
+    })
+    setPendingMode(null)
+    setSelectedSample('')
+  }, [pendingMode, update])
+
   const featuresLoaded = adminFeatures.length > 0
 
   return (
     <div className="space-y-4">
+      <div>
+        <h3 className="text-sm font-medium mb-2">Input Mode</h3>
+        <div className="flex rounded border border-border overflow-hidden text-sm">
+          <button
+            onClick={() => handleModeSwitch('csv')}
+            className={`flex-1 py-1.5 transition-colors ${dataInputMode === 'csv' ? 'bg-ink text-paper font-medium' : 'bg-paper text-muted hover:text-ink'}`}
+          >
+            Upload CSV
+          </button>
+          <button
+            onClick={() => handleModeSwitch('manual')}
+            className={`flex-1 py-1.5 transition-colors ${dataInputMode === 'manual' ? 'bg-ink text-paper font-medium' : 'bg-paper text-muted hover:text-ink'}`}
+          >
+            Enter manually
+          </button>
+        </div>
+        {pendingMode && (
+          <div className="mt-2 rounded border border-amber-200 bg-amber-50 p-2 text-xs">
+            <p className="text-amber-800 mb-1.5">Switching mode will clear your current data.</p>
+            <div className="flex gap-2">
+              <button
+                onClick={confirmModeSwitch}
+                className="bg-accent text-paper px-2 py-0.5 rounded font-medium hover:bg-accentMuted transition-colors"
+              >
+                Continue
+              </button>
+              <button
+                onClick={() => setPendingMode(null)}
+                className="text-muted hover:text-ink transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
       <div>
         <h3 className="text-sm font-medium mb-2">Admin Layer</h3>
         <select
@@ -131,55 +200,64 @@ export default function DataTab() {
         )}
       </div>
 
-      <div>
-        <h3 className="text-sm font-medium mb-2">Upload CSV</h3>
-        <div
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          onClick={() => fileInputRef.current?.click()}
-          className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-accent transition-colors"
-        >
-          <p className="text-sm text-muted">Drag & drop a CSV file</p>
-          <p className="text-xs text-muted mt-1">or click to browse</p>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv"
-            className="hidden"
-            onChange={(e) => handleFile(e.target.files[0])}
-          />
-        </div>
-      </div>
+      {dataInputMode === 'csv' ? (
+        <>
+          <div>
+            <h3 className="text-sm font-medium mb-2">Upload CSV</h3>
+            <div
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onClick={() => fileInputRef.current?.click()}
+              className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-accent transition-colors"
+            >
+              <p className="text-sm text-muted">Drag & drop a CSV file</p>
+              <p className="text-xs text-muted mt-1">or click to browse</p>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv"
+                className="hidden"
+                onChange={(e) => handleFile(e.target.files[0])}
+              />
+            </div>
+          </div>
 
-      <div>
-        <div className="flex items-center gap-2 mb-2">
-          <div className="flex-1 h-px bg-border" />
-          <span className="text-xs text-muted">or try sample data</span>
-          <div className="flex-1 h-px bg-border" />
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-xs text-muted">or try sample data</span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
+            <div className="flex gap-2">
+              <select
+                value={selectedSample}
+                onChange={(e) => setSelectedSample(e.target.value)}
+                className="flex-1 rounded border border-border bg-paper px-2 py-1 text-sm"
+              >
+                <option value="">Select sample...</option>
+                {samples.map((s) => (
+                  <option key={s.key} value={s.key}>{s.label}</option>
+                ))}
+              </select>
+              <button
+                onClick={handleLoadSample}
+                disabled={!selectedSample}
+                className="bg-ink text-paper px-3 py-1 rounded text-sm font-medium hover:bg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Load
+              </button>
+            </div>
+            {sampleError && <p className="mt-1 text-xs text-red-600">{sampleError}</p>}
+          </div>
+        </>
+      ) : (
+        <div>
+          <h3 className="text-sm font-medium mb-2">Manual Data Entry</h3>
+          <ManualDataTable />
         </div>
-        <div className="flex gap-2">
-          <select
-            value={selectedSample}
-            onChange={(e) => setSelectedSample(e.target.value)}
-            className="flex-1 rounded border border-border bg-paper px-2 py-1 text-sm"
-          >
-            <option value="">Select sample...</option>
-            {samples.map((s) => (
-              <option key={s.key} value={s.key}>{s.label}</option>
-            ))}
-          </select>
-          <button
-            onClick={handleLoadSample}
-            disabled={!selectedSample}
-            className="bg-ink text-paper px-3 py-1 rounded text-sm font-medium hover:bg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            Load
-          </button>
-        </div>
-        {sampleError && <p className="mt-1 text-xs text-red-600">{sampleError}</p>}
-      </div>
+      )}
 
-      {csvData && (
+      {dataInputMode === 'csv' && csvData && (
         <>
           <div>
             <h3 className="text-sm font-medium mb-2">Column Mapping</h3>

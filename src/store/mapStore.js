@@ -13,6 +13,9 @@ const useMapStore = create(persist((set) => ({
   joinResult: null,
   adminLayerId: DEFAULT_LAYER_ID,
   adminFeatures: [], // [{ featureId, featureName }] — derived from GeoJSON, not persisted
+  dataInputMode: 'csv', // 'csv' | 'manual'
+  manualValues: {}, // { [featureId]: string }
+  manualValueLabel: 'value',
 
   // Style state
   styleMode: 'graduated', // 'graduated' | 'categorized'
@@ -46,7 +49,7 @@ const useMapStore = create(persist((set) => ({
   // Actions
   update: (partial) => set(partial),
   setCsvData: (data, columns) => set({ csvData: data, csvColumns: columns }),
-  setAdminLayerId: (adminLayerId) => set({ adminLayerId, adminFeatures: [], joinResult: null }),
+  setAdminLayerId: (adminLayerId) => set({ adminLayerId, adminFeatures: [], joinResult: null, manualValues: {} }),
 
   resetData: () => set({
     csvData: null,
@@ -57,6 +60,9 @@ const useMapStore = create(persist((set) => ({
     joinResult: null,
     adminLayerId: DEFAULT_LAYER_ID,
     adminFeatures: [],
+    dataInputMode: 'csv',
+    manualValues: {},
+    manualValueLabel: 'value',
     activeProjectId: null,
     activeProjectName: '',
     activeProjectPublic: false,
@@ -79,6 +85,9 @@ const useMapStore = create(persist((set) => ({
     valueColumn: state.valueColumn,
     joinResult: state.joinResult,
     adminLayerId: state.adminLayerId,
+    dataInputMode: state.dataInputMode,
+    manualValues: state.manualValues,
+    manualValueLabel: state.manualValueLabel,
     styleMode: state.styleMode,
     colorPreset: state.colorPreset,
     colorReversed: state.colorReversed,
