@@ -8,23 +8,16 @@ import useAuthStore from './store/authStore'
 import useMapStore from './store/mapStore'
 import { loadProject, normalizeProjectState } from './lib/projectsService'
 import { ExportProvider } from './contexts/ExportContext'
-
-function getInitialParams() {
-  const params = new URLSearchParams(window.location.search)
-  return { projectId: params.get('project'), embed: params.get('embed'), page: params.get('page') }
-}
+import useAppRoute from './hooks/useAppRoute'
 
 function MapEditor() {
+  const { projectId, embed } = useAppRoute()
   const viewMode = useMapStore((s) => s.viewMode)
-  const [shareLoading, setShareLoading] = useState(
-    () => !!getInitialParams().projectId
-  )
+  const [shareLoading, setShareLoading] = useState(!!projectId)
   const [shareError, setShareError] = useState('')
 
   useEffect(() => {
-    const { projectId, embed } = getInitialParams()
-
-    if (embed === 'true') {
+    if (embed) {
       useMapStore.getState().setViewMode('view')
     }
 
@@ -88,7 +81,7 @@ export default function App() {
     useAuthStore.getState().initialize()
   }, [])
 
-  const { page } = getInitialParams()
+  const { page } = useAppRoute()
   if (page === 'gallery') return <GalleryPage />
   return <MapEditor />
 }
