@@ -30,9 +30,8 @@ export const PRESET_GROUPS = {
 export function buildColorScale(presetKey, numClasses, reversed) {
   const colors = PRESETS[presetKey]
   if (!colors) return null
-  let scale = chroma.scale(colors).mode('lab')
-  if (reversed) scale = scale.domain([1, 0])
-  return scale.classes(numClasses)
+  const colorList = reversed ? [...colors].reverse() : colors
+  return chroma.scale(colorList).mode('lab').classes(numClasses)
 }
 
 // Qualitative palette for categorized maps (12 distinct colors)
