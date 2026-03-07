@@ -20,6 +20,7 @@ export default function DataTab() {
   const resetData = useMapStore((s) => s.resetData)
 
   const [selectedSample, setSelectedSample] = useState('')
+  const [pendingLayerId, setPendingLayerId] = useState(null)
 
   const layerConfig = getLayer(adminLayerId)
   const samples = layerConfig.samples
@@ -27,12 +28,19 @@ export default function DataTab() {
   const handleLayerChange = useCallback((e) => {
     const newLayerId = e.target.value
     if (csvData) {
-      const ok = window.confirm('Changing the admin layer will reset your column mapping. Continue?')
-      if (!ok) return
+      setPendingLayerId(newLayerId)
+    } else {
+      setAdminLayerId(newLayerId)
+      setSelectedSample('')
     }
-    setAdminLayerId(newLayerId)
-    setSelectedSample('')
   }, [csvData, setAdminLayerId])
+
+  const confirmLayerChange = useCallback(() => {
+    if (!pendingLayerId) return
+    setAdminLayerId(pendingLayerId)
+    setSelectedSample('')
+    setPendingLayerId(null)
+  }, [pendingLayerId, setAdminLayerId])
 
   const handleLoadSample = useCallback(async () => {
     const sample = samples.find((s) => s.key === selectedSample)
@@ -94,6 +102,25 @@ export default function DataTab() {
         >
           Download template CSV
         </button>
+        {pendingLayerId && (
+          <div className="mt-2 rounded border border-amber-200 bg-amber-50 p-2 text-xs">
+            <p className="text-amber-800 mb-1.5">Changing the layer will reset your column mapping.</p>
+            <div className="flex gap-2">
+              <button
+                onClick={confirmLayerChange}
+                className="bg-accent text-paper px-2 py-0.5 rounded font-medium hover:bg-accentMuted transition-colors"
+              >
+                Continue
+              </button>
+              <button
+                onClick={() => setPendingLayerId(null)}
+                className="text-muted hover:text-ink transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <div>
