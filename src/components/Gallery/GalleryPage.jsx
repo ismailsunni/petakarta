@@ -57,12 +57,10 @@ export default function GalleryPage() {
       {/* Header */}
       <header className="h-[52px] bg-ink text-paper flex items-center justify-between px-5 shrink-0 border-b border-ink/20">
         <h1 className="font-display text-xl tracking-tight">PetaKarta Gallery</h1>
-        <a
-          href={import.meta.env.BASE_URL}
-          className="text-sm text-paper/80 hover:text-paper transition-colors"
-        >
-          Open Editor
-        </a>
+        <div className="flex items-center gap-4 text-sm">
+          <a href={`${import.meta.env.BASE_URL}?page=about`} className="text-paper/80 hover:text-paper transition-colors">About</a>
+          <a href={import.meta.env.BASE_URL} className="text-paper/80 hover:text-paper transition-colors">Open Editor</a>
+        </div>
       </header>
 
       {/* Grid */}

@@ -254,6 +254,12 @@ export default function Header() {
           >
             Gallery
           </a>
+          <a
+            href="?page=about"
+            className="text-sm text-paper/80 hover:text-paper transition-colors"
+          >
+            About
+          </a>
           {supabase && !loading && (
             user ? (
               <>

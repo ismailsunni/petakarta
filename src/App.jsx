@@ -4,6 +4,7 @@ import Footer from './components/Footer'
 import MapView from './components/Map/MapView'
 import Sidebar from './components/Sidebar/Sidebar'
 import GalleryPage from './components/Gallery/GalleryPage'
+import AboutPage from './components/About/AboutPage'
 import useAuthStore from './store/authStore'
 import useMapStore from './store/mapStore'
 import { loadProject, normalizeProjectState } from './lib/projectsService'
@@ -85,5 +86,6 @@ export default function App() {
 
   const { page } = useAppRoute()
   if (page === 'gallery') return <GalleryPage />
+  if (page === 'about') return <AboutPage />
   return <MapEditor />
 }
