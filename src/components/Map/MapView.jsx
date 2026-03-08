@@ -10,7 +10,9 @@ import MapAttribution from './MapAttribution'
 import MapTitle from './MapTitle'
 import Tooltip from './Tooltip'
 import MapControls from './MapControls'
-import { INDONESIA_EXTENT_3857, FIT_PADDING } from '../../utils/mapConstants'
+import { transformExtent } from 'ol/proj'
+import { FIT_PADDING } from '../../utils/mapConstants'
+import { getLayer } from '../../utils/adminLayers'
 
 export default function MapView() {
   const containerRef = useRef(null)
@@ -19,15 +21,18 @@ export default function MapView() {
   const { exportMap } = useMapExport(map)
   const exportFnRef = useExportContext()
   const viewMode = useMapStore((s) => s.viewMode)
+  const adminLayerId = useMapStore((s) => s.adminLayerId)
 
   useEffect(() => {
     exportFnRef.current = exportMap
   }, [exportMap, exportFnRef])
 
-  const fitToIndonesia = useCallback(() => {
+  const fitToLayer = useCallback(() => {
     if (!map) return
-    map.getView().fit(INDONESIA_EXTENT_3857, { padding: FIT_PADDING, duration: 500 })
-  }, [map])
+    const { bbox } = getLayer(adminLayerId)
+    const extent = transformExtent(bbox, 'EPSG:4326', 'EPSG:3857')
+    map.getView().fit(extent, { padding: FIT_PADDING, duration: 500 })
+  }, [map, adminLayerId])
 
   return (
     <div className="relative flex-1 h-full">
@@ -38,7 +43,7 @@ export default function MapView() {
       <MapAttribution />
       <Tooltip map={map} />
       <MapControls
-        onFit={fitToIndonesia}
+        onFit={fitToLayer}
         onExport={() => exportMap(2)}
       />
       {viewMode === 'view' && (

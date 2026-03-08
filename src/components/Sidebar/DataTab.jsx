@@ -4,6 +4,7 @@ import { parseCSV, parseCSVString, downloadTemplateCsv } from '../../utils/csvPa
 import { matchFeatures } from '../../utils/featureMatcher'
 import { ADMIN_LAYERS, getLayer } from '../../utils/adminLayers'
 import ManualDataTable from './ManualDataTable'
+import SearchableSelect from '../UI/SearchableSelect'
 
 export default function DataTab() {
   const fileInputRef = useRef(null)
@@ -163,15 +164,12 @@ export default function DataTab() {
 
       <div>
         <h3 className="text-sm font-medium mb-2">Admin Layer</h3>
-        <select
+        <SearchableSelect
+          options={ADMIN_LAYERS.map((l) => ({ value: l.id, label: l.name, group: l.group }))}
           value={adminLayerId}
-          onChange={handleLayerChange}
-          className="block w-full rounded border border-border bg-paper px-2 py-1 text-sm"
-        >
-          {ADMIN_LAYERS.map((l) => (
-            <option key={l.id} value={l.id}>{l.name}</option>
-          ))}
-        </select>
+          onChange={(id) => handleLayerChange({ target: { value: id } })}
+          placeholder="Select layer..."
+        />
         <button
           onClick={handleDownloadTemplate}
           disabled={!featuresLoaded}
