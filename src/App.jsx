@@ -62,7 +62,7 @@ function MapEditor() {
 
   return (
     <ExportProvider>
-      <div className="flex flex-col h-full font-sans bg-canvas text-ink">
+      <div className="flex flex-col h-full font-sans bg-canvas text-ink overflow-hidden">
         {showEditor && <Header />}
         <main className="relative flex flex-1 min-h-0">
           {showEditor && <Sidebar />}

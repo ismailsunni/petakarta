@@ -157,7 +157,7 @@ export default function Header() {
     <>
       <header className="h-[52px] bg-ink text-paper flex items-center justify-between px-5 shrink-0 border-b border-ink/20">
         <div className="flex items-center gap-3">
-          <h1 className="font-display text-xl tracking-tight">PetaKarta</h1>
+          <a href={import.meta.env.BASE_URL} className="font-display text-xl tracking-tight hover:opacity-80 transition-opacity">PetaKarta</a>
           {supabase && !loading && user ? (
             <div className="flex items-center gap-2 ml-2">
               <span className="text-paper/40 hidden sm:inline">—</span>
