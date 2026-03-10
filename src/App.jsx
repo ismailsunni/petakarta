@@ -3,6 +3,8 @@ import Header from './components/Header'
 import Footer from './components/Footer'
 import MapView from './components/Map/MapView'
 import Sidebar from './components/Sidebar/Sidebar'
+import BottomSheet from './components/Mobile/BottomSheet'
+import MobileFAB from './components/Mobile/MobileFAB'
 import GalleryPage from './components/Gallery/GalleryPage'
 import AboutPage from './components/About/AboutPage'
 import useAuthStore from './store/authStore'
@@ -16,6 +18,7 @@ function MapEditor() {
   const viewMode = useMapStore((s) => s.viewMode)
   const [shareLoading, setShareLoading] = useState(!!projectId)
   const [shareError, setShareError] = useState('')
+  const [sheetOpen, setSheetOpen] = useState(false)
 
   useEffect(() => {
     if (embed) {
@@ -74,6 +77,12 @@ function MapEditor() {
           )}
         </main>
         {showEditor && <Footer />}
+        {showEditor && (
+          <>
+            <MobileFAB onClick={() => setSheetOpen(true)} />
+            <BottomSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
+          </>
+        )}
       </div>
     </ExportProvider>
   )

@@ -56,9 +56,7 @@ export default function MapView() {
           Made with PetaKarta
         </a>
       )}
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 md:hidden bg-ink/80 backdrop-blur-sm text-paper text-xs px-4 py-2 rounded-full shadow-lg">
-        Use desktop for full editing features
-      </div>
+
     </div>
   )
 }
