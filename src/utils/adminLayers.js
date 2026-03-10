@@ -7,7 +7,11 @@ export const ADMIN_LAYERS = [
     featureIdField: 'kode',
     featureNameField: 'nama',
     bbox: [94.5, -11.5, 141.5, 6.5],
-    samples: [],
+    samples: [
+      { key: 'gdp', label: 'GDP per Capita', file: 'sample_gdp_per_capita.csv', keyCol: 'province_name', keyType: 'name', valueCol: 'gdp_per_capita_2023' },
+      { key: 'hdi', label: 'HDI', file: 'sample_hdi.csv', keyCol: 'pcode', keyType: 'id', valueCol: 'hdi_2023' },
+      { key: 'pop', label: 'Population Density', file: 'sample_population_density.csv', keyCol: 'province_name', keyType: 'name', valueCol: 'pop_density' },
+    ],
     aliases: {
       'jakarta': '31',
       'dki jakarta': '31',
