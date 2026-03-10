@@ -22,7 +22,7 @@ export default function StyleTab() {
   const legendTitle = useMapStore((s) => s.legendTitle)
   const attribution = useMapStore((s) => s.attribution)
   const showFeatureLabels = useMapStore((s) => s.showFeatureLabels)
-  const joinResult = useMapStore((s) => s.joinResult)
+  const featureValues = useMapStore((s) => s.featureValues)
   const categoryColors = useMapStore((s) => s.categoryColors)
   const update = useMapStore((s) => s.update)
 
@@ -40,13 +40,13 @@ export default function StyleTab() {
   const setLegendTitle = (v) => update({ legendTitle: v })
   const setAttribution = (v) => update({ attribution: v })
 
-  // Extract unique values from joinResult for categorized mode
+  // Extract unique values from featureValues for categorized mode
   const uniqueValues = useMemo(() => {
-    if (!joinResult?.valueMap) return []
-    const vals = [...new Set(Object.values(joinResult.valueMap).map(String))]
+    if (!featureValues || Object.keys(featureValues).length === 0) return []
+    const vals = [...new Set(Object.values(featureValues).map(String))]
     vals.sort()
     return vals
-  }, [joinResult])
+  }, [featureValues])
 
   // Auto-assign colors when switching to categorized or when values change
   const effectiveCategoryColors = useMemo(() => {

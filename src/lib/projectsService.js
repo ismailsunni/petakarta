@@ -2,7 +2,7 @@ import { supabase } from './supabase'
 import { applyAllMigrations } from '../utils/stateMigrations'
 
 const PERSIST_KEYS = [
-  'csvData', 'csvColumns', 'keyColumn', 'keyType', 'valueColumn', 'joinResult',
+  'featureValues',
   'adminLayerId',
   'styleMode', 'colorPreset', 'colorReversed', 'classMethod', 'numClasses',
   'manualBreaks', 'categoryColors', 'strokeColor', 'strokeWidth', 'noDataColor',

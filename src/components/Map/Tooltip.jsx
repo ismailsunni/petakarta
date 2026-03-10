@@ -94,8 +94,7 @@ export default function Tooltip({ map }) {
       if (feature) {
         const name = feature.get('province_name')
         const pcode = feature.get('ADM1_PCODE')
-        const joinResult = useMapStore.getState().joinResult
-        const value = joinResult?.valueMap?.[pcode]
+        const value = useMapStore.getState().featureValues?.[pcode]
         updateTooltipContent(hoverRef.current, name, value, pcode)
         hoverOverlay.setPosition(evt.coordinate)
         map.getTargetElement().style.cursor = 'pointer'
@@ -113,8 +112,7 @@ export default function Tooltip({ map }) {
       if (feature) {
         const name = feature.get('province_name')
         const pcode = feature.get('ADM1_PCODE')
-        const joinResult = useMapStore.getState().joinResult
-        const value = joinResult?.valueMap?.[pcode]
+        const value = useMapStore.getState().featureValues?.[pcode]
         updateClickContent(clickRef.current, name, value, pcode)
         clickOverlay.setPosition(evt.coordinate)
       } else {

@@ -38,6 +38,7 @@ export default function ManualDataTable() {
       keyType: 'id',
       valueColumn: valueCol,
       joinResult: result,
+      featureValues: result.valueMap,
     })
   }, [adminFeatures, layerConfig, update])
 
@@ -54,7 +55,7 @@ export default function ManualDataTable() {
 
   const handleClearAll = useCallback(() => {
     setLocalValues({})
-    update({ manualValues: {}, csvData: null, joinResult: null })
+    update({ manualValues: {}, csvData: null, joinResult: null, featureValues: {} })
   }, [update])
 
   const handleExportCsv = useCallback(() => {

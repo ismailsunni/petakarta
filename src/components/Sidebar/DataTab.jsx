@@ -62,7 +62,7 @@ export default function DataTab() {
       const text = await response.text()
       const { data, columns } = parseCSVString(text)
       setCsvData(data, columns)
-      update({ keyColumn: sample.keyCol, keyType: sample.keyType, valueColumn: sample.valueCol, joinResult: null })
+      update({ keyColumn: sample.keyCol, keyType: sample.keyType, valueColumn: sample.valueCol, joinResult: null, featureValues: {} })
     } catch (err) {
       setSampleError(err.message)
     }
@@ -71,14 +71,14 @@ export default function DataTab() {
   const handleApply = useCallback(() => {
     if (!csvData || !keyColumn || !valueColumn || adminFeatures.length === 0) return
     const result = matchFeatures(csvData, keyColumn, keyType, valueColumn, adminFeatures, layerConfig)
-    update({ joinResult: result })
+    update({ joinResult: result, featureValues: result.valueMap })
   }, [csvData, keyColumn, keyType, valueColumn, adminFeatures, layerConfig, update])
 
   const handleFile = useCallback(async (file) => {
     if (!file || !file.name.endsWith('.csv')) return
     const { data, columns } = await parseCSV(file)
     setCsvData(data, columns)
-    update({ joinResult: null })
+    update({ joinResult: null, featureValues: {} })
   }, [setCsvData, update])
 
   const handleDrop = useCallback((e) => {
@@ -114,6 +114,7 @@ export default function DataTab() {
       keyType: 'name',
       valueColumn: '',
       joinResult: null,
+      featureValues: {},
       manualValues: {},
       manualValueLabel: 'value',
     })

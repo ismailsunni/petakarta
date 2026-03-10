@@ -19,7 +19,7 @@ export default function useAdminLayer(map) {
   const sourceRef = useRef(null)
   const adminLayerId = useMapStore((s) => s.adminLayerId)
   const update = useMapStore((s) => s.update)
-  const joinResult = useMapStore((s) => s.joinResult)
+  const featureValues = useMapStore((s) => s.featureValues)
   const styleMode = useMapStore((s) => s.styleMode)
   const colorPreset = useMapStore((s) => s.colorPreset)
   const colorReversed = useMapStore((s) => s.colorReversed)
@@ -79,7 +79,7 @@ export default function useAdminLayer(map) {
 
     const layerConfig = getLayer(adminLayerId)
 
-    if (!joinResult?.valueMap) {
+    if (!featureValues || Object.keys(featureValues).length === 0) {
       if (showFeatureLabels) {
         layer.setStyle((feature) => [
           new Style({ fill: new Fill({ color: '#d4d0c8' }), stroke: new Stroke({ color: '#ffffff', width: 0.8 }) }),
@@ -91,13 +91,13 @@ export default function useAdminLayer(map) {
       return
     }
 
-    const { valueMap } = joinResult
+    const valueMap = featureValues
     const styleFunction = styleMode === 'categorized'
       ? buildCategorizedStyleFn({ valueMap, layerConfig, categoryColors, strokeColor, strokeWidth, noDataColor, showFeatureLabels })
       : buildGraduatedStyleFn({ valueMap, layerConfig, numClasses, classMethod, manualBreaks, colorPreset, colorReversed, strokeColor, strokeWidth, noDataColor, showFeatureLabels })
 
     layer.setStyle(styleFunction || DEFAULT_STYLE)
-  }, [map, adminLayerId, joinResult, styleMode, colorPreset, colorReversed, classMethod, numClasses, manualBreaks, categoryColors, strokeColor, strokeWidth, noDataColor, showFeatureLabels])
+  }, [map, adminLayerId, featureValues, styleMode, colorPreset, colorReversed, classMethod, numClasses, manualBreaks, categoryColors, strokeColor, strokeWidth, noDataColor, showFeatureLabels])
 
   return { layer: layerRef.current, source: sourceRef.current }
 }

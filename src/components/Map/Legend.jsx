@@ -32,6 +32,7 @@ export default function Legend() {
   }, [])
 
   const joinResult = useMapStore((s) => s.joinResult)
+  const featureValues = useMapStore((s) => s.featureValues)
   const styleMode = useMapStore((s) => s.styleMode)
   const colorPreset = useMapStore((s) => s.colorPreset)
   const colorReversed = useMapStore((s) => s.colorReversed)
@@ -44,10 +45,10 @@ export default function Legend() {
   const legendPosition = useMapStore((s) => s.legendPosition)
   const update = useMapStore((s) => s.update)
 
-  if (!joinResult || !joinResult.valueMap) return null
+  if (!featureValues || Object.keys(featureValues).length === 0) return null
   if (tooSmall) return null
 
-  const hasUnmatched = joinResult.unmatched > 0
+  const hasUnmatched = joinResult ? joinResult.unmatched > 0 : false
 
   if (styleMode === 'categorized') {
     const entries = Object.entries(categoryColors).sort(([a], [b]) => a.localeCompare(b))
@@ -97,7 +98,7 @@ export default function Legend() {
   }
 
   // Graduated mode
-  const values = Object.values(joinResult.valueMap)
+  const values = Object.values(featureValues)
     .map(Number)
     .filter((v) => !isNaN(v))
   if (values.length === 0) return null

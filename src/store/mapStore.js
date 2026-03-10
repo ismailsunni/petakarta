@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { DEFAULT_LAYER_ID } from '../utils/adminLayers'
-import { migrateShowBasemap, migrateProvinceLabels } from '../utils/stateMigrations'
+import { migrateShowBasemap, migrateProvinceLabels, migrateFeatureValues } from '../utils/stateMigrations'
 
 const useMapStore = create(persist((set) => ({
   // Data state
@@ -11,6 +11,7 @@ const useMapStore = create(persist((set) => ({
   keyType: 'name',
   valueColumn: '',
   joinResult: null,
+  featureValues: {}, // { [featureId]: value } — persisted, derived from joinResult.valueMap on apply
   adminLayerId: DEFAULT_LAYER_ID,
   adminFeatures: [], // [{ featureId, featureName }] — derived from GeoJSON, not persisted
   dataInputMode: 'csv', // 'csv' | 'manual'
@@ -49,7 +50,7 @@ const useMapStore = create(persist((set) => ({
   // Actions
   update: (partial) => set(partial),
   setCsvData: (data, columns) => set({ csvData: data, csvColumns: columns }),
-  setAdminLayerId: (adminLayerId) => set({ adminLayerId, adminFeatures: [], joinResult: null, manualValues: {} }),
+  setAdminLayerId: (adminLayerId) => set({ adminLayerId, adminFeatures: [], joinResult: null, featureValues: {}, manualValues: {} }),
 
   resetData: () => set({
     csvData: null,
@@ -58,6 +59,7 @@ const useMapStore = create(persist((set) => ({
     keyType: 'name',
     valueColumn: '',
     joinResult: null,
+    featureValues: {},
     adminLayerId: DEFAULT_LAYER_ID,
     adminFeatures: [],
     dataInputMode: 'csv',
@@ -71,19 +73,15 @@ const useMapStore = create(persist((set) => ({
   }),
 }), {
   name: 'petakarta-store',
-  version: 3,
+  version: 4,
   migrate: (persisted, version) => {
     if (version < 2) persisted = migrateShowBasemap(persisted)
     if (version < 3) persisted = migrateProvinceLabels({ ...persisted, adminLayerId: persisted.adminLayerId ?? DEFAULT_LAYER_ID })
+    if (version < 4) persisted = migrateFeatureValues(persisted)
     return persisted
   },
   partialize: (state) => ({
-    csvData: state.csvData,
-    csvColumns: state.csvColumns,
-    keyColumn: state.keyColumn,
-    keyType: state.keyType,
-    valueColumn: state.valueColumn,
-    joinResult: state.joinResult,
+    featureValues: state.featureValues,
     adminLayerId: state.adminLayerId,
     dataInputMode: state.dataInputMode,
     manualValues: state.manualValues,

@@ -4,7 +4,7 @@ import useMapStore from '../../store/mapStore'
 export default function ClassBreakEditor() {
   const numClasses = useMapStore((s) => s.numClasses)
   const manualBreaks = useMapStore((s) => s.manualBreaks)
-  const joinResult = useMapStore((s) => s.joinResult)
+  const featureValues = useMapStore((s) => s.featureValues)
   const update = useMapStore((s) => s.update)
 
   const [inputs, setInputs] = useState([])
@@ -13,8 +13,8 @@ export default function ClassBreakEditor() {
   useEffect(() => {
     if (manualBreaks.length === numClasses + 1) {
       setInputs(manualBreaks.map(String))
-    } else if (joinResult?.valueMap) {
-      const values = Object.values(joinResult.valueMap)
+    } else if (featureValues && Object.keys(featureValues).length > 0) {
+      const values = Object.values(featureValues)
       const min = Math.min(...values)
       const max = Math.max(...values)
       const step = (max - min) / numClasses
@@ -24,7 +24,7 @@ export default function ClassBreakEditor() {
       }
       setInputs(breaks)
     }
-  }, [numClasses, joinResult])
+  }, [numClasses, featureValues])
 
   const handleChange = (index, value) => {
     const next = [...inputs]

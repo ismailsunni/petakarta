@@ -28,9 +28,20 @@ export function migrateProvinceLabels(state) {
   return s
 }
 
+export function migrateFeatureValues(state) {
+  if (!('featureValues' in state) && state.joinResult?.valueMap) {
+    return { ...state, featureValues: state.joinResult.valueMap }
+  }
+  if (!('featureValues' in state)) {
+    return { ...state, featureValues: {} }
+  }
+  return state
+}
+
 export function applyAllMigrations(state) {
   let s = migrateShowBasemap(state)
   s = migrateAdminLayerId(s)
   s = migrateProvinceLabels(s)
+  s = migrateFeatureValues(s)
   return s
 }
