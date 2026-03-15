@@ -1,6 +1,7 @@
 import { useRef, useCallback, useEffect } from 'react'
 import useMapInstance from '../../hooks/useMapInstance'
 import useAdminLayer from '../../hooks/useAdminLayer'
+import useUserLayers from '../../hooks/useUserLayers'
 import useMapExport from '../../hooks/useMapExport'
 import useMapStore from '../../store/mapStore'
 import { useExportContext } from '../../contexts/ExportContext'
@@ -18,6 +19,7 @@ export default function MapView() {
   const containerRef = useRef(null)
   const { map } = useMapInstance(containerRef)
   useAdminLayer(map)
+  useUserLayers(map)
   const { exportMap } = useMapExport(map)
   const exportFnRef = useExportContext()
   const viewMode = useMapStore((s) => s.viewMode)

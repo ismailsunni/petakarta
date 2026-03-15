@@ -2,9 +2,11 @@ import useMapStore from '../../store/mapStore'
 import DataTab from './DataTab'
 import StyleTab from './StyleTab'
 import ExportTab from './ExportTab'
+import DatasetsTab from '../Datasets/DatasetsTab'
 
 const TABS = [
   { key: 'data', label: 'Data' },
+  { key: 'datasets', label: 'Datasets' },
   { key: 'style', label: 'Style' },
   { key: 'export', label: 'Export' },
 ]
@@ -32,6 +34,7 @@ export default function Sidebar() {
       </div>
       <div className="flex-1 overflow-y-auto p-4">
         {activeTab === 'data' && <DataTab />}
+        {activeTab === 'datasets' && <DatasetsTab />}
         {activeTab === 'style' && <StyleTab />}
         {activeTab === 'export' && <ExportTab />}
       </div>

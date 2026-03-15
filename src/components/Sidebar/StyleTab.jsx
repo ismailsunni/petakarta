@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import useMapStore from '../../store/mapStore'
+import useDatasetsStore from '../../store/datasetsStore'
 import ColorRampPicker from '../UI/ColorRampPicker'
 import ClassBreakEditor from '../UI/ClassBreakEditor'
+import UserLayerStylePanel from '../Datasets/UserLayerStylePanel'
 import { getCategoryColor } from '../../utils/colorUtils'
 
 const CLASS_METHODS = [
@@ -25,6 +27,14 @@ export default function StyleTab() {
   const featureValues = useMapStore((s) => s.featureValues)
   const categoryColors = useMapStore((s) => s.categoryColors)
   const update = useMapStore((s) => s.update)
+
+  // User layers
+  const selectedLayerId = useDatasetsStore((s) => s.selectedLayerId)
+  const userLayers = useDatasetsStore((s) => s.userLayers)
+  const hasSelectedUserLayer = userLayers.some((l) => l.id === selectedLayerId)
+
+  // Style target: 'admin' (choropleth layer) or 'user' (uploaded layer)
+  const [styleTarget, setStyleTarget] = useState(hasSelectedUserLayer ? 'user' : 'admin')
 
   // Local state for text inputs — avoids serializing large csvData on every keystroke
   const [localMapTitle, setLocalMapTitle] = useState(mapTitle)
@@ -78,31 +88,58 @@ export default function StyleTab() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h3 className="text-sm font-medium mb-2">Style Mode</h3>
-        <div className="flex rounded border border-border overflow-hidden">
-          <button
-            onClick={() => handleModeChange('graduated')}
-            className={`flex-1 px-3 py-1.5 text-xs font-medium transition-colors ${
-              styleMode === 'graduated'
-                ? 'bg-accent text-white'
-                : 'bg-paper text-muted hover:text-ink'
-            }`}
-          >
-            Graduated
-          </button>
-          <button
-            onClick={() => handleModeChange('categorized')}
-            className={`flex-1 px-3 py-1.5 text-xs font-medium transition-colors ${
-              styleMode === 'categorized'
-                ? 'bg-accent text-white'
-                : 'bg-paper text-muted hover:text-ink'
-            }`}
-          >
-            Categorized
-          </button>
+      {/* Layer target selector - only show if user layers exist */}
+      {userLayers.length > 0 && (
+        <div>
+          <h3 className="text-sm font-medium mb-2">Style Layer</h3>
+          <div className="flex rounded border border-border overflow-hidden text-sm">
+            <button
+              onClick={() => setStyleTarget('admin')}
+              className={`flex-1 py-1.5 transition-colors ${styleTarget === 'admin' ? 'bg-ink text-paper font-medium' : 'bg-paper text-muted hover:text-ink'}`}
+            >
+              Admin Layer
+            </button>
+            <button
+              onClick={() => setStyleTarget('user')}
+              className={`flex-1 py-1.5 transition-colors ${styleTarget === 'user' ? 'bg-ink text-paper font-medium' : 'bg-paper text-muted hover:text-ink'}`}
+            >
+              User Layer
+            </button>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* User layer styling */}
+      {styleTarget === 'user' && userLayers.length > 0 ? (
+        <UserLayerStylePanel />
+      ) : (
+        /* Admin layer styling */
+        <>
+          <div>
+            <h3 className="text-sm font-medium mb-2">Style Mode</h3>
+            <div className="flex rounded border border-border overflow-hidden">
+              <button
+                onClick={() => handleModeChange('graduated')}
+                className={`flex-1 px-3 py-1.5 text-xs font-medium transition-colors ${
+                  styleMode === 'graduated'
+                    ? 'bg-accent text-white'
+                    : 'bg-paper text-muted hover:text-ink'
+                }`}
+              >
+                Graduated
+              </button>
+              <button
+                onClick={() => handleModeChange('categorized')}
+                className={`flex-1 px-3 py-1.5 text-xs font-medium transition-colors ${
+                  styleMode === 'categorized'
+                    ? 'bg-accent text-white'
+                    : 'bg-paper text-muted hover:text-ink'
+                }`}
+              >
+                Categorized
+              </button>
+            </div>
+          </div>
 
       {styleMode === 'graduated' && (
         <>
@@ -260,6 +297,7 @@ export default function StyleTab() {
           </label>
         </div>
       </div>
-    </div>
+        </>
+      )}    </div>
   )
 }
