@@ -1,6 +1,6 @@
 import { supabase } from "./supabase";
 
-const BUCKET_NAME = "datasets";
+const BUCKET_NAME = "dataset";
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 /**
