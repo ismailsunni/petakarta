@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useMemo } from "react";
 import { Vector as VectorLayer } from "ol/layer";
 import { Vector as VectorSource } from "ol/source";
 import GeoJSON from "ol/format/GeoJSON";
@@ -6,6 +6,12 @@ import { Style, Fill, Stroke, Circle as CircleStyle } from "ol/style";
 import { transformExtent } from "ol/proj";
 import useLayerTreeStore from "../store/layerTreeStore";
 import { FIT_PADDING } from "../utils/mapConstants";
+import {
+  getColorFromValue,
+  getCategoryColor,
+  interpolateRamp,
+} from "../utils/colorUtils";
+import { computeBreaks } from "../utils/classificationUtils";
 
 const BASE_Z_INDEX = 5;
 
@@ -53,6 +59,72 @@ function createOLStyle(styleConfig, layerOpacity = 1) {
     fill: fill ? new Fill({ color: fillColor }) : undefined,
     stroke: strokeStyle,
   });
+}
+
+/**
+ * Create a graduated/categorized style function for user layers
+ */
+function createValueBasedStyleFunction(userConfig, layerOpacity = 1) {
+  const {
+    featureValues = {},
+    styleMode = "single",
+    colorRamp = "YlOrRd",
+    numClasses = 5,
+    classMethod = "quantile",
+    manualBreaks,
+    categoryColors = {},
+    strokeColor = "#333333",
+    strokeWidth = 1,
+    noDataColor = "#e0e0e0",
+  } = userConfig;
+
+  // No values - return null to use default style
+  if (Object.keys(featureValues).length === 0 || styleMode === "single") {
+    return null;
+  }
+
+  // Compute breaks for graduated mode
+  let breaks = null;
+  if (styleMode === "graduated") {
+    const values = Object.values(featureValues).map(Number).filter((v) => !isNaN(v));
+    if (values.length > 0) {
+      breaks = manualBreaks || computeBreaks(values, numClasses, classMethod);
+    }
+  }
+
+  // Create style function
+  return (feature, resolution) => {
+    // Use feature's index position as the key
+    const featureIndex = feature.get("__featureIndex");
+    const value = featureValues[featureIndex];
+
+    let fillColor = noDataColor;
+
+    if (value !== undefined && value !== null) {
+      if (styleMode === "graduated" && breaks) {
+        const numValue = Number(value);
+        if (!isNaN(numValue)) {
+          fillColor = getColorFromValue(numValue, breaks, colorRamp);
+        }
+      } else if (styleMode === "categorized") {
+        const strValue = String(value);
+        // Use category color if defined, otherwise generate one
+        fillColor = categoryColors[strValue] || getCategoryColor(
+          Object.keys(featureValues).indexOf(String(featureIndex)) % 20
+        );
+      }
+    }
+
+    return new Style({
+      fill: new Fill({
+        color: hexToRgba(fillColor, 0.8 * layerOpacity),
+      }),
+      stroke: new Stroke({
+        color: hexToRgba(strokeColor, layerOpacity),
+        width: strokeWidth,
+      }),
+    });
+  };
 }
 
 /**
@@ -121,9 +193,14 @@ export default function useUserLayers(map) {
         // Update z-index
         existing.olLayer.setZIndex(BASE_Z_INDEX + layer.order);
 
-        // Update style (including opacity)
-        const style = createOLStyle(userConfig.style, layer.opacity);
-        existing.olLayer.setStyle(style);
+        // Update style (including opacity) - use value-based style if available
+        const valueBasedStyle = createValueBasedStyleFunction(userConfig, layer.opacity);
+        if (valueBasedStyle) {
+          existing.olLayer.setStyle(valueBasedStyle);
+        } else {
+          const style = createOLStyle(userConfig.style, layer.opacity);
+          existing.olLayer.setStyle(style);
+        }
       } else if (userConfig?.geojson) {
         // Create new layer
         const format = new GeoJSON();
@@ -131,8 +208,16 @@ export default function useUserLayers(map) {
           featureProjection: "EPSG:3857",
         });
 
+        // Add index property to each feature for value lookup
+        features.forEach((feature, index) => {
+          feature.set("__featureIndex", index);
+        });
+
         const source = new VectorSource({ features });
-        const style = createOLStyle(userConfig.style, layer.opacity);
+
+        // Use value-based style if available, otherwise basic style
+        const valueBasedStyle = createValueBasedStyleFunction(userConfig, layer.opacity);
+        const style = valueBasedStyle || createOLStyle(userConfig.style, layer.opacity);
 
         const olLayer = new VectorLayer({
           source,

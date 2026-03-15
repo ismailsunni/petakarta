@@ -255,6 +255,22 @@ const useLayerTreeStore = create(
       },
 
       /**
+       * Update user layer config (valueColumn, featureValues, styleMode, etc.)
+       */
+      updateUserConfig: (layerId, updates) => {
+        set((state) => ({
+          layers: state.layers.map((l) =>
+            l.id === layerId && l.type === "user"
+              ? {
+                  ...l,
+                  userConfig: { ...l.userConfig, ...updates },
+                }
+              : l
+          ),
+        }));
+      },
+
+      /**
        * Update user layer geojson (after re-fetch)
        */
       setUserLayerGeojson: (layerId, geojson) => {
