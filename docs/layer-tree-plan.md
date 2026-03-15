@@ -27,7 +27,7 @@ Unified store replacing layer state from `mapStore` and `datasetsStore`.
   visible: boolean,        // Layer visibility
   opacity: number,         // 0-1 opacity
   order: number,           // Z-index order (higher = on top)
-  
+
   // For admin layers:
   adminConfig: {
     adminLayerId: string,
@@ -35,7 +35,7 @@ Unified store replacing layer state from `mapStore` and `datasetsStore`.
     styleMode: 'graduated' | 'categorized',
     colorPreset, classMethod, numClasses, etc.
   },
-  
+
   // For user layers:
   userConfig: {
     datasetId: string,

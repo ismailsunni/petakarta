@@ -48,14 +48,14 @@ export default function AddLayerModal() {
 
   // Check if admin layer is already added
   const isAdminLayerAdded = useCallback((adminLayerId) => {
-    return existingLayers.some(l => 
+    return existingLayers.some(l =>
       l.type === 'admin' && l.adminConfig?.adminLayerId === adminLayerId
     )
   }, [existingLayers])
 
   // Check if dataset is already added
   const isDatasetAdded = useCallback((datasetId) => {
-    return existingLayers.some(l => 
+    return existingLayers.some(l =>
       l.type === 'user' && l.userConfig?.datasetId === datasetId
     )
   }, [existingLayers])

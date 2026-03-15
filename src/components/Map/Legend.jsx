@@ -39,10 +39,10 @@ export default function Legend() {
 
   // Find the selected admin layer or fall back to first admin layer with data
   const selectedLayer = layers.find(l => l.id === selectedLayerId)
-  const adminLayer = selectedLayer?.type === 'admin' 
-    ? selectedLayer 
+  const adminLayer = selectedLayer?.type === 'admin'
+    ? selectedLayer
     : layers.find(l => l.type === 'admin' && l.adminConfig?.featureValues && Object.keys(l.adminConfig.featureValues).length > 0)
-  
+
   const config = adminLayer?.adminConfig
   const featureValues = config?.featureValues
   const styleMode = config?.styleMode || 'graduated'

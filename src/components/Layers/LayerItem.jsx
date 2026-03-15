@@ -31,7 +31,7 @@ export default function LayerItem({ layer, isFirst, isLast }) {
         </svg>
       )
     }
-    
+
     const type = layer.userConfig?.geometryType?.toLowerCase() || ''
     if (type.includes('polygon')) {
       return (

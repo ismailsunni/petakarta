@@ -14,6 +14,7 @@ const CLASS_METHODS = [
 export default function StyleTab() {
   const layers = useLayerTreeStore((s) => s.layers)
   const selectedLayerId = useLayerTreeStore((s) => s.selectedLayerId)
+  const selectLayer = useLayerTreeStore((s) => s.selectLayer)
   const updateAdminConfig = useLayerTreeStore((s) => s.updateAdminConfig)
   const updateUserStyle = useLayerTreeStore((s) => s.updateUserStyle)
   const mapTitle = useLayerTreeStore((s) => s.mapTitle)
@@ -21,23 +22,54 @@ export default function StyleTab() {
   const attribution = useLayerTreeStore((s) => s.attribution)
   const update = useLayerTreeStore((s) => s.update)
 
-  const selectedLayer = layers.find(l => l.id === selectedLayerId)
+  const selectedLayer = layers.find((l) => l.id === selectedLayerId)
 
   // Local state for text inputs
   const [localMapTitle, setLocalMapTitle] = useState(mapTitle)
   const [localLegendTitle, setLocalLegendTitle] = useState(legendTitle)
   const [localAttribution, setLocalAttribution] = useState(attribution)
 
-  useEffect(() => { setLocalMapTitle(mapTitle) }, [mapTitle])
-  useEffect(() => { setLocalLegendTitle(legendTitle) }, [legendTitle])
-  useEffect(() => { setLocalAttribution(attribution) }, [attribution])
+  useEffect(() => {
+    setLocalMapTitle(mapTitle)
+  }, [mapTitle])
+  useEffect(() => {
+    setLocalLegendTitle(legendTitle)
+  }, [legendTitle])
+  useEffect(() => {
+    setLocalAttribution(attribution)
+  }, [attribution])
+
+  // Layer selector component
+  const LayerSelector = () => (
+    <div className="pb-3 border-b border-border">
+      <label className="block text-xs text-muted mb-1">Style Layer</label>
+      <select
+        value={selectedLayerId || ''}
+        onChange={(e) => selectLayer(e.target.value || null)}
+        className="w-full rounded border border-border bg-paper px-2 py-1.5 text-sm"
+      >
+        {layers.length === 0 ? (
+          <option value="">No layers available</option>
+        ) : (
+          <>
+            <option value="">Select a layer...</option>
+            {layers.map((layer) => (
+              <option key={layer.id} value={layer.id}>
+                {layer.name} ({layer.type === 'admin' ? 'Admin' : 'User'})
+              </option>
+            ))}
+          </>
+        )}
+      </select>
+    </div>
+  )
 
   if (!selectedLayer) {
     return (
       <div className="space-y-5">
-        <div className="text-center py-8 text-sm text-muted">
-          <p>No layer selected</p>
-          <p className="mt-1 text-xs">Select a layer from the Layers tab to style it</p>
+        <LayerSelector />
+        <div className="text-center py-4 text-sm text-muted">
+          <p>Select a layer above to style it</p>
         </div>
         <AnnotationControls
           localMapTitle={localMapTitle}
@@ -54,8 +86,11 @@ export default function StyleTab() {
 
   if (selectedLayer.type === 'admin') {
     return (
-      <AdminLayerStylePanel 
-        layer={selectedLayer} 
+      <AdminLayerStylePanel
+        layer={selectedLayer}
+        layers={layers}
+        selectedLayerId={selectedLayerId}
+        selectLayer={selectLayer}
         updateAdminConfig={updateAdminConfig}
         localMapTitle={localMapTitle}
         setLocalMapTitle={setLocalMapTitle}
@@ -69,8 +104,11 @@ export default function StyleTab() {
   }
 
   return (
-    <UserLayerStylePanel 
-      layer={selectedLayer} 
+    <UserLayerStylePanel
+      layer={selectedLayer}
+      layers={layers}
+      selectedLayerId={selectedLayerId}
+      selectLayer={selectLayer}
       updateUserStyle={updateUserStyle}
       localMapTitle={localMapTitle}
       setLocalMapTitle={setLocalMapTitle}
@@ -83,13 +121,23 @@ export default function StyleTab() {
   )
 }
 
-function AdminLayerStylePanel({ layer, updateAdminConfig, ...annotationProps }) {
+function AdminLayerStylePanel({
+  layer,
+  layers,
+  selectedLayerId,
+  selectLayer,
+  updateAdminConfig,
+  ...annotationProps
+}) {
   const config = layer.adminConfig
   const layerId = layer.id
 
-  const handleUpdate = useCallback((updates) => {
-    updateAdminConfig(layerId, updates)
-  }, [layerId, updateAdminConfig])
+  const handleUpdate = useCallback(
+    (updates) => {
+      updateAdminConfig(layerId, updates)
+    },
+    [layerId, updateAdminConfig]
+  )
 
   // Extract unique values for categorized mode
   const uniqueValues = useMemo(() => {
@@ -124,10 +172,20 @@ function AdminLayerStylePanel({ layer, updateAdminConfig, ...annotationProps }) 
 
   return (
     <div className="space-y-5">
-      {/* Layer info */}
-      <div className="pb-2 border-b border-border">
-        <p className="text-sm font-medium">{layer.name}</p>
-        <p className="text-xs text-muted">Admin Layer</p>
+      {/* Layer selector */}
+      <div className="pb-3 border-b border-border">
+        <label className="block text-xs text-muted mb-1">Style Layer</label>
+        <select
+          value={selectedLayerId || ''}
+          onChange={(e) => selectLayer(e.target.value || null)}
+          className="w-full rounded border border-border bg-paper px-2 py-1.5 text-sm"
+        >
+          {layers.map((l) => (
+            <option key={l.id} value={l.id}>
+              {l.name} ({l.type === 'admin' ? 'Admin' : 'User'})
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Style Mode */}
@@ -284,14 +342,24 @@ function AdminLayerStylePanel({ layer, updateAdminConfig, ...annotationProps }) 
   )
 }
 
-function UserLayerStylePanel({ layer, updateUserStyle, ...annotationProps }) {
+function UserLayerStylePanel({
+  layer,
+  layers,
+  selectedLayerId,
+  selectLayer,
+  updateUserStyle,
+  ...annotationProps
+}) {
   const config = layer.userConfig
   const style = config.style
   const layerId = layer.id
 
-  const handleStyleChange = useCallback((key, value) => {
-    updateUserStyle(layerId, { [key]: value })
-  }, [layerId, updateUserStyle])
+  const handleStyleChange = useCallback(
+    (key, value) => {
+      updateUserStyle(layerId, { [key]: value })
+    },
+    [layerId, updateUserStyle]
+  )
 
   const geometryType = config.geometryType?.toLowerCase() || ''
   const isPolygon = geometryType.includes('polygon')
@@ -300,10 +368,20 @@ function UserLayerStylePanel({ layer, updateUserStyle, ...annotationProps }) {
 
   return (
     <div className="space-y-5">
-      {/* Layer info */}
-      <div className="pb-2 border-b border-border">
-        <p className="text-sm font-medium">{layer.name}</p>
-        <p className="text-xs text-muted capitalize">{config.geometryType || 'User Layer'}</p>
+      {/* Layer selector */}
+      <div className="pb-3 border-b border-border">
+        <label className="block text-xs text-muted mb-1">Style Layer</label>
+        <select
+          value={selectedLayerId || ''}
+          onChange={(e) => selectLayer(e.target.value || null)}
+          className="w-full rounded border border-border bg-paper px-2 py-1.5 text-sm"
+        >
+          {layers.map((l) => (
+            <option key={l.id} value={l.id}>
+              {l.name} ({l.type === 'admin' ? 'Admin' : 'User'})
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Fill Color */}

@@ -34,10 +34,10 @@ export default function MapView() {
     if (!map) return
     // Find the selected layer or first admin layer to fit to
     const selectedLayer = layers.find(l => l.id === selectedLayerId)
-    const adminLayer = selectedLayer?.type === 'admin' 
-      ? selectedLayer 
+    const adminLayer = selectedLayer?.type === 'admin'
+      ? selectedLayer
       : layers.find(l => l.type === 'admin')
-    
+
     if (adminLayer?.adminConfig?.adminLayerId) {
       const { bbox } = getLayer(adminLayer.adminConfig.adminLayerId)
       const extent = transformExtent(bbox, 'EPSG:4326', 'EPSG:3857')

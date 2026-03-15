@@ -19,7 +19,7 @@ function createOLStyle(styleConfig, layerOpacity = 1) {
   const effectiveFillOpacity = (fillOpacity ?? 0.6) * layerOpacity;
   const fillColor = fill ? hexToRgba(fill, effectiveFillOpacity) : undefined;
   const strokeColor = stroke ? hexToRgba(stroke, layerOpacity) : undefined;
-  
+
   const strokeStyle = stroke
     ? new Stroke({
         color: strokeColor,
@@ -73,8 +73,8 @@ function hexToRgba(hex, alpha = 1) {
 export default function useUserLayers(map) {
   // Get user layers from layer tree
   const layers = useLayerTreeStore((s) => s.layers);
-  const userLayers = layers.filter(l => l.type === 'user');
-  
+  const userLayers = layers.filter((l) => l.type === "user");
+
   const layersRef = useRef(new Map()); // layerId -> { olLayer, source }
 
   // Handle "fit to layer" events
@@ -117,7 +117,7 @@ export default function useUserLayers(map) {
       if (existing) {
         // Update visibility
         existing.olLayer.setVisible(layer.visible);
-        
+
         // Update z-index
         existing.olLayer.setZIndex(BASE_Z_INDEX + layer.order);
 
@@ -171,7 +171,11 @@ export default function useUserLayers(map) {
       if (!map) return;
       const layer = userLayers.find((l) => l.id === layerId);
       if (layer?.userConfig?.bbox) {
-        const extent = transformExtent(layer.userConfig.bbox, "EPSG:4326", "EPSG:3857");
+        const extent = transformExtent(
+          layer.userConfig.bbox,
+          "EPSG:4326",
+          "EPSG:3857"
+        );
         map.getView().fit(extent, { padding: FIT_PADDING, duration: 500 });
       }
     },

@@ -16,8 +16,8 @@ const formatValue = (v) => {
 const getFeatureValues = () => {
   const { layers, selectedLayerId } = useLayerTreeStore.getState()
   const selectedLayer = layers.find(l => l.id === selectedLayerId)
-  const adminLayer = selectedLayer?.type === 'admin' 
-    ? selectedLayer 
+  const adminLayer = selectedLayer?.type === 'admin'
+    ? selectedLayer
     : layers.find(l => l.type === 'admin' && l.adminConfig?.featureValues && Object.keys(l.adminConfig.featureValues).length > 0)
   return adminLayer?.adminConfig?.featureValues || {}
 }
