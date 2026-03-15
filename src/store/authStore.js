@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { supabase } from "../lib/supabase";
 import useMapStore from "./mapStore";
+import useLayerTreeStore from "./layerTreeStore";
 import useDatasetsStore from "./datasetsStore";
 
 const useAuthStore = create((set) => ({
@@ -54,6 +55,7 @@ const useAuthStore = create((set) => ({
     await supabase.auth.signOut();
     set({ user: null });
     useMapStore.getState().resetData();
+    useLayerTreeStore.getState().reset();
     useDatasetsStore.getState().reset();
   },
 }));

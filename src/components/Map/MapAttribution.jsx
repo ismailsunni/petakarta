@@ -1,7 +1,7 @@
-import useMapStore from '../../store/mapStore'
+import useLayerTreeStore from '../../store/layerTreeStore'
 
 export default function MapAttribution() {
-  const attribution = useMapStore((s) => s.attribution)
+  const attribution = useLayerTreeStore((s) => s.attribution)
 
   if (!attribution) return null
 

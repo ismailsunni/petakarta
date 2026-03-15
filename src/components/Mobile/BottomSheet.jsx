@@ -1,17 +1,17 @@
-import useMapStore from '../../store/mapStore'
-import DataTab from '../Sidebar/DataTab'
+import useLayerTreeStore from '../../store/layerTreeStore'
+import LayerTreePanel from '../Layers/LayerTreePanel'
 import StyleTab from '../Sidebar/StyleTab'
 import ExportTab from '../Sidebar/ExportTab'
 
 const TABS = [
-  { key: 'data', label: 'Data' },
+  { key: 'layers', label: 'Layers' },
   { key: 'style', label: 'Style' },
   { key: 'export', label: 'Export' },
 ]
 
 export default function BottomSheet({ open, onClose }) {
-  const activeTab = useMapStore((s) => s.activeTab)
-  const update = useMapStore((s) => s.update)
+  const activeTab = useLayerTreeStore((s) => s.activeTab)
+  const update = useLayerTreeStore((s) => s.update)
 
   return (
     <>
@@ -64,7 +64,7 @@ export default function BottomSheet({ open, onClose }) {
 
         {/* Tab content */}
         <div className="flex-1 overflow-y-auto p-4">
-          {activeTab === 'data' && <DataTab />}
+          {activeTab === 'layers' && <LayerTreePanel />}
           {activeTab === 'style' && <StyleTab />}
           {activeTab === 'export' && <ExportTab />}
         </div>

@@ -8,33 +8,34 @@ import MobileFAB from './components/Mobile/MobileFAB'
 import GalleryPage from './components/Gallery/GalleryPage'
 import AboutPage from './components/About/AboutPage'
 import useAuthStore from './store/authStore'
-import useMapStore from './store/mapStore'
+import useLayerTreeStore from './store/layerTreeStore'
 import { loadProject, normalizeProjectState } from './lib/projectsService'
 import { ExportProvider } from './contexts/ExportContext'
 import useAppRoute from './hooks/useAppRoute'
 
 function MapEditor() {
   const { projectId, embed } = useAppRoute()
-  const viewMode = useMapStore((s) => s.viewMode)
+  const viewMode = useLayerTreeStore((s) => s.viewMode)
   const [shareLoading, setShareLoading] = useState(!!projectId)
   const [shareError, setShareError] = useState('')
   const [sheetOpen, setSheetOpen] = useState(false)
 
   useEffect(() => {
     if (embed) {
-      useMapStore.setState({ viewMode: 'view' })
+      useLayerTreeStore.setState({ viewMode: 'view' })
     }
 
     if (projectId) {
-      useMapStore.setState({ viewMode: 'view' })
+      useLayerTreeStore.setState({ viewMode: 'view' })
       loadProject(projectId).then(({ data, error }) => {
         if (error || !data?.state_json) {
           setShareError(error?.message || 'Project not found or is private.')
           setShareLoading(false)
           return
         }
-        useMapStore.setState({
-          ...normalizeProjectState(data.state_json),
+        const normalized = normalizeProjectState(data.state_json)
+        useLayerTreeStore.getState().loadProject(normalized)
+        useLayerTreeStore.setState({
           viewMode: 'view',
           activeProjectId: data.id,
           activeProjectName: data.name || '',

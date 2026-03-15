@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import useMapStore from '../../store/mapStore'
+import useLayerTreeStore from '../../store/layerTreeStore'
 import { buildColorScale } from '../../utils/colorUtils'
 import { getBreaks } from '../../utils/classificationUtils'
 
@@ -31,24 +31,34 @@ export default function Legend() {
     return () => window.removeEventListener('resize', check)
   }, [])
 
-  const joinResult = useMapStore((s) => s.joinResult)
-  const featureValues = useMapStore((s) => s.featureValues)
-  const styleMode = useMapStore((s) => s.styleMode)
-  const colorPreset = useMapStore((s) => s.colorPreset)
-  const colorReversed = useMapStore((s) => s.colorReversed)
-  const classMethod = useMapStore((s) => s.classMethod)
-  const numClasses = useMapStore((s) => s.numClasses)
-  const manualBreaks = useMapStore((s) => s.manualBreaks)
-  const categoryColors = useMapStore((s) => s.categoryColors)
-  const noDataColor = useMapStore((s) => s.noDataColor)
-  const legendTitle = useMapStore((s) => s.legendTitle)
-  const legendPosition = useMapStore((s) => s.legendPosition)
-  const update = useMapStore((s) => s.update)
+  const layers = useLayerTreeStore((s) => s.layers)
+  const selectedLayerId = useLayerTreeStore((s) => s.selectedLayerId)
+  const legendTitle = useLayerTreeStore((s) => s.legendTitle)
+  const legendPosition = useLayerTreeStore((s) => s.legendPosition)
+  const update = (patch) => useLayerTreeStore.setState(patch)
+
+  // Find the selected admin layer or fall back to first admin layer with data
+  const selectedLayer = layers.find(l => l.id === selectedLayerId)
+  const adminLayer = selectedLayer?.type === 'admin' 
+    ? selectedLayer 
+    : layers.find(l => l.type === 'admin' && l.adminConfig?.featureValues && Object.keys(l.adminConfig.featureValues).length > 0)
+  
+  const config = adminLayer?.adminConfig
+  const featureValues = config?.featureValues
+  const styleMode = config?.styleMode || 'graduated'
+  const colorPreset = config?.colorPreset || 'Viridis'
+  const colorReversed = config?.colorReversed || false
+  const classMethod = config?.classMethod || 'quantile'
+  const numClasses = config?.numClasses || 5
+  const manualBreaks = config?.manualBreaks || []
+  const categoryColors = config?.categoryColors || {}
+  const noDataColor = config?.noDataColor || '#e0e0e0'
 
   if (!featureValues || Object.keys(featureValues).length === 0) return null
   if (tooSmall) return null
 
-  const hasUnmatched = joinResult ? joinResult.unmatched > 0 : false
+  // Check if there are unmatched features (features with no data)
+  const hasUnmatched = Object.values(featureValues).some(v => v === undefined || v === null || v === '')
 
   if (styleMode === 'categorized') {
     const entries = Object.entries(categoryColors).sort(([a], [b]) => a.localeCompare(b))

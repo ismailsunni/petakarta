@@ -1,7 +1,7 @@
-import useMapStore from '../../store/mapStore'
+import useLayerTreeStore from '../../store/layerTreeStore'
 
 export default function MapTitle() {
-  const mapTitle = useMapStore((s) => s.mapTitle)
+  const mapTitle = useLayerTreeStore((s) => s.mapTitle)
 
   if (!mapTitle) return null
 

@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import useAuthStore from '../store/authStore'
-import useMapStore from '../store/mapStore'
+import useLayerTreeStore from '../store/layerTreeStore'
 import { supabase } from '../lib/supabase'
 import AuthModal from './Auth/AuthModal'
 import ProjectsPanel from './Projects/ProjectsPanel'
 import {
-  extractProjectState,
   saveProject,
   updateProject,
 } from '../lib/projectsService'
@@ -60,9 +59,9 @@ export default function Header() {
   const user = useAuthStore((s) => s.user)
   const loading = useAuthStore((s) => s.loading)
   const signOut = useAuthStore((s) => s.signOut)
-  const activeProjectId = useMapStore((s) => s.activeProjectId)
-  const activeProjectName = useMapStore((s) => s.activeProjectName)
-  const activeProjectPublic = useMapStore((s) => s.activeProjectPublic)
+  const activeProjectId = useLayerTreeStore((s) => s.activeProjectId)
+  const activeProjectName = useLayerTreeStore((s) => s.activeProjectName)
+  const activeProjectPublic = useLayerTreeStore((s) => s.activeProjectPublic)
   const [showAuth, setShowAuth] = useState(false)
   const [showProjects, setShowProjects] = useState(false)
   const [showSaveAs, setShowSaveAs] = useState(false)
@@ -97,7 +96,7 @@ export default function Header() {
     if (!user) return
     setSaving(true)
     if (activeProjectId) {
-      const state = extractProjectState(useMapStore.getState())
+      const state = useLayerTreeStore.getState().getProjectState()
       await updateProject(activeProjectId, { state_json: state })
     } else {
       setShowSaveAs(true)
@@ -108,10 +107,10 @@ export default function Header() {
   const handleSaveAs = useCallback(async (name, isPublic) => {
     if (!user) return
     setSaving(true)
-    const state = extractProjectState(useMapStore.getState())
+    const state = useLayerTreeStore.getState().getProjectState()
     const { data } = await saveProject(user.id, name, state, isPublic)
     if (data) {
-      useMapStore.setState({ activeProjectId: data.id, activeProjectName: data.name, activeProjectPublic: data.is_public ?? false })
+      useLayerTreeStore.setState({ activeProjectId: data.id, activeProjectName: data.name, activeProjectPublic: data.is_public ?? false })
     }
     setSaving(false)
     setShowSaveAs(false)
@@ -121,7 +120,7 @@ export default function Header() {
     if (!activeProjectId) return
     const next = !activeProjectPublic
     await updateProject(activeProjectId, { is_public: next })
-    useMapStore.setState({ activeProjectPublic: next })
+    useLayerTreeStore.setState({ activeProjectPublic: next })
   }, [activeProjectId, activeProjectPublic])
 
   const handleRenameSubmit = useCallback(async () => {
@@ -131,12 +130,12 @@ export default function Header() {
       return
     }
     await updateProject(activeProjectId, { name: trimmed })
-    useMapStore.setState({ activeProjectName: trimmed })
+    useLayerTreeStore.setState({ activeProjectName: trimmed })
     setRenaming(false)
   }, [renameValue, activeProjectId, activeProjectName])
 
   const handleNewProject = useCallback(() => {
-    useMapStore.getState().resetData()
+    useLayerTreeStore.getState().reset()
     setShowMenu(false)
   }, [])
 

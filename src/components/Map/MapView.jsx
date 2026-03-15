@@ -3,7 +3,7 @@ import useMapInstance from '../../hooks/useMapInstance'
 import useAdminLayer from '../../hooks/useAdminLayer'
 import useUserLayers from '../../hooks/useUserLayers'
 import useMapExport from '../../hooks/useMapExport'
-import useMapStore from '../../store/mapStore'
+import useLayerTreeStore from '../../store/layerTreeStore'
 import { useExportContext } from '../../contexts/ExportContext'
 import ExportBounds from './ExportBounds'
 import Legend from './Legend'
@@ -22,8 +22,9 @@ export default function MapView() {
   useUserLayers(map)
   const { exportMap } = useMapExport(map)
   const exportFnRef = useExportContext()
-  const viewMode = useMapStore((s) => s.viewMode)
-  const adminLayerId = useMapStore((s) => s.adminLayerId)
+  const viewMode = useLayerTreeStore((s) => s.viewMode)
+  const selectedLayerId = useLayerTreeStore((s) => s.selectedLayerId)
+  const layers = useLayerTreeStore((s) => s.layers)
 
   useEffect(() => {
     exportFnRef.current = exportMap
@@ -31,10 +32,18 @@ export default function MapView() {
 
   const fitToLayer = useCallback(() => {
     if (!map) return
-    const { bbox } = getLayer(adminLayerId)
-    const extent = transformExtent(bbox, 'EPSG:4326', 'EPSG:3857')
-    map.getView().fit(extent, { padding: FIT_PADDING, duration: 500 })
-  }, [map, adminLayerId])
+    // Find the selected layer or first admin layer to fit to
+    const selectedLayer = layers.find(l => l.id === selectedLayerId)
+    const adminLayer = selectedLayer?.type === 'admin' 
+      ? selectedLayer 
+      : layers.find(l => l.type === 'admin')
+    
+    if (adminLayer?.adminConfig?.adminLayerId) {
+      const { bbox } = getLayer(adminLayer.adminConfig.adminLayerId)
+      const extent = transformExtent(bbox, 'EPSG:4326', 'EPSG:3857')
+      map.getView().fit(extent, { padding: FIT_PADDING, duration: 500 })
+    }
+  }, [map, selectedLayerId, layers])
 
   return (
     <div className="relative flex-1 h-full">

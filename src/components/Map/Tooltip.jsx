@@ -1,13 +1,25 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import Overlay from 'ol/Overlay'
-import useMapStore from '../../store/mapStore'
+import useLayerTreeStore from '../../store/layerTreeStore'
 
 const formatValue = (v) => {
   if (v == null || v === '') return 'No data'
   const num = Number(v)
   if (isNaN(num)) return String(v)
   return Number.isInteger(num) ? num.toLocaleString() : num.toFixed(2)
+}
+
+/**
+ * Get featureValues from the selected admin layer or first admin layer with data
+ */
+const getFeatureValues = () => {
+  const { layers, selectedLayerId } = useLayerTreeStore.getState()
+  const selectedLayer = layers.find(l => l.id === selectedLayerId)
+  const adminLayer = selectedLayer?.type === 'admin' 
+    ? selectedLayer 
+    : layers.find(l => l.type === 'admin' && l.adminConfig?.featureValues && Object.keys(l.adminConfig.featureValues).length > 0)
+  return adminLayer?.adminConfig?.featureValues || {}
 }
 
 export default function Tooltip({ map }) {
@@ -94,7 +106,7 @@ export default function Tooltip({ map }) {
       if (feature) {
         const name = feature.get('province_name')
         const pcode = feature.get('ADM1_PCODE')
-        const value = useMapStore.getState().featureValues?.[pcode]
+        const value = getFeatureValues()[pcode]
         updateTooltipContent(hoverRef.current, name, value, pcode)
         hoverOverlay.setPosition(evt.coordinate)
         map.getTargetElement().style.cursor = 'pointer'
@@ -112,7 +124,7 @@ export default function Tooltip({ map }) {
       if (feature) {
         const name = feature.get('province_name')
         const pcode = feature.get('ADM1_PCODE')
-        const value = useMapStore.getState().featureValues?.[pcode]
+        const value = getFeatureValues()[pcode]
         updateClickContent(clickRef.current, name, value, pcode)
         clickOverlay.setPosition(evt.coordinate)
       } else {

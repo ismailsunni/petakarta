@@ -4,7 +4,7 @@ import VectorSource from 'ol/source/Vector'
 import GeoJSON from 'ol/format/GeoJSON'
 import { Style, Fill, Stroke } from 'ol/style'
 import { transformExtent } from 'ol/proj'
-import useMapStore from '../store/mapStore'
+import useLayerTreeStore from '../store/layerTreeStore'
 import { getLayer } from '../utils/adminLayers'
 import { makeLabelStyle, buildGraduatedStyleFn, buildCategorizedStyleFn } from '../utils/styleUtils'
 import { FIT_PADDING } from '../utils/mapConstants'
@@ -14,90 +14,166 @@ const DEFAULT_STYLE = new Style({
   stroke: new Stroke({ color: '#ffffff', width: 0.8 }),
 })
 
-export default function useAdminLayer(map) {
-  const layerRef = useRef(null)
-  const sourceRef = useRef(null)
-  const adminLayerId = useMapStore((s) => s.adminLayerId)
-  const update = useMapStore((s) => s.update)
-  const featureValues = useMapStore((s) => s.featureValues)
-  const styleMode = useMapStore((s) => s.styleMode)
-  const colorPreset = useMapStore((s) => s.colorPreset)
-  const colorReversed = useMapStore((s) => s.colorReversed)
-  const classMethod = useMapStore((s) => s.classMethod)
-  const numClasses = useMapStore((s) => s.numClasses)
-  const manualBreaks = useMapStore((s) => s.manualBreaks)
-  const categoryColors = useMapStore((s) => s.categoryColors)
-  const strokeColor = useMapStore((s) => s.strokeColor)
-  const strokeWidth = useMapStore((s) => s.strokeWidth)
-  const noDataColor = useMapStore((s) => s.noDataColor)
-  const showFeatureLabels = useMapStore((s) => s.showFeatureLabels)
+const BASE_Z_INDEX = 5
 
-  // Load/reload OL layer when map or adminLayerId changes
+export default function useAdminLayer(map) {
+  // Map of layerId -> { olLayer, source }
+  const layersRef = useRef(new Map())
+  
+  // Get admin layers from layer tree
+  const layers = useLayerTreeStore((s) => s.layers)
+  const adminLayers = layers.filter(l => l.type === 'admin')
+
+  // Handle "fit to admin layer" events
   useEffect(() => {
     if (!map) return
 
-    const layerConfig = getLayer(adminLayerId)
-
-    const source = new VectorSource({
-      url: import.meta.env.BASE_URL + layerConfig.geojsonPath,
-      format: new GeoJSON(),
-    })
-
-    const layer = new VectorLayer({
-      source,
-      style: DEFAULT_STYLE,
-      declutter: true,
-    })
-
-    source.once('change', () => {
-      if (source.getState() === 'ready') {
-        const features = source.getFeatures()
-        const featureData = features.map((f) => ({
-          featureId: f.get(layerConfig.featureIdField),
-          featureName: f.get(layerConfig.featureNameField),
-        }))
-        update({ adminFeatures: featureData })
-
-        const extent3857 = transformExtent(layerConfig.bbox, 'EPSG:4326', 'EPSG:3857')
-        map.getView().fit(extent3857, { padding: FIT_PADDING, duration: 400 })
+    const handleFitToLayer = (e) => {
+      const { adminLayerId } = e.detail
+      const layerConfig = getLayer(adminLayerId)
+      if (layerConfig?.bbox) {
+        const extent = transformExtent(layerConfig.bbox, 'EPSG:4326', 'EPSG:3857')
+        map.getView().fit(extent, { padding: FIT_PADDING, duration: 500 })
       }
-    })
-
-    map.addLayer(layer)
-    layerRef.current = layer
-    sourceRef.current = source
-
-    return () => {
-      map.removeLayer(layer)
     }
-  }, [map, adminLayerId, update])
 
-  // Update styles when any style-related state changes
+    window.addEventListener('fitToAdminLayer', handleFitToLayer)
+    return () => window.removeEventListener('fitToAdminLayer', handleFitToLayer)
+  }, [map])
+
+  // Sync OL layers with layer tree
   useEffect(() => {
-    const layer = layerRef.current
-    if (!layer) return
+    if (!map) return
 
-    const layerConfig = getLayer(adminLayerId)
+    const currentLayerIds = new Set(adminLayers.map(l => l.id))
+    const existingLayerIds = new Set(layersRef.current.keys())
 
-    if (!featureValues || Object.keys(featureValues).length === 0) {
-      if (showFeatureLabels) {
-        layer.setStyle((feature) => [
-          new Style({ fill: new Fill({ color: '#d4d0c8' }), stroke: new Stroke({ color: '#ffffff', width: 0.8 }) }),
-          makeLabelStyle(feature, layerConfig),
-        ])
-      } else {
-        layer.setStyle(DEFAULT_STYLE)
+    // Remove layers no longer in tree
+    for (const layerId of existingLayerIds) {
+      if (!currentLayerIds.has(layerId)) {
+        const { olLayer } = layersRef.current.get(layerId)
+        map.removeLayer(olLayer)
+        layersRef.current.delete(layerId)
       }
-      return
     }
 
-    const valueMap = featureValues
-    const styleFunction = styleMode === 'categorized'
-      ? buildCategorizedStyleFn({ valueMap, layerConfig, categoryColors, strokeColor, strokeWidth, noDataColor, showFeatureLabels })
-      : buildGraduatedStyleFn({ valueMap, layerConfig, numClasses, classMethod, manualBreaks, colorPreset, colorReversed, strokeColor, strokeWidth, noDataColor, showFeatureLabels })
+    // Add or update layers
+    for (const layer of adminLayers) {
+      const existing = layersRef.current.get(layer.id)
+      const layerConfig = getLayer(layer.adminConfig.adminLayerId)
 
-    layer.setStyle(styleFunction || DEFAULT_STYLE)
-  }, [map, adminLayerId, featureValues, styleMode, colorPreset, colorReversed, classMethod, numClasses, manualBreaks, categoryColors, strokeColor, strokeWidth, noDataColor, showFeatureLabels])
+      if (existing) {
+        // Update existing layer
+        existing.olLayer.setVisible(layer.visible)
+        existing.olLayer.setOpacity(layer.opacity)
+        existing.olLayer.setZIndex(BASE_Z_INDEX + layer.order)
 
-  return { layer: layerRef.current, source: sourceRef.current }
+        // Update style
+        updateLayerStyle(existing.olLayer, layer, layerConfig)
+      } else {
+        // Create new layer
+        const source = new VectorSource({
+          url: import.meta.env.BASE_URL + layerConfig.geojsonPath,
+          format: new GeoJSON(),
+        })
+
+        const olLayer = new VectorLayer({
+          source,
+          style: DEFAULT_STYLE,
+          declutter: true,
+          visible: layer.visible,
+          opacity: layer.opacity,
+          properties: {
+            layerTreeId: layer.id,
+            adminLayerId: layer.adminConfig.adminLayerId,
+          },
+        })
+
+        olLayer.setZIndex(BASE_Z_INDEX + layer.order)
+
+        // On load, fit to extent for the first layer added
+        source.once('change', () => {
+          if (source.getState() === 'ready') {
+            // If this is the only layer, fit to it
+            if (adminLayers.length === 1 && adminLayers[0].id === layer.id) {
+              const extent = transformExtent(layerConfig.bbox, 'EPSG:4326', 'EPSG:3857')
+              map.getView().fit(extent, { padding: FIT_PADDING, duration: 400 })
+            }
+            // Apply style after features are loaded
+            updateLayerStyle(olLayer, layer, layerConfig)
+          }
+        })
+
+        map.addLayer(olLayer)
+        layersRef.current.set(layer.id, { olLayer, source })
+      }
+    }
+  }, [map, adminLayers])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (map) {
+        for (const { olLayer } of layersRef.current.values()) {
+          map.removeLayer(olLayer)
+        }
+        layersRef.current.clear()
+      }
+    }
+  }, [map])
+
+  return { layersRef }
 }
+
+/**
+ * Update the style of an admin layer based on its config
+ */
+function updateLayerStyle(olLayer, layer, layerConfig) {
+  const config = layer.adminConfig
+  const featureValues = config.featureValues || {}
+
+  if (!featureValues || Object.keys(featureValues).length === 0) {
+    if (config.showFeatureLabels) {
+      olLayer.setStyle((feature) => [
+        new Style({ 
+          fill: new Fill({ color: '#d4d0c8' }), 
+          stroke: new Stroke({ color: config.strokeColor || '#ffffff', width: config.strokeWidth || 0.8 }) 
+        }),
+        makeLabelStyle(feature, layerConfig),
+      ])
+    } else {
+      olLayer.setStyle(new Style({
+        fill: new Fill({ color: config.noDataColor || '#d4d0c8' }),
+        stroke: new Stroke({ color: config.strokeColor || '#ffffff', width: config.strokeWidth || 0.8 }),
+      }))
+    }
+    return
+  }
+
+  const styleFunction = config.styleMode === 'categorized'
+    ? buildCategorizedStyleFn({
+        valueMap: featureValues,
+        layerConfig,
+        categoryColors: config.categoryColors,
+        strokeColor: config.strokeColor,
+        strokeWidth: config.strokeWidth,
+        noDataColor: config.noDataColor,
+        showFeatureLabels: config.showFeatureLabels,
+      })
+    : buildGraduatedStyleFn({
+        valueMap: featureValues,
+        layerConfig,
+        numClasses: config.numClasses,
+        classMethod: config.classMethod,
+        manualBreaks: config.manualBreaks,
+        colorPreset: config.colorPreset,
+        colorReversed: config.colorReversed,
+        strokeColor: config.strokeColor,
+        strokeWidth: config.strokeWidth,
+        noDataColor: config.noDataColor,
+        showFeatureLabels: config.showFeatureLabels,
+      })
+
+  olLayer.setStyle(styleFunction || DEFAULT_STYLE)
+}
+

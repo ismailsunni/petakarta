@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import useMapStore from '../../store/mapStore'
+import useLayerTreeStore from '../../store/layerTreeStore'
 import { useExportContext } from '../../contexts/ExportContext'
 
 export default function ExportTab() {
   const exportFnRef = useExportContext()
-  const activeProjectId = useMapStore((s) => s.activeProjectId)
-  const activeProjectPublic = useMapStore((s) => s.activeProjectPublic)
+  const activeProjectId = useLayerTreeStore((s) => s.activeProjectId)
+  const activeProjectPublic = useLayerTreeStore((s) => s.activeProjectPublic)
   const [resolution, setResolution] = useState(2)
   const [copied, setCopied] = useState(false)
 

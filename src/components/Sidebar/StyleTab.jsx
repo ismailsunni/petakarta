@@ -1,9 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
-import useMapStore from '../../store/mapStore'
-import useDatasetsStore from '../../store/datasetsStore'
+import { useEffect, useMemo, useState, useCallback } from 'react'
+import useLayerTreeStore from '../../store/layerTreeStore'
 import ColorRampPicker from '../UI/ColorRampPicker'
 import ClassBreakEditor from '../UI/ClassBreakEditor'
-import UserLayerStylePanel from '../Datasets/UserLayerStylePanel'
 import { getCategoryColor } from '../../utils/colorUtils'
 
 const CLASS_METHODS = [
@@ -14,138 +12,160 @@ const CLASS_METHODS = [
 ]
 
 export default function StyleTab() {
-  const styleMode = useMapStore((s) => s.styleMode)
-  const classMethod = useMapStore((s) => s.classMethod)
-  const numClasses = useMapStore((s) => s.numClasses)
-  const strokeColor = useMapStore((s) => s.strokeColor)
-  const strokeWidth = useMapStore((s) => s.strokeWidth)
-  const noDataColor = useMapStore((s) => s.noDataColor)
-  const mapTitle = useMapStore((s) => s.mapTitle)
-  const legendTitle = useMapStore((s) => s.legendTitle)
-  const attribution = useMapStore((s) => s.attribution)
-  const showFeatureLabels = useMapStore((s) => s.showFeatureLabels)
-  const featureValues = useMapStore((s) => s.featureValues)
-  const categoryColors = useMapStore((s) => s.categoryColors)
-  const update = useMapStore((s) => s.update)
+  const layers = useLayerTreeStore((s) => s.layers)
+  const selectedLayerId = useLayerTreeStore((s) => s.selectedLayerId)
+  const updateAdminConfig = useLayerTreeStore((s) => s.updateAdminConfig)
+  const updateUserStyle = useLayerTreeStore((s) => s.updateUserStyle)
+  const mapTitle = useLayerTreeStore((s) => s.mapTitle)
+  const legendTitle = useLayerTreeStore((s) => s.legendTitle)
+  const attribution = useLayerTreeStore((s) => s.attribution)
+  const update = useLayerTreeStore((s) => s.update)
 
-  // User layers
-  const selectedLayerId = useDatasetsStore((s) => s.selectedLayerId)
-  const userLayers = useDatasetsStore((s) => s.userLayers)
-  const hasSelectedUserLayer = userLayers.some((l) => l.id === selectedLayerId)
+  const selectedLayer = layers.find(l => l.id === selectedLayerId)
 
-  // Style target: 'admin' (choropleth layer) or 'user' (uploaded layer)
-  const [styleTarget, setStyleTarget] = useState(hasSelectedUserLayer ? 'user' : 'admin')
-
-  // Local state for text inputs — avoids serializing large csvData on every keystroke
+  // Local state for text inputs
   const [localMapTitle, setLocalMapTitle] = useState(mapTitle)
   const [localLegendTitle, setLocalLegendTitle] = useState(legendTitle)
   const [localAttribution, setLocalAttribution] = useState(attribution)
 
-  // Sync store → local when a project is loaded externally
   useEffect(() => { setLocalMapTitle(mapTitle) }, [mapTitle])
   useEffect(() => { setLocalLegendTitle(legendTitle) }, [legendTitle])
   useEffect(() => { setLocalAttribution(attribution) }, [attribution])
 
-  const setMapTitle = (v) => update({ mapTitle: v })
-  const setLegendTitle = (v) => update({ legendTitle: v })
-  const setAttribution = (v) => update({ attribution: v })
+  if (!selectedLayer) {
+    return (
+      <div className="space-y-5">
+        <div className="text-center py-8 text-sm text-muted">
+          <p>No layer selected</p>
+          <p className="mt-1 text-xs">Select a layer from the Layers tab to style it</p>
+        </div>
+        <AnnotationControls
+          localMapTitle={localMapTitle}
+          setLocalMapTitle={setLocalMapTitle}
+          localLegendTitle={localLegendTitle}
+          setLocalLegendTitle={setLocalLegendTitle}
+          localAttribution={localAttribution}
+          setLocalAttribution={setLocalAttribution}
+          update={update}
+        />
+      </div>
+    )
+  }
 
-  // Extract unique values from featureValues for categorized mode
+  if (selectedLayer.type === 'admin') {
+    return (
+      <AdminLayerStylePanel 
+        layer={selectedLayer} 
+        updateAdminConfig={updateAdminConfig}
+        localMapTitle={localMapTitle}
+        setLocalMapTitle={setLocalMapTitle}
+        localLegendTitle={localLegendTitle}
+        setLocalLegendTitle={setLocalLegendTitle}
+        localAttribution={localAttribution}
+        setLocalAttribution={setLocalAttribution}
+        update={update}
+      />
+    )
+  }
+
+  return (
+    <UserLayerStylePanel 
+      layer={selectedLayer} 
+      updateUserStyle={updateUserStyle}
+      localMapTitle={localMapTitle}
+      setLocalMapTitle={setLocalMapTitle}
+      localLegendTitle={localLegendTitle}
+      setLocalLegendTitle={setLocalLegendTitle}
+      localAttribution={localAttribution}
+      setLocalAttribution={setLocalAttribution}
+      update={update}
+    />
+  )
+}
+
+function AdminLayerStylePanel({ layer, updateAdminConfig, ...annotationProps }) {
+  const config = layer.adminConfig
+  const layerId = layer.id
+
+  const handleUpdate = useCallback((updates) => {
+    updateAdminConfig(layerId, updates)
+  }, [layerId, updateAdminConfig])
+
+  // Extract unique values for categorized mode
   const uniqueValues = useMemo(() => {
-    if (!featureValues || Object.keys(featureValues).length === 0) return []
+    const featureValues = config.featureValues || {}
+    if (Object.keys(featureValues).length === 0) return []
     const vals = [...new Set(Object.values(featureValues).map(String))]
     vals.sort()
     return vals
-  }, [featureValues])
+  }, [config.featureValues])
 
-  // Auto-assign colors when switching to categorized or when values change
   const effectiveCategoryColors = useMemo(() => {
-    const colors = { ...categoryColors }
+    const colors = { ...config.categoryColors }
     uniqueValues.forEach((val, i) => {
       if (!colors[val]) {
         colors[val] = getCategoryColor(i)
       }
     })
     return colors
-  }, [uniqueValues, categoryColors])
+  }, [uniqueValues, config.categoryColors])
 
-  // Sync auto-assigned colors to store when they differ
   const handleModeChange = (mode) => {
     if (mode === 'categorized') {
       const colors = {}
       uniqueValues.forEach((val, i) => {
-        colors[val] = categoryColors[val] || getCategoryColor(i)
+        colors[val] = config.categoryColors?.[val] || getCategoryColor(i)
       })
-      update({ styleMode: mode, categoryColors: colors })
+      handleUpdate({ styleMode: mode, categoryColors: colors })
     } else {
-      update({ styleMode: mode })
+      handleUpdate({ styleMode: mode })
     }
-  }
-
-  const handleCategoryColorChange = (val, color) => {
-    update({ categoryColors: { ...effectiveCategoryColors, [val]: color } })
   }
 
   return (
     <div className="space-y-5">
-      {/* Layer target selector - only show if user layers exist */}
-      {userLayers.length > 0 && (
-        <div>
-          <h3 className="text-sm font-medium mb-2">Style Layer</h3>
-          <div className="flex rounded border border-border overflow-hidden text-sm">
-            <button
-              onClick={() => setStyleTarget('admin')}
-              className={`flex-1 py-1.5 transition-colors ${styleTarget === 'admin' ? 'bg-ink text-paper font-medium' : 'bg-paper text-muted hover:text-ink'}`}
-            >
-              Admin Layer
-            </button>
-            <button
-              onClick={() => setStyleTarget('user')}
-              className={`flex-1 py-1.5 transition-colors ${styleTarget === 'user' ? 'bg-ink text-paper font-medium' : 'bg-paper text-muted hover:text-ink'}`}
-            >
-              User Layer
-            </button>
-          </div>
+      {/* Layer info */}
+      <div className="pb-2 border-b border-border">
+        <p className="text-sm font-medium">{layer.name}</p>
+        <p className="text-xs text-muted">Admin Layer</p>
+      </div>
+
+      {/* Style Mode */}
+      <div>
+        <h3 className="text-sm font-medium mb-2">Style Mode</h3>
+        <div className="flex rounded border border-border overflow-hidden">
+          <button
+            onClick={() => handleModeChange('graduated')}
+            className={`flex-1 px-3 py-1.5 text-xs font-medium transition-colors ${
+              config.styleMode === 'graduated'
+                ? 'bg-accent text-white'
+                : 'bg-paper text-muted hover:text-ink'
+            }`}
+          >
+            Graduated
+          </button>
+          <button
+            onClick={() => handleModeChange('categorized')}
+            className={`flex-1 px-3 py-1.5 text-xs font-medium transition-colors ${
+              config.styleMode === 'categorized'
+                ? 'bg-accent text-white'
+                : 'bg-paper text-muted hover:text-ink'
+            }`}
+          >
+            Categorized
+          </button>
         </div>
-      )}
+      </div>
 
-      {/* User layer styling */}
-      {styleTarget === 'user' && userLayers.length > 0 ? (
-        <UserLayerStylePanel />
-      ) : (
-        /* Admin layer styling */
-        <>
-          <div>
-            <h3 className="text-sm font-medium mb-2">Style Mode</h3>
-            <div className="flex rounded border border-border overflow-hidden">
-              <button
-                onClick={() => handleModeChange('graduated')}
-                className={`flex-1 px-3 py-1.5 text-xs font-medium transition-colors ${
-                  styleMode === 'graduated'
-                    ? 'bg-accent text-white'
-                    : 'bg-paper text-muted hover:text-ink'
-                }`}
-              >
-                Graduated
-              </button>
-              <button
-                onClick={() => handleModeChange('categorized')}
-                className={`flex-1 px-3 py-1.5 text-xs font-medium transition-colors ${
-                  styleMode === 'categorized'
-                    ? 'bg-accent text-white'
-                    : 'bg-paper text-muted hover:text-ink'
-                }`}
-              >
-                Categorized
-              </button>
-            </div>
-          </div>
-
-      {styleMode === 'graduated' && (
+      {config.styleMode === 'graduated' && (
         <>
           <div>
             <h3 className="text-sm font-medium mb-2">Color Ramp</h3>
-            <ColorRampPicker />
+            <ColorRampPicker 
+              value={config.colorPreset}
+              reversed={config.colorReversed}
+              onChange={(preset, reversed) => handleUpdate({ colorPreset: preset, colorReversed: reversed })}
+            />
           </div>
 
           <div>
@@ -154,8 +174,8 @@ export default function StyleTab() {
               <label className="block">
                 <span className="text-xs text-muted">Method</span>
                 <select
-                  value={classMethod}
-                  onChange={(e) => update({ classMethod: e.target.value })}
+                  value={config.classMethod}
+                  onChange={(e) => handleUpdate({ classMethod: e.target.value })}
                   className="mt-1 block w-full rounded border border-border bg-paper px-2 py-1 text-sm"
                 >
                   {CLASS_METHODS.map((m) => (
@@ -165,32 +185,33 @@ export default function StyleTab() {
               </label>
 
               <div>
-                <span className="text-xs text-muted">Classes: {numClasses}</span>
+                <span className="text-xs text-muted">Classes: {config.numClasses}</span>
                 <input
                   type="range"
                   min={3}
                   max={9}
-                  value={numClasses}
-                  onChange={(e) => update({ numClasses: Number(e.target.value) })}
+                  value={config.numClasses}
+                  onChange={(e) => handleUpdate({ numClasses: Number(e.target.value) })}
                   className="w-full mt-1 accent-accent"
                 />
-                <div className="flex justify-between text-[10px] text-muted">
-                  <span>3</span>
-                  <span>9</span>
-                </div>
               </div>
 
-              {classMethod === 'manual' && <ClassBreakEditor />}
+              {config.classMethod === 'manual' && (
+                <ClassBreakEditor
+                  breaks={config.manualBreaks}
+                  onChange={(breaks) => handleUpdate({ manualBreaks: breaks })}
+                />
+              )}
             </div>
           </div>
         </>
       )}
 
-      {styleMode === 'categorized' && (
+      {config.styleMode === 'categorized' && (
         <div>
           <h3 className="text-sm font-medium mb-2">Category Colors</h3>
           {uniqueValues.length === 0 ? (
-            <p className="text-xs text-muted">Upload data and join columns to see categories.</p>
+            <p className="text-xs text-muted">No data values yet. Add data to see categories.</p>
           ) : (
             <div className="space-y-1.5 max-h-64 overflow-y-auto">
               {uniqueValues.map((val) => (
@@ -198,7 +219,7 @@ export default function StyleTab() {
                   <input
                     type="color"
                     value={effectiveCategoryColors[val] || '#e0e0e0'}
-                    onChange={(e) => handleCategoryColorChange(val, e.target.value)}
+                    onChange={(e) => handleUpdate({ categoryColors: { ...effectiveCategoryColors, [val]: e.target.value } })}
                     className="w-6 h-6 rounded border border-border cursor-pointer shrink-0"
                   />
                   <span className="text-xs text-ink truncate">{val}</span>
@@ -209,6 +230,7 @@ export default function StyleTab() {
         </div>
       )}
 
+      {/* Appearance */}
       <div>
         <h3 className="text-sm font-medium mb-2">Appearance</h3>
         <div className="space-y-2">
@@ -217,8 +239,8 @@ export default function StyleTab() {
               <span className="text-xs text-muted">Stroke</span>
               <input
                 type="color"
-                value={strokeColor}
-                onChange={(e) => update({ strokeColor: e.target.value })}
+                value={config.strokeColor}
+                onChange={(e) => handleUpdate({ strokeColor: e.target.value })}
                 className="w-6 h-6 rounded border border-border cursor-pointer"
               />
             </label>
@@ -226,8 +248,8 @@ export default function StyleTab() {
               <span className="text-xs text-muted">Width</span>
               <input
                 type="number"
-                value={strokeWidth}
-                onChange={(e) => update({ strokeWidth: Number(e.target.value) })}
+                value={config.strokeWidth}
+                onChange={(e) => handleUpdate({ strokeWidth: Number(e.target.value) })}
                 min={0}
                 max={5}
                 step={0.1}
@@ -240,64 +262,243 @@ export default function StyleTab() {
             <span className="text-xs text-muted">No-data color</span>
             <input
               type="color"
-              value={noDataColor}
-              onChange={(e) => update({ noDataColor: e.target.value })}
+              value={config.noDataColor}
+              onChange={(e) => handleUpdate({ noDataColor: e.target.value })}
               className="w-6 h-6 rounded border border-border cursor-pointer"
             />
           </label>
-        </div>
-      </div>
 
-      <div>
-        <h3 className="text-sm font-medium mb-2">Labels</h3>
-        <div className="space-y-2">
-          <label className="block">
-            <span className="text-xs text-muted">Map title</span>
-            <input
-              type="text"
-              value={localMapTitle}
-              onChange={(e) => setLocalMapTitle(e.target.value)}
-              onBlur={() => setMapTitle(localMapTitle)}
-              onKeyDown={(e) => e.key === 'Enter' && setMapTitle(localMapTitle)}
-              placeholder="e.g. GDP per Capita 2023"
-              className="mt-1 block w-full rounded border border-border bg-paper px-2 py-1 text-sm"
-            />
-          </label>
-          <label className="block">
-            <span className="text-xs text-muted">Legend title</span>
-            <input
-              type="text"
-              value={localLegendTitle}
-              onChange={(e) => setLocalLegendTitle(e.target.value)}
-              onBlur={() => setLegendTitle(localLegendTitle)}
-              onKeyDown={(e) => e.key === 'Enter' && setLegendTitle(localLegendTitle)}
-              placeholder="e.g. Million IDR"
-              className="mt-1 block w-full rounded border border-border bg-paper px-2 py-1 text-sm"
-            />
-          </label>
-          <label className="block">
-            <span className="text-xs text-muted">Attribution / Source</span>
-            <input
-              type="text"
-              value={localAttribution}
-              onChange={(e) => setLocalAttribution(e.target.value)}
-              onBlur={() => setAttribution(localAttribution)}
-              onKeyDown={(e) => e.key === 'Enter' && setAttribution(localAttribution)}
-              placeholder="e.g. Source: BPS 2023"
-              className="mt-1 block w-full rounded border border-border bg-paper px-2 py-1 text-sm"
-            />
-          </label>
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
-              checked={showFeatureLabels}
-              onChange={(e) => update({ showFeatureLabels: e.target.checked })}
+              checked={config.showFeatureLabels}
+              onChange={(e) => handleUpdate({ showFeatureLabels: e.target.checked })}
             />
             Show area names
           </label>
         </div>
       </div>
-        </>
-      )}    </div>
+
+      <AnnotationControls {...annotationProps} />
+    </div>
   )
+}
+
+function UserLayerStylePanel({ layer, updateUserStyle, ...annotationProps }) {
+  const config = layer.userConfig
+  const style = config.style
+  const layerId = layer.id
+
+  const handleStyleChange = useCallback((key, value) => {
+    updateUserStyle(layerId, { [key]: value })
+  }, [layerId, updateUserStyle])
+
+  const geometryType = config.geometryType?.toLowerCase() || ''
+  const isPolygon = geometryType.includes('polygon')
+  const isLine = geometryType.includes('line')
+  const isPoint = geometryType.includes('point')
+
+  return (
+    <div className="space-y-5">
+      {/* Layer info */}
+      <div className="pb-2 border-b border-border">
+        <p className="text-sm font-medium">{layer.name}</p>
+        <p className="text-xs text-muted capitalize">{config.geometryType || 'User Layer'}</p>
+      </div>
+
+      {/* Fill Color */}
+      {(isPolygon || isPoint) && (
+        <div>
+          <label className="block text-xs text-muted mb-1">Fill Color</label>
+          <div className="flex gap-2 items-center">
+            <input
+              type="color"
+              value={style.fill || '#3498DB'}
+              onChange={(e) => handleStyleChange('fill', e.target.value)}
+              className="w-8 h-8 rounded border border-border cursor-pointer"
+            />
+            <input
+              type="text"
+              value={style.fill || '#3498DB'}
+              onChange={(e) => handleStyleChange('fill', e.target.value)}
+              className="flex-1 rounded border border-border bg-paper px-2 py-1 text-sm font-mono"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Fill Opacity */}
+      {isPolygon && (
+        <div>
+          <label className="block text-xs text-muted mb-1">
+            Fill Opacity: {Math.round((style.fillOpacity ?? 0.6) * 100)}%
+          </label>
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.05"
+            value={style.fillOpacity ?? 0.6}
+            onChange={(e) => handleStyleChange('fillOpacity', parseFloat(e.target.value))}
+            className="w-full"
+          />
+        </div>
+      )}
+
+      {/* Stroke Color */}
+      <div>
+        <label className="block text-xs text-muted mb-1">Stroke Color</label>
+        <div className="flex gap-2 items-center">
+          <input
+            type="color"
+            value={style.stroke || '#2980B9'}
+            onChange={(e) => handleStyleChange('stroke', e.target.value)}
+            className="w-8 h-8 rounded border border-border cursor-pointer"
+          />
+          <input
+            type="text"
+            value={style.stroke || '#2980B9'}
+            onChange={(e) => handleStyleChange('stroke', e.target.value)}
+            className="flex-1 rounded border border-border bg-paper px-2 py-1 text-sm font-mono"
+          />
+        </div>
+      </div>
+
+      {/* Stroke Width */}
+      <div>
+        <label className="block text-xs text-muted mb-1">
+          Stroke Width: {style.strokeWidth ?? 2}px
+        </label>
+        <input
+          type="range"
+          min="0"
+          max="10"
+          step="0.5"
+          value={style.strokeWidth ?? 2}
+          onChange={(e) => handleStyleChange('strokeWidth', parseFloat(e.target.value))}
+          className="w-full"
+        />
+      </div>
+
+      {/* Point Radius */}
+      {isPoint && (
+        <div>
+          <label className="block text-xs text-muted mb-1">
+            Point Size: {style.radius ?? 6}px
+          </label>
+          <input
+            type="range"
+            min="2"
+            max="20"
+            step="1"
+            value={style.radius ?? 6}
+            onChange={(e) => handleStyleChange('radius', parseInt(e.target.value))}
+            className="w-full"
+          />
+        </div>
+      )}
+
+      {/* Quick Presets */}
+      <div>
+        <label className="block text-xs text-muted mb-2">Quick Presets</label>
+        <div className="flex flex-wrap gap-2">
+          {getPresets(config.geometryType).map((preset) => (
+            <button
+              key={preset.name}
+              onClick={() => {
+                Object.entries(preset.style).forEach(([key, value]) => {
+                  handleStyleChange(key, value)
+                })
+              }}
+              className="px-2 py-1 text-xs rounded border border-border hover:border-accent transition-colors flex items-center gap-1.5"
+            >
+              <span
+                className="w-3 h-3 rounded-sm"
+                style={{ backgroundColor: preset.style.fill || preset.style.stroke }}
+              />
+              {preset.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <AnnotationControls {...annotationProps} />
+    </div>
+  )
+}
+
+function AnnotationControls({ localMapTitle, setLocalMapTitle, localLegendTitle, setLocalLegendTitle, localAttribution, setLocalAttribution, update }) {
+  return (
+    <div>
+      <h3 className="text-sm font-medium mb-2">Labels</h3>
+      <div className="space-y-2">
+        <label className="block">
+          <span className="text-xs text-muted">Map title</span>
+          <input
+            type="text"
+            value={localMapTitle}
+            onChange={(e) => setLocalMapTitle(e.target.value)}
+            onBlur={() => update({ mapTitle: localMapTitle })}
+            onKeyDown={(e) => e.key === 'Enter' && update({ mapTitle: localMapTitle })}
+            placeholder="e.g. GDP per Capita 2023"
+            className="mt-1 block w-full rounded border border-border bg-paper px-2 py-1 text-sm"
+          />
+        </label>
+        <label className="block">
+          <span className="text-xs text-muted">Legend title</span>
+          <input
+            type="text"
+            value={localLegendTitle}
+            onChange={(e) => setLocalLegendTitle(e.target.value)}
+            onBlur={() => update({ legendTitle: localLegendTitle })}
+            onKeyDown={(e) => e.key === 'Enter' && update({ legendTitle: localLegendTitle })}
+            placeholder="e.g. Million IDR"
+            className="mt-1 block w-full rounded border border-border bg-paper px-2 py-1 text-sm"
+          />
+        </label>
+        <label className="block">
+          <span className="text-xs text-muted">Attribution / Source</span>
+          <input
+            type="text"
+            value={localAttribution}
+            onChange={(e) => setLocalAttribution(e.target.value)}
+            onBlur={() => update({ attribution: localAttribution })}
+            onKeyDown={(e) => e.key === 'Enter' && update({ attribution: localAttribution })}
+            placeholder="e.g. Source: BPS 2023"
+            className="mt-1 block w-full rounded border border-border bg-paper px-2 py-1 text-sm"
+          />
+        </label>
+      </div>
+    </div>
+  )
+}
+
+function getPresets(geometryType) {
+  const normalized = geometryType?.toLowerCase() || ''
+
+  if (normalized.includes('polygon')) {
+    return [
+      { name: 'Blue', style: { fill: '#3498DB', fillOpacity: 0.6, stroke: '#2980B9', strokeWidth: 2 } },
+      { name: 'Green', style: { fill: '#2ECC71', fillOpacity: 0.6, stroke: '#27AE60', strokeWidth: 2 } },
+      { name: 'Red', style: { fill: '#E74C3C', fillOpacity: 0.6, stroke: '#C0392B', strokeWidth: 2 } },
+      { name: 'Purple', style: { fill: '#9B59B6', fillOpacity: 0.6, stroke: '#8E44AD', strokeWidth: 2 } },
+    ]
+  }
+
+  if (normalized.includes('line')) {
+    return [
+      { name: 'Blue', style: { stroke: '#3498DB', strokeWidth: 3 } },
+      { name: 'Red', style: { stroke: '#E74C3C', strokeWidth: 3 } },
+      { name: 'Green', style: { stroke: '#2ECC71', strokeWidth: 3 } },
+      { name: 'Black', style: { stroke: '#2C3E50', strokeWidth: 2 } },
+    ]
+  }
+
+  // Points
+  return [
+    { name: 'Blue', style: { fill: '#3498DB', stroke: '#2980B9', strokeWidth: 1, radius: 6 } },
+    { name: 'Red', style: { fill: '#E74C3C', stroke: '#C0392B', strokeWidth: 1, radius: 6 } },
+    { name: 'Green', style: { fill: '#2ECC71', stroke: '#27AE60', strokeWidth: 1, radius: 6 } },
+    { name: 'Large', style: { fill: '#9B59B6', stroke: '#8E44AD', strokeWidth: 2, radius: 10 } },
+  ]
 }

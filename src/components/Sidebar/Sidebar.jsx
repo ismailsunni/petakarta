@@ -1,19 +1,17 @@
-import useMapStore from '../../store/mapStore'
-import DataTab from './DataTab'
+import useLayerTreeStore from '../../store/layerTreeStore'
+import LayerTreePanel from '../Layers/LayerTreePanel'
 import StyleTab from './StyleTab'
 import ExportTab from './ExportTab'
-import DatasetsTab from '../Datasets/DatasetsTab'
 
 const TABS = [
-  { key: 'data', label: 'Data' },
-  { key: 'datasets', label: 'Datasets' },
+  { key: 'layers', label: 'Layers' },
   { key: 'style', label: 'Style' },
   { key: 'export', label: 'Export' },
 ]
 
 export default function Sidebar() {
-  const activeTab = useMapStore((s) => s.activeTab)
-  const update = useMapStore((s) => s.update)
+  const activeTab = useLayerTreeStore((s) => s.activeTab)
+  const update = useLayerTreeStore((s) => s.update)
 
   return (
     <aside className="w-80 bg-paper border-r border-border flex flex-col shrink-0 hidden md:flex">
@@ -33,8 +31,7 @@ export default function Sidebar() {
         ))}
       </div>
       <div className="flex-1 overflow-y-auto p-4">
-        {activeTab === 'data' && <DataTab />}
-        {activeTab === 'datasets' && <DatasetsTab />}
+        {activeTab === 'layers' && <LayerTreePanel />}
         {activeTab === 'style' && <StyleTab />}
         {activeTab === 'export' && <ExportTab />}
       </div>

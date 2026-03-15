@@ -4,19 +4,25 @@ import { Vector as VectorSource } from "ol/source";
 import GeoJSON from "ol/format/GeoJSON";
 import { Style, Fill, Stroke, Circle as CircleStyle } from "ol/style";
 import { transformExtent } from "ol/proj";
-import useDatasetsStore from "../store/datasetsStore";
+import useLayerTreeStore from "../store/layerTreeStore";
 import { FIT_PADDING } from "../utils/mapConstants";
+
+const BASE_Z_INDEX = 5;
 
 /**
  * Create an OpenLayers style from a layer style config
  */
-function createOLStyle(styleConfig) {
+function createOLStyle(styleConfig, layerOpacity = 1) {
   const { type, fill, fillOpacity, stroke, strokeWidth, radius } = styleConfig;
 
-  const fillColor = fill ? hexToRgba(fill, fillOpacity ?? 0.6) : undefined;
+  // Apply layer opacity to fill opacity
+  const effectiveFillOpacity = (fillOpacity ?? 0.6) * layerOpacity;
+  const fillColor = fill ? hexToRgba(fill, effectiveFillOpacity) : undefined;
+  const strokeColor = stroke ? hexToRgba(stroke, layerOpacity) : undefined;
+  
   const strokeStyle = stroke
     ? new Stroke({
-        color: stroke,
+        color: strokeColor,
         width: strokeWidth ?? 2,
       })
     : undefined;
@@ -36,7 +42,7 @@ function createOLStyle(styleConfig) {
       stroke:
         strokeStyle ||
         new Stroke({
-          color: stroke || "#3498DB",
+          color: hexToRgba(stroke || "#3498DB", layerOpacity),
           width: strokeWidth ?? 3,
         }),
     });
@@ -65,7 +71,10 @@ function hexToRgba(hex, alpha = 1) {
  * Hook to manage user-uploaded layers on the map
  */
 export default function useUserLayers(map) {
-  const userLayers = useDatasetsStore((s) => s.userLayers);
+  // Get user layers from layer tree
+  const layers = useLayerTreeStore((s) => s.layers);
+  const userLayers = layers.filter(l => l.type === 'user');
+  
   const layersRef = useRef(new Map()); // layerId -> { olLayer, source }
 
   // Handle "fit to layer" events
@@ -103,36 +112,40 @@ export default function useUserLayers(map) {
     // Add or update layers
     for (const layer of userLayers) {
       const existing = layersRef.current.get(layer.id);
+      const userConfig = layer.userConfig;
 
       if (existing) {
         // Update visibility
         existing.olLayer.setVisible(layer.visible);
+        
+        // Update z-index
+        existing.olLayer.setZIndex(BASE_Z_INDEX + layer.order);
 
-        // Update style
-        const style = createOLStyle(layer.style);
+        // Update style (including opacity)
+        const style = createOLStyle(userConfig.style, layer.opacity);
         existing.olLayer.setStyle(style);
-      } else if (layer.geojson) {
+      } else if (userConfig?.geojson) {
         // Create new layer
         const format = new GeoJSON();
-        const features = format.readFeatures(layer.geojson, {
+        const features = format.readFeatures(userConfig.geojson, {
           featureProjection: "EPSG:3857",
         });
 
         const source = new VectorSource({ features });
-        const style = createOLStyle(layer.style);
+        const style = createOLStyle(userConfig.style, layer.opacity);
 
         const olLayer = new VectorLayer({
           source,
           style,
           visible: layer.visible,
           properties: {
-            userLayerId: layer.id,
+            layerTreeId: layer.id,
+            datasetId: userConfig.datasetId,
             name: layer.name,
           },
         });
 
-        // Add layer at a z-index above basemap but below UI overlays
-        olLayer.setZIndex(10);
+        olLayer.setZIndex(BASE_Z_INDEX + layer.order);
         map.addLayer(olLayer);
 
         layersRef.current.set(layer.id, { olLayer, source });
@@ -157,8 +170,8 @@ export default function useUserLayers(map) {
     (layerId) => {
       if (!map) return;
       const layer = userLayers.find((l) => l.id === layerId);
-      if (layer?.bbox) {
-        const extent = transformExtent(layer.bbox, "EPSG:4326", "EPSG:3857");
+      if (layer?.userConfig?.bbox) {
+        const extent = transformExtent(layer.userConfig.bbox, "EPSG:4326", "EPSG:3857");
         map.getView().fit(extent, { padding: FIT_PADDING, duration: 500 });
       }
     },

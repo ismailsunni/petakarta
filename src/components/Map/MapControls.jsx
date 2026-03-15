@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import useMapStore from '../../store/mapStore'
+import useLayerTreeStore from '../../store/layerTreeStore'
 import { BASEMAP_OPTIONS } from '../../utils/basemapSources'
 
 const BTN = 'relative group bg-paper/90 backdrop-blur-sm border border-border rounded-lg p-2 hover:bg-paper transition-all shadow-md text-ink flex items-center justify-center'
@@ -56,7 +57,7 @@ export default function MapControls({ onFit, onExport }) {
   const [copied, setCopied] = useState(false)
   const basemap = useMapStore((s) => s.basemap)
   const update = useMapStore((s) => s.update)
-  const activeProjectId = useMapStore((s) => s.activeProjectId)
+  const activeProjectId = useLayerTreeStore((s) => s.activeProjectId)
 
   useEffect(() => {
     if (!showBasemaps) return

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import useAuthStore from '../../store/authStore'
-import useMapStore from '../../store/mapStore'
+import useLayerTreeStore from '../../store/layerTreeStore'
 import {
   listProjects,
   loadProject,
@@ -11,7 +11,7 @@ import {
 
 export default function ProjectsPanel({ onClose }) {
   const user = useAuthStore((s) => s.user)
-  const storeActiveId = useMapStore((s) => s.activeProjectId)
+  const storeActiveId = useLayerTreeStore((s) => s.activeProjectId)
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -39,8 +39,9 @@ export default function ProjectsPanel({ onClose }) {
       return
     }
     if (data?.state_json) {
-      useMapStore.setState({
-        ...normalizeProjectState(data.state_json),
+      const normalized = normalizeProjectState(data.state_json)
+      useLayerTreeStore.getState().loadProject(normalized)
+      useLayerTreeStore.setState({
         activeProjectId: id,
         activeProjectName: data.name || '',
         activeProjectPublic: data.is_public ?? false,
@@ -56,7 +57,7 @@ export default function ProjectsPanel({ onClose }) {
       setError(delError.message)
     } else {
       if (storeActiveId === id) {
-        useMapStore.setState({ activeProjectId: null, activeProjectName: '', activeProjectPublic: false })
+        useLayerTreeStore.setState({ activeProjectId: null, activeProjectName: '', activeProjectPublic: false })
       }
       fetchProjects()
     }
@@ -71,7 +72,7 @@ export default function ProjectsPanel({ onClose }) {
       setError(toggleError.message)
     } else {
       if (project.id === storeActiveId) {
-        useMapStore.setState({ activeProjectPublic: !project.is_public })
+        useLayerTreeStore.setState({ activeProjectPublic: !project.is_public })
       }
       fetchProjects()
     }
@@ -88,7 +89,7 @@ export default function ProjectsPanel({ onClose }) {
       setError(renameError.message)
     } else {
       if (id === storeActiveId) {
-        useMapStore.setState({ activeProjectName: trimmed })
+        useLayerTreeStore.setState({ activeProjectName: trimmed })
       }
       fetchProjects()
     }

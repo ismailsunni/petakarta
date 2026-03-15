@@ -1,23 +1,40 @@
 import { supabase } from './supabase'
-import { applyAllMigrations } from '../utils/stateMigrations'
 
-const PERSIST_KEYS = [
-  'featureValues',
-  'adminLayerId',
-  'styleMode', 'colorPreset', 'colorReversed', 'classMethod', 'numClasses',
-  'manualBreaks', 'categoryColors', 'strokeColor', 'strokeWidth', 'noDataColor',
-  'basemap', 'showFeatureLabels', 'mapTitle', 'legendTitle', 'legendPosition', 'attribution',
-]
-
+/**
+ * Normalize project state for loading (apply migrations if needed)
+ */
 export function normalizeProjectState(state) {
   if (!state) return state
-  return applyAllMigrations(state)
+  
+  // Future: Add version migrations here
+  // For now, just return the state as-is since we're using the new layer tree format
+  return state
 }
 
+/**
+ * Extract project state for saving
+ * This function is used by the old mapStore - keeping for backwards compatibility
+ * New code should use layerTreeStore.getProjectState() directly
+ */
 export function extractProjectState(storeState) {
+  // If storeState has layers array, it's already in new format
+  if (storeState.layers) {
+    return storeState
+  }
+  
+  // Legacy support - extract old format keys
+  const PERSIST_KEYS = [
+    'featureValues', 'adminLayerId',
+    'styleMode', 'colorPreset', 'colorReversed', 'classMethod', 'numClasses',
+    'manualBreaks', 'categoryColors', 'strokeColor', 'strokeWidth', 'noDataColor',
+    'basemap', 'showFeatureLabels', 'mapTitle', 'legendTitle', 'legendPosition', 'attribution',
+  ]
+  
   const state = {}
   for (const key of PERSIST_KEYS) {
-    state[key] = storeState[key]
+    if (storeState[key] !== undefined) {
+      state[key] = storeState[key]
+    }
   }
   return state
 }
