@@ -54,7 +54,6 @@ export default function LayerTreePanel() {
       {sortedLayers.length > 0 && (
         <div className="text-xs text-muted pt-2 border-t border-border">
           <p>Layers on top are drawn last (in front).</p>
-          <p>Select a layer to edit its style.</p>
         </div>
       )}
 

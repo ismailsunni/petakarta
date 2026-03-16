@@ -461,11 +461,6 @@ function UserLayerStylePanel({
         </select>
       </div>
 
-      {/* Data Configuration for User Layer (polygons only) */}
-      {isPolygon && (
-        <UserDataPanel layer={layer} onValueColumnChange={handleValueColumnChange} />
-      )}
-
       {/* Style Mode - always show for polygons */}
       {isPolygon && (
         <div>
@@ -503,6 +498,11 @@ function UserLayerStylePanel({
             </button>
           </div>
         </div>
+      )}
+
+      {/* Data Configuration for User Layer - only for graduated/categorized */}
+      {isPolygon && styleMode !== 'single' && (
+        <UserDataPanel layer={layer} onValueColumnChange={handleValueColumnChange} />
       )}
 
       {/* Single style mode - fill color */}
@@ -733,13 +733,6 @@ function UserLayerStylePanel({
               />
             </label>
           </div>
-        </div>
-      )}
-
-      <AnnotationControls {...annotationProps} />
-    </div>
-  )
-}
         </div>
       )}
 
