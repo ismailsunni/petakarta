@@ -37,6 +37,7 @@ const useLayerTreeStore = create(
       attribution: "",
       basemap: "osm",
       exportExtent: "", // "" (current view) or layer id
+      currentViewExtentVersion: 0, // increment to trigger current view update
 
       // Project state
       activeProjectId: null,

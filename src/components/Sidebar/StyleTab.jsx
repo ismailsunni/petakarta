@@ -717,14 +717,14 @@ function AdminDataPanel({ layer, handleUpdate }) {
   // Load admin features from GeoJSON on mount
   useEffect(() => {
     if (!layerConfig?.geojsonPath) return
-    
+
     const loadFeatures = async () => {
       try {
         const url = import.meta.env.BASE_URL + layerConfig.geojsonPath
         const response = await fetch(url)
         if (!response.ok) return
         const geojson = await response.json()
-        
+
         const features = geojson.features.map((f) => ({
           featureId: f.properties[layerConfig.featureIdField],
           featureName: f.properties[layerConfig.featureNameField],
@@ -734,7 +734,7 @@ function AdminDataPanel({ layer, handleUpdate }) {
         console.error('Failed to load admin features:', err)
       }
     }
-    
+
     loadFeatures()
   }, [layerConfig])
 

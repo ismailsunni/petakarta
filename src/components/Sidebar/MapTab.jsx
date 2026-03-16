@@ -12,6 +12,7 @@ export default function MapTab() {
   const legendTitle = useLayerTreeStore((s) => s.legendTitle)
   const attribution = useLayerTreeStore((s) => s.attribution)
   const exportExtent = useLayerTreeStore((s) => s.exportExtent)
+  const currentViewExtentVersion = useLayerTreeStore((s) => s.currentViewExtentVersion)
   const update = useLayerTreeStore((s) => s.update)
 
   const [resolution, setResolution] = useState(2)
@@ -144,6 +145,14 @@ export default function MapTab() {
             </option>
           ))}
         </select>
+        {exportExtent === '' && (
+          <button
+            onClick={() => update({ currentViewExtentVersion: currentViewExtentVersion + 1 })}
+            className="mt-2 w-full bg-ink text-paper py-1.5 rounded text-sm font-medium hover:bg-muted transition-colors"
+          >
+            Update to Current View
+          </button>
+        )}
       </div>
 
       {/* Download Section */}

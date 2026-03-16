@@ -18,15 +18,16 @@ export default function ExportBounds({ map }) {
   const sourceRef = useRef(null)
   const exportExtent = useLayerTreeStore((s) => s.exportExtent)
   const layers = useLayerTreeStore((s) => s.layers)
+  const currentViewExtentVersion = useLayerTreeStore((s) => s.currentViewExtentVersion)
 
   // Function to update bounds from current view
   const updateCurrentViewBounds = useCallback(() => {
     if (!map || !sourceRef.current) return
-    
+
     sourceRef.current.clear()
     const view = map.getView()
     const extent = view.calculateExtent(map.getSize())
-    
+
     // Add padding (shrink the extent by ~5% on each side)
     const width = extent[2] - extent[0]
     const height = extent[3] - extent[1]
@@ -38,7 +39,7 @@ export default function ExportBounds({ map }) {
       extent[2] - paddingX,
       extent[3] - paddingY,
     ]
-    
+
     const feature = new Feature(fromExtent(paddedExtent))
     sourceRef.current.addFeature(feature)
   }, [map])
@@ -65,28 +66,16 @@ export default function ExportBounds({ map }) {
     }
   }, [map])
 
-  // Listen to view changes when "current view" is selected
+  // Update bounds when current view is selected and version changes
   useEffect(() => {
     if (!map) return
 
-    // Only listen when current view is selected (empty string)
+    // Only update when current view is selected (empty string)
     if (exportExtent !== '') return
 
-    // Update immediately
+    // Update to current view
     updateCurrentViewBounds()
-
-    // Listen for view changes
-    const view = map.getView()
-    const handleChange = () => updateCurrentViewBounds()
-    
-    view.on('change:center', handleChange)
-    view.on('change:resolution', handleChange)
-
-    return () => {
-      view.un('change:center', handleChange)
-      view.un('change:resolution', handleChange)
-    }
-  }, [map, exportExtent, updateCurrentViewBounds])
+  }, [map, exportExtent, currentViewExtentVersion, updateCurrentViewBounds])
 
   // Update extent display when layer selection changes
   useEffect(() => {
