@@ -8,6 +8,7 @@ import useLayerTreeStore from "../store/layerTreeStore";
 import { FIT_PADDING } from "../utils/mapConstants";
 import { buildColorScale, getCategoryColor } from "../utils/colorUtils";
 import { getBreaks } from "../utils/classificationUtils";
+import { downloadDataset } from "../lib/datasetsService";
 
 const BASE_Z_INDEX = 5;
 
@@ -150,9 +151,40 @@ function hexToRgba(hex, alpha = 1) {
 export default function useUserLayers(map) {
   // Get user layers from layer tree
   const layers = useLayerTreeStore((s) => s.layers);
+  const setUserLayerGeojson = useLayerTreeStore((s) => s.setUserLayerGeojson);
   const userLayers = layers.filter((l) => l.type === "user");
 
   const layersRef = useRef(new Map()); // layerId -> { olLayer, source }
+  const fetchingRef = useRef(new Set()); // Track layers currently being fetched
+
+  // Re-fetch geojson for persisted layers that lost their data
+  useEffect(() => {
+    for (const layer of userLayers) {
+      const { id, userConfig } = layer;
+      // Check if layer has storagePath but no geojson (happens after page refresh)
+      if (
+        userConfig?.storagePath &&
+        !userConfig?.geojson &&
+        !fetchingRef.current.has(id)
+      ) {
+        fetchingRef.current.add(id);
+        downloadDataset(userConfig.storagePath)
+          .then(({ data, error }) => {
+            if (data && !error) {
+              setUserLayerGeojson(id, data);
+            } else {
+              console.error(
+                `Failed to re-fetch geojson for layer ${layer.name}:`,
+                error
+              );
+            }
+          })
+          .finally(() => {
+            fetchingRef.current.delete(id);
+          });
+      }
+    }
+  }, [userLayers, setUserLayerGeojson]);
 
   // Handle "fit to layer" events
   useEffect(() => {
