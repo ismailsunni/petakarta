@@ -36,6 +36,7 @@ const useLayerTreeStore = create(
       legendPosition: "bottom-right",
       attribution: "",
       basemap: "osm",
+      exportExtent: "current", // "current" or layer id
 
       // Project state
       activeProjectId: null,
@@ -360,6 +361,7 @@ const useLayerTreeStore = create(
           legendPosition: state.legendPosition,
           attribution: state.attribution,
           basemap: state.basemap,
+          exportExtent: state.exportExtent,
         };
       },
     }),
@@ -378,6 +380,7 @@ const useLayerTreeStore = create(
         legendPosition: state.legendPosition,
         attribution: state.attribution,
         basemap: state.basemap,
+        exportExtent: state.exportExtent,
       }),
     }
   )

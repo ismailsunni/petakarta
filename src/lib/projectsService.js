@@ -42,6 +42,7 @@ export function extractProjectState(storeState) {
     "legendTitle",
     "legendPosition",
     "attribution",
+    "exportExtent",
   ];
 
   const state = {};

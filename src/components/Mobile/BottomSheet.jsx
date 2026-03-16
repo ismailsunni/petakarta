@@ -1,12 +1,12 @@
 import useLayerTreeStore from '../../store/layerTreeStore'
 import LayerTreePanel from '../Layers/LayerTreePanel'
 import StyleTab from '../Sidebar/StyleTab'
-import ExportTab from '../Sidebar/ExportTab'
+import MapTab from '../Sidebar/MapTab'
 
 const TABS = [
   { key: 'layers', label: 'Layers' },
   { key: 'style', label: 'Style' },
-  { key: 'export', label: 'Export' },
+  { key: 'map', label: 'Map' },
 ]
 
 export default function BottomSheet({ open, onClose }) {
@@ -66,7 +66,7 @@ export default function BottomSheet({ open, onClose }) {
         <div className="flex-1 overflow-y-auto p-4">
           {activeTab === 'layers' && <LayerTreePanel />}
           {activeTab === 'style' && <StyleTab />}
-          {activeTab === 'export' && <ExportTab />}
+          {activeTab === 'map' && <MapTab />}
         </div>
       </div>
     </>

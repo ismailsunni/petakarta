@@ -20,27 +20,8 @@ export default function StyleTab() {
   const selectLayer = useLayerTreeStore((s) => s.selectLayer)
   const updateAdminConfig = useLayerTreeStore((s) => s.updateAdminConfig)
   const updateUserConfig = useLayerTreeStore((s) => s.updateUserConfig)
-  const mapTitle = useLayerTreeStore((s) => s.mapTitle)
-  const legendTitle = useLayerTreeStore((s) => s.legendTitle)
-  const attribution = useLayerTreeStore((s) => s.attribution)
-  const update = useLayerTreeStore((s) => s.update)
 
   const selectedLayer = layers.find((l) => l.id === selectedLayerId)
-
-  // Local state for text inputs
-  const [localMapTitle, setLocalMapTitle] = useState(mapTitle)
-  const [localLegendTitle, setLocalLegendTitle] = useState(legendTitle)
-  const [localAttribution, setLocalAttribution] = useState(attribution)
-
-  useEffect(() => {
-    setLocalMapTitle(mapTitle)
-  }, [mapTitle])
-  useEffect(() => {
-    setLocalLegendTitle(legendTitle)
-  }, [legendTitle])
-  useEffect(() => {
-    setLocalAttribution(attribution)
-  }, [attribution])
 
   // Layer selector component
   const LayerSelector = () => (
@@ -74,15 +55,6 @@ export default function StyleTab() {
         <div className="text-center py-4 text-sm text-muted">
           <p>Select a layer above to style it</p>
         </div>
-        <AnnotationControls
-          localMapTitle={localMapTitle}
-          setLocalMapTitle={setLocalMapTitle}
-          localLegendTitle={localLegendTitle}
-          setLocalLegendTitle={setLocalLegendTitle}
-          localAttribution={localAttribution}
-          setLocalAttribution={setLocalAttribution}
-          update={update}
-        />
       </div>
     )
   }
@@ -95,13 +67,6 @@ export default function StyleTab() {
         selectedLayerId={selectedLayerId}
         selectLayer={selectLayer}
         updateAdminConfig={updateAdminConfig}
-        localMapTitle={localMapTitle}
-        setLocalMapTitle={setLocalMapTitle}
-        localLegendTitle={localLegendTitle}
-        setLocalLegendTitle={setLocalLegendTitle}
-        localAttribution={localAttribution}
-        setLocalAttribution={setLocalAttribution}
-        update={update}
       />
     )
   }
@@ -113,13 +78,6 @@ export default function StyleTab() {
       selectedLayerId={selectedLayerId}
       selectLayer={selectLayer}
       updateUserConfig={updateUserConfig}
-      localMapTitle={localMapTitle}
-      setLocalMapTitle={setLocalMapTitle}
-      localLegendTitle={localLegendTitle}
-      setLocalLegendTitle={setLocalLegendTitle}
-      localAttribution={localAttribution}
-      setLocalAttribution={setLocalAttribution}
-      update={update}
     />
   )
 }
@@ -130,7 +88,6 @@ function AdminLayerStylePanel({
   selectedLayerId,
   selectLayer,
   updateAdminConfig,
-  ...annotationProps
 }) {
   const config = layer.adminConfig
   const layerId = layer.id
@@ -373,8 +330,6 @@ function AdminLayerStylePanel({
           </label>
         </div>
       </div>
-
-      <AnnotationControls {...annotationProps} />
     </div>
   )
 }
@@ -384,9 +339,7 @@ function UserLayerStylePanel({
   layers,
   selectedLayerId,
   selectLayer,
-  updateUserStyle,
   updateUserConfig,
-  ...annotationProps
 }) {
   const config = layer.userConfig
   const layerId = layer.id
@@ -735,54 +688,6 @@ function UserLayerStylePanel({
           </div>
         </div>
       )}
-
-      <AnnotationControls {...annotationProps} />
-    </div>
-  )
-}
-
-function AnnotationControls({ localMapTitle, setLocalMapTitle, localLegendTitle, setLocalLegendTitle, localAttribution, setLocalAttribution, update }) {
-  return (
-    <div>
-      <h3 className="text-sm font-medium mb-2">Labels</h3>
-      <div className="space-y-2">
-        <label className="block">
-          <span className="text-xs text-muted">Map title</span>
-          <input
-            type="text"
-            value={localMapTitle}
-            onChange={(e) => setLocalMapTitle(e.target.value)}
-            onBlur={() => update({ mapTitle: localMapTitle })}
-            onKeyDown={(e) => e.key === 'Enter' && update({ mapTitle: localMapTitle })}
-            placeholder="e.g. GDP per Capita 2023"
-            className="mt-1 block w-full rounded border border-border bg-paper px-2 py-1 text-sm"
-          />
-        </label>
-        <label className="block">
-          <span className="text-xs text-muted">Legend title</span>
-          <input
-            type="text"
-            value={localLegendTitle}
-            onChange={(e) => setLocalLegendTitle(e.target.value)}
-            onBlur={() => update({ legendTitle: localLegendTitle })}
-            onKeyDown={(e) => e.key === 'Enter' && update({ legendTitle: localLegendTitle })}
-            placeholder="e.g. Million IDR"
-            className="mt-1 block w-full rounded border border-border bg-paper px-2 py-1 text-sm"
-          />
-        </label>
-        <label className="block">
-          <span className="text-xs text-muted">Attribution / Source</span>
-          <input
-            type="text"
-            value={localAttribution}
-            onChange={(e) => setLocalAttribution(e.target.value)}
-            onBlur={() => update({ attribution: localAttribution })}
-            onKeyDown={(e) => e.key === 'Enter' && update({ attribution: localAttribution })}
-            placeholder="e.g. Source: BPS 2023"
-            className="mt-1 block w-full rounded border border-border bg-paper px-2 py-1 text-sm"
-          />
-        </label>
-      </div>
     </div>
   )
 }
