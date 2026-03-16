@@ -710,8 +710,33 @@ function AdminDataPanel({ layer, handleUpdate }) {
   const [sampleError, setSampleError] = useState('')
   const [joinResult, setJoinResult] = useState(null)
   const [expanded, setExpanded] = useState(false)
+  const [adminFeatures, setAdminFeatures] = useState([])
 
   const hasData = Object.keys(config.featureValues || {}).length > 0
+
+  // Load admin features from GeoJSON on mount
+  useEffect(() => {
+    if (!layerConfig?.geojsonPath) return
+    
+    const loadFeatures = async () => {
+      try {
+        const url = import.meta.env.BASE_URL + layerConfig.geojsonPath
+        const response = await fetch(url)
+        if (!response.ok) return
+        const geojson = await response.json()
+        
+        const features = geojson.features.map((f) => ({
+          featureId: f.properties[layerConfig.featureIdField],
+          featureName: f.properties[layerConfig.featureNameField],
+        }))
+        setAdminFeatures(features)
+      } catch (err) {
+        console.error('Failed to load admin features:', err)
+      }
+    }
+    
+    loadFeatures()
+  }, [layerConfig])
 
   const handleFile = useCallback(async (file) => {
     if (!file || !file.name.endsWith('.csv')) return
@@ -753,18 +778,15 @@ function AdminDataPanel({ layer, handleUpdate }) {
 
   const handleApply = useCallback(() => {
     if (!csvData || !keyColumn || !valueColumn) return
-
-    // Create adminFeatures from layer config
-    // We need to fetch the features from the GeoJSON - for now we'll do a simple match
-    const adminFeatures = csvData.map((row) => ({
-      featureId: row[keyColumn],
-      featureName: row[keyColumn],
-    }))
+    if (adminFeatures.length === 0) {
+      console.warn('Admin features not loaded yet')
+      return
+    }
 
     const result = matchFeatures(csvData, keyColumn, keyType, valueColumn, adminFeatures, layerConfig)
     setJoinResult(result)
     handleUpdate({ featureValues: result.valueMap })
-  }, [csvData, keyColumn, keyType, valueColumn, layerConfig, handleUpdate])
+  }, [csvData, keyColumn, keyType, valueColumn, adminFeatures, layerConfig, handleUpdate])
 
   const handleClearData = useCallback(() => {
     setCsvData(null)
