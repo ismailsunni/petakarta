@@ -9,6 +9,7 @@ export default function MapTab() {
   const activeProjectId = useLayerTreeStore((s) => s.activeProjectId)
   const activeProjectPublic = useLayerTreeStore((s) => s.activeProjectPublic)
   const mapTitle = useLayerTreeStore((s) => s.mapTitle)
+  const mapDescription = useLayerTreeStore((s) => s.mapDescription)
   const legendTitle = useLayerTreeStore((s) => s.legendTitle)
   const attribution = useLayerTreeStore((s) => s.attribution)
   const exportExtent = useLayerTreeStore((s) => s.exportExtent)
@@ -20,10 +21,12 @@ export default function MapTab() {
 
   // Local state for text inputs
   const [localMapTitle, setLocalMapTitle] = useState(mapTitle)
+  const [localMapDescription, setLocalMapDescription] = useState(mapDescription)
   const [localLegendTitle, setLocalLegendTitle] = useState(legendTitle)
   const [localAttribution, setLocalAttribution] = useState(attribution)
 
   useEffect(() => { setLocalMapTitle(mapTitle) }, [mapTitle])
+  useEffect(() => { setLocalMapDescription(mapDescription) }, [mapDescription])
   useEffect(() => { setLocalLegendTitle(legendTitle) }, [legendTitle])
   useEffect(() => { setLocalAttribution(attribution) }, [attribution])
 
@@ -89,7 +92,7 @@ export default function MapTab() {
     <div className="space-y-4">
       {/* Labels Section */}
       <div>
-        <h3 className="text-sm font-medium mb-2">Labels</h3>
+        <h3 className="text-sm font-medium mb-2">Map Info</h3>
         <div className="space-y-2">
           <label className="block">
             <span className="text-xs text-muted">Map title</span>
@@ -101,6 +104,17 @@ export default function MapTab() {
               onKeyDown={(e) => e.key === 'Enter' && update({ mapTitle: localMapTitle })}
               placeholder="e.g. GDP per Capita 2023"
               className="mt-1 block w-full rounded border border-border bg-paper px-2 py-1 text-sm"
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs text-muted">Map description (for gallery)</span>
+            <textarea
+              value={localMapDescription}
+              onChange={(e) => setLocalMapDescription(e.target.value)}
+              onBlur={() => update({ mapDescription: localMapDescription })}
+              placeholder="A brief description of your map..."
+              rows={2}
+              className="mt-1 block w-full rounded border border-border bg-paper px-2 py-1 text-sm resize-none"
             />
           </label>
           <label className="block">

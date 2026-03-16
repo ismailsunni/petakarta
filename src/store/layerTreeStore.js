@@ -33,6 +33,7 @@ const useLayerTreeStore = create(
 
       // Map annotations (shared across project)
       mapTitle: "",
+      mapDescription: "",
       legendTitle: "",
       legendPosition: "bottom-right",
       attribution: "",
