@@ -302,6 +302,7 @@ export default function useUserLayers(map) {
         const olLayer = new VectorLayer({
           source,
           style,
+          declutter: true,
           visible: layer.visible,
           properties: {
             layerTreeId: layer.id,

@@ -31,7 +31,8 @@ export function makeLabelStyle(feature, labelField) {
       font: '11px "IBM Plex Sans", sans-serif',
       fill: new Fill({ color: '#1a1a2e' }),
       stroke: new Stroke({ color: '#ffffff', width: 3 }),
-      overflow: true,
+      overflow: false,
+      padding: [2, 4, 2, 4],
     }),
   })
 }
