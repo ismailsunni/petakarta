@@ -326,8 +326,12 @@ function AdminLayerStylePanel({
               checked={config.showFeatureLabels}
               onChange={(e) => handleUpdate({ showFeatureLabels: e.target.checked })}
             />
-            Show area names
+            Show feature labels
           </label>
+
+          {config.showFeatureLabels && (
+            <AdminLabelColumnSelector layer={layer} handleUpdate={handleUpdate} />
+          )}
         </div>
       </div>
     </div>
@@ -588,6 +592,19 @@ function UserLayerStylePanel({
                 className="w-6 h-6 rounded border border-border cursor-pointer"
               />
             </label>
+
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={config.showFeatureLabels || false}
+                onChange={(e) => handleConfigUpdate({ showFeatureLabels: e.target.checked })}
+              />
+              Show feature labels
+            </label>
+
+            {config.showFeatureLabels && (
+              <UserLabelColumnSelector layer={layer} handleConfigUpdate={handleConfigUpdate} />
+            )}
           </div>
         </div>
       )}
@@ -688,6 +705,113 @@ function UserLayerStylePanel({
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+/**
+ * UserLabelColumnSelector - Select which column to use for labels in user layers
+ */
+function UserLabelColumnSelector({ layer, handleConfigUpdate }) {
+  const config = layer.userConfig
+  const [availableColumns, setAvailableColumns] = useState([])
+
+  // Extract columns from the geojson stored in userConfig
+  useEffect(() => {
+    const geojson = config?.geojson
+    if (!geojson?.features || geojson.features.length === 0) {
+      setAvailableColumns([])
+      return
+    }
+
+    // Get properties from first feature
+    const props = geojson.features[0].properties || {}
+    const cols = Object.keys(props).filter(key => {
+      // Exclude internal properties and check for string/number values
+      if (key.startsWith('__')) return false
+      const val = props[key]
+      return typeof val === 'string' || typeof val === 'number'
+    })
+    setAvailableColumns(cols)
+  }, [config?.geojson])
+
+  const currentLabel = config.labelColumn || ''
+
+  return (
+    <div className="ml-6">
+      <label className="block text-xs text-muted mb-1">Label column</label>
+      <select
+        value={currentLabel}
+        onChange={(e) => handleConfigUpdate({ labelColumn: e.target.value })}
+        className="w-full rounded border border-border bg-paper px-2 py-1 text-sm"
+      >
+        <option value="">Select column...</option>
+        {availableColumns.map((col) => (
+          <option key={col} value={col}>
+            {col}
+          </option>
+        ))}
+      </select>
+    </div>
+  )
+}
+
+/**
+ * AdminLabelColumnSelector - Select which column to use for labels
+ */
+function AdminLabelColumnSelector({ layer, handleUpdate }) {
+  const config = layer.adminConfig
+  const layerConfig = getLayer(config.adminLayerId)
+  const [availableColumns, setAvailableColumns] = useState([])
+
+  // Load available columns from GeoJSON
+  useEffect(() => {
+    if (!layerConfig?.geojsonPath) return
+
+    const loadColumns = async () => {
+      try {
+        const url = import.meta.env.BASE_URL + layerConfig.geojsonPath
+        const response = await fetch(url)
+        if (!response.ok) return
+        const geojson = await response.json()
+
+        // Get properties from first feature
+        if (geojson.features && geojson.features.length > 0) {
+          const props = geojson.features[0].properties || {}
+          const cols = Object.keys(props).filter(key => 
+            typeof props[key] === 'string' || typeof props[key] === 'number'
+          )
+          setAvailableColumns(cols)
+        }
+      } catch (err) {
+        console.error('Failed to load admin feature columns:', err)
+      }
+    }
+
+    loadColumns()
+  }, [layerConfig])
+
+  // Default to featureNameField if no labelColumn is set
+  const currentLabel = config.labelColumn || layerConfig?.featureNameField || ''
+
+  return (
+    <div className="ml-6 mt-1">
+      <label className="block text-xs text-muted mb-1">Label column</label>
+      <select
+        value={currentLabel}
+        onChange={(e) => handleUpdate({ labelColumn: e.target.value })}
+        className="w-full rounded border border-border bg-paper px-2 py-1 text-sm"
+      >
+        {availableColumns.length === 0 ? (
+          <option value="">Loading...</option>
+        ) : (
+          availableColumns.map((col) => (
+            <option key={col} value={col}>
+              {col} {col === layerConfig?.featureNameField ? '(default)' : ''}
+            </option>
+          ))
+        )}
+      </select>
     </div>
   )
 }

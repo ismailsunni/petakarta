@@ -146,20 +146,26 @@ export default function useAdminLayer(map) {
 function updateLayerStyle(olLayer, layer, layerConfig) {
   const config = layer.adminConfig;
   const featureValues = config.featureValues || {};
+  // Determine label field: use labelColumn if set, otherwise default to featureNameField
+  const labelField = config.labelColumn || layerConfig.featureNameField;
 
   // Single style mode - use fill color
   if (config.styleMode === "single") {
     if (config.showFeatureLabels) {
-      olLayer.setStyle((feature) => [
-        new Style({
-          fill: new Fill({ color: config.fillColor || "#3498DB" }),
-          stroke: new Stroke({
-            color: config.strokeColor || "#ffffff",
-            width: config.strokeWidth || 0.8,
+      olLayer.setStyle((feature) => {
+        const styles = [
+          new Style({
+            fill: new Fill({ color: config.fillColor || "#3498DB" }),
+            stroke: new Stroke({
+              color: config.strokeColor || "#ffffff",
+              width: config.strokeWidth || 0.8,
+            }),
           }),
-        }),
-        makeLabelStyle(feature, layerConfig),
-      ]);
+        ];
+        const labelStyle = makeLabelStyle(feature, labelField);
+        if (labelStyle) styles.push(labelStyle);
+        return styles;
+      });
     } else {
       olLayer.setStyle(
         new Style({
@@ -177,16 +183,20 @@ function updateLayerStyle(olLayer, layer, layerConfig) {
   // No feature values - use no-data style
   if (!featureValues || Object.keys(featureValues).length === 0) {
     if (config.showFeatureLabels) {
-      olLayer.setStyle((feature) => [
-        new Style({
-          fill: new Fill({ color: config.noDataColor || "#d4d0c8" }),
-          stroke: new Stroke({
-            color: config.strokeColor || "#ffffff",
-            width: config.strokeWidth || 0.8,
+      olLayer.setStyle((feature) => {
+        const styles = [
+          new Style({
+            fill: new Fill({ color: config.noDataColor || "#d4d0c8" }),
+            stroke: new Stroke({
+              color: config.strokeColor || "#ffffff",
+              width: config.strokeWidth || 0.8,
+            }),
           }),
-        }),
-        makeLabelStyle(feature, layerConfig),
-      ]);
+        ];
+        const labelStyle = makeLabelStyle(feature, labelField);
+        if (labelStyle) styles.push(labelStyle);
+        return styles;
+      });
     } else {
       olLayer.setStyle(
         new Style({
@@ -211,6 +221,7 @@ function updateLayerStyle(olLayer, layer, layerConfig) {
           strokeWidth: config.strokeWidth,
           noDataColor: config.noDataColor,
           showFeatureLabels: config.showFeatureLabels,
+          labelColumn: config.labelColumn,
         })
       : buildGraduatedStyleFn({
           valueMap: featureValues,
@@ -224,6 +235,7 @@ function updateLayerStyle(olLayer, layer, layerConfig) {
           strokeWidth: config.strokeWidth,
           noDataColor: config.noDataColor,
           showFeatureLabels: config.showFeatureLabels,
+          labelColumn: config.labelColumn,
         });
 
   olLayer.setStyle(styleFunction || DEFAULT_STYLE);

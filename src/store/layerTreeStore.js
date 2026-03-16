@@ -19,6 +19,7 @@ const DEFAULT_ADMIN_STYLE = {
   strokeWidth: 0.8,
   noDataColor: "#e0e0e0",
   showFeatureLabels: false,
+  labelColumn: "", // empty means use default featureNameField
 };
 
 const useLayerTreeStore = create(

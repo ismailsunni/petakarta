@@ -9,6 +9,7 @@ import { FIT_PADDING } from "../utils/mapConstants";
 import { buildColorScale, getCategoryColor } from "../utils/colorUtils";
 import { getBreaks } from "../utils/classificationUtils";
 import { downloadDataset } from "../lib/datasetsService";
+import { makeLabelStyle } from "../utils/styleUtils";
 
 const BASE_Z_INDEX = 5;
 
@@ -23,6 +24,8 @@ function createStyleFromConfig(userConfig, layerOpacity = 1) {
     strokeWidth = 0.8,
     pointRadius = 6,
     noDataColor = "#e0e0e0",
+    showFeatureLabels = false,
+    labelColumn = "",
   } = userConfig;
 
   const fillColorWithAlpha = hexToRgba(fillColor, 0.8 * layerOpacity);
@@ -50,7 +53,26 @@ function createStyleFromConfig(userConfig, layerOpacity = 1) {
     });
   }
 
-  // Polygon or default
+  // Polygon or default - support labels
+  if (showFeatureLabels && labelColumn) {
+    return (feature) => {
+      const styles = [
+        new Style({
+          fill: new Fill({ color: fillColorWithAlpha }),
+          stroke: new Stroke({
+            color: strokeColorWithAlpha,
+            width: strokeWidth,
+          }),
+        }),
+      ];
+      const labelStyle = makeLabelStyle(feature, labelColumn);
+      if (labelStyle) {
+        styles.push(labelStyle);
+      }
+      return styles;
+    };
+  }
+
   return new Style({
     fill: new Fill({ color: fillColorWithAlpha }),
     stroke: new Stroke({
@@ -75,6 +97,8 @@ function createValueBasedStyleFunction(userConfig, layerOpacity = 1) {
     strokeColor = "#333333",
     strokeWidth = 1,
     noDataColor = "#e0e0e0",
+    showFeatureLabels = false,
+    labelColumn = "",
   } = userConfig;
 
   // No values - return null to use default style
@@ -121,15 +145,27 @@ function createValueBasedStyleFunction(userConfig, layerOpacity = 1) {
       }
     }
 
-    return new Style({
-      fill: new Fill({
-        color: hexToRgba(fillColor, 0.8 * layerOpacity),
+    const styles = [
+      new Style({
+        fill: new Fill({
+          color: hexToRgba(fillColor, 0.8 * layerOpacity),
+        }),
+        stroke: new Stroke({
+          color: hexToRgba(strokeColor, layerOpacity),
+          width: strokeWidth,
+        }),
       }),
-      stroke: new Stroke({
-        color: hexToRgba(strokeColor, layerOpacity),
-        width: strokeWidth,
-      }),
-    });
+    ];
+
+    // Add label if enabled and column is set
+    if (showFeatureLabels && labelColumn) {
+      const labelStyle = makeLabelStyle(feature, labelColumn);
+      if (labelStyle) {
+        styles.push(labelStyle);
+      }
+    }
+
+    return styles;
   };
 }
 

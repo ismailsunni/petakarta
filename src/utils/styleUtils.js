@@ -2,7 +2,7 @@ import { Style, Fill, Stroke, Text } from 'ol/style'
 import { buildColorScale } from './colorUtils'
 import { getBreaks, classifyValue } from './classificationUtils'
 
-export function makeLabelStyle(feature, layerConfig) {
+export function makeLabelStyle(feature, labelField) {
   const geom = feature.getGeometry()
   let labelPoint
   if (geom.getType() === 'MultiPolygon') {
@@ -20,10 +20,14 @@ export function makeLabelStyle(feature, layerConfig) {
   } else {
     labelPoint = geom.getInteriorPoint()
   }
+  
+  const labelText = feature.get(labelField)
+  if (!labelText) return null
+  
   return new Style({
     geometry: labelPoint,
     text: new Text({
-      text: feature.get(layerConfig.featureNameField),
+      text: String(labelText),
       font: '11px "IBM Plex Sans", sans-serif',
       fill: new Fill({ color: '#1a1a2e' }),
       stroke: new Stroke({ color: '#ffffff', width: 3 }),
@@ -34,7 +38,7 @@ export function makeLabelStyle(feature, layerConfig) {
 
 export function buildGraduatedStyleFn({
   valueMap, layerConfig, numClasses, classMethod, manualBreaks,
-  colorPreset, colorReversed, strokeColor, strokeWidth, noDataColor, showFeatureLabels,
+  colorPreset, colorReversed, strokeColor, strokeWidth, noDataColor, showFeatureLabels, labelColumn,
 }) {
   const numericMap = {}
   for (const [code, raw] of Object.entries(valueMap)) {
@@ -59,6 +63,9 @@ export function buildGraduatedStyleFn({
     classColors.push(scale(t).hex())
   }
 
+  // Use labelColumn if provided, otherwise default to featureNameField
+  const labelField = labelColumn || layerConfig.featureNameField
+
   return (feature) => {
     const featureCode = feature.get(layerConfig.featureIdField)
     const value = numericMap[featureCode]
@@ -74,14 +81,20 @@ export function buildGraduatedStyleFn({
       fill: new Fill({ color: fillColor }),
       stroke: new Stroke({ color: strokeColor, width: strokeWidth }),
     })]
-    if (showFeatureLabels) styles.push(makeLabelStyle(feature, layerConfig))
+    if (showFeatureLabels) {
+      const labelStyle = makeLabelStyle(feature, labelField)
+      if (labelStyle) styles.push(labelStyle)
+    }
     return styles
   }
 }
 
 export function buildCategorizedStyleFn({
-  valueMap, layerConfig, categoryColors, strokeColor, strokeWidth, noDataColor, showFeatureLabels,
+  valueMap, layerConfig, categoryColors, strokeColor, strokeWidth, noDataColor, showFeatureLabels, labelColumn,
 }) {
+  // Use labelColumn if provided, otherwise default to featureNameField
+  const labelField = labelColumn || layerConfig.featureNameField
+  
   return (feature) => {
     const featureCode = feature.get(layerConfig.featureIdField)
     const value = valueMap[featureCode]
@@ -94,7 +107,10 @@ export function buildCategorizedStyleFn({
       fill: new Fill({ color: fillColor }),
       stroke: new Stroke({ color: strokeColor, width: strokeWidth }),
     })]
-    if (showFeatureLabels) styles.push(makeLabelStyle(feature, layerConfig))
+    if (showFeatureLabels) {
+      const labelStyle = makeLabelStyle(feature, labelField)
+      if (labelStyle) styles.push(labelStyle)
+    }
     return styles
   }
 }
