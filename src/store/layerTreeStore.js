@@ -36,7 +36,7 @@ const useLayerTreeStore = create(
       legendPosition: "bottom-right",
       attribution: "",
       basemap: "osm",
-      exportExtent: "current", // "current" or layer id
+      exportExtent: "", // "" (current view) or layer id
 
       // Project state
       activeProjectId: null,

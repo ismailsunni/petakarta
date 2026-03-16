@@ -16,7 +16,7 @@ export default function MapTab() {
 
   const [resolution, setResolution] = useState(2)
   const [copied, setCopied] = useState(false)
-  
+
   // Local state for text inputs
   const [localMapTitle, setLocalMapTitle] = useState(mapTitle)
   const [localLegendTitle, setLocalLegendTitle] = useState(legendTitle)
@@ -137,7 +137,7 @@ export default function MapTab() {
           onChange={(e) => update({ exportExtent: e.target.value })}
           className="w-full rounded border border-border bg-paper px-2 py-1.5 text-sm"
         >
-          <option value="current">Current view</option>
+          <option value="">Current view</option>
           {layersWithExtent.map((layer) => (
             <option key={layer.id} value={layer.id}>
               {layer.name}
