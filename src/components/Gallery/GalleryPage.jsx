@@ -103,7 +103,6 @@ export default function GalleryPage() {
             )
           })}
         </div>
-        </div>
 
         {/* Sentinel for infinite scroll */}
         <div ref={sentinelRef} className="h-1" />
