@@ -152,7 +152,7 @@ function updateLayerStyle(olLayer, layer, layerConfig) {
   // Single style mode - use fill color
   if (config.styleMode === "single") {
     if (config.showFeatureLabels) {
-      olLayer.setStyle((feature) => {
+      olLayer.setStyle((feature, resolution) => {
         const styles = [
           new Style({
             fill: new Fill({ color: config.fillColor || "#3498DB" }),
@@ -162,7 +162,7 @@ function updateLayerStyle(olLayer, layer, layerConfig) {
             }),
           }),
         ];
-        const labelStyle = makeLabelStyle(feature, labelField);
+        const labelStyle = makeLabelStyle(feature, labelField, resolution);
         if (labelStyle) styles.push(labelStyle);
         return styles;
       });
@@ -183,7 +183,7 @@ function updateLayerStyle(olLayer, layer, layerConfig) {
   // No feature values - use no-data style
   if (!featureValues || Object.keys(featureValues).length === 0) {
     if (config.showFeatureLabels) {
-      olLayer.setStyle((feature) => {
+      olLayer.setStyle((feature, resolution) => {
         const styles = [
           new Style({
             fill: new Fill({ color: config.noDataColor || "#d4d0c8" }),
@@ -193,7 +193,7 @@ function updateLayerStyle(olLayer, layer, layerConfig) {
             }),
           }),
         ];
-        const labelStyle = makeLabelStyle(feature, labelField);
+        const labelStyle = makeLabelStyle(feature, labelField, resolution);
         if (labelStyle) styles.push(labelStyle);
         return styles;
       });

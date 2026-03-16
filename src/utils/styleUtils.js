@@ -2,9 +2,11 @@ import { Style, Fill, Stroke, Text } from 'ol/style'
 import { buildColorScale } from './colorUtils'
 import { getBreaks, classifyValue } from './classificationUtils'
 
-export function makeLabelStyle(feature, labelField) {
+export function makeLabelStyle(feature, labelField, resolution) {
   const geom = feature.getGeometry()
   let labelPoint
+  let featureArea
+  
   if (geom.getType() === 'MultiPolygon') {
     const polygons = geom.getPolygons()
     let largest = polygons[0]
@@ -17,8 +19,20 @@ export function makeLabelStyle(feature, labelField) {
       }
     }
     labelPoint = largest.getInteriorPoint()
+    featureArea = maxArea
   } else {
     labelPoint = geom.getInteriorPoint()
+    featureArea = geom.getArea()
+  }
+  
+  // Skip labels for small features based on resolution
+  // At higher resolutions (zoomed out), require larger features
+  if (resolution) {
+    const minAreaPixels = 2500 // ~50x50 pixels
+    const minAreaMap = minAreaPixels * resolution * resolution
+    if (featureArea < minAreaMap) {
+      return null
+    }
   }
   
   const labelText = feature.get(labelField)
@@ -67,7 +81,7 @@ export function buildGraduatedStyleFn({
   // Use labelColumn if provided, otherwise default to featureNameField
   const labelField = labelColumn || layerConfig.featureNameField
 
-  return (feature) => {
+  return (feature, resolution) => {
     const featureCode = feature.get(layerConfig.featureIdField)
     const value = numericMap[featureCode]
 
@@ -83,7 +97,7 @@ export function buildGraduatedStyleFn({
       stroke: new Stroke({ color: strokeColor, width: strokeWidth }),
     })]
     if (showFeatureLabels) {
-      const labelStyle = makeLabelStyle(feature, labelField)
+      const labelStyle = makeLabelStyle(feature, labelField, resolution)
       if (labelStyle) styles.push(labelStyle)
     }
     return styles
@@ -96,7 +110,7 @@ export function buildCategorizedStyleFn({
   // Use labelColumn if provided, otherwise default to featureNameField
   const labelField = labelColumn || layerConfig.featureNameField
   
-  return (feature) => {
+  return (feature, resolution) => {
     const featureCode = feature.get(layerConfig.featureIdField)
     const value = valueMap[featureCode]
 
@@ -109,7 +123,7 @@ export function buildCategorizedStyleFn({
       stroke: new Stroke({ color: strokeColor, width: strokeWidth }),
     })]
     if (showFeatureLabels) {
-      const labelStyle = makeLabelStyle(feature, labelField)
+      const labelStyle = makeLabelStyle(feature, labelField, resolution)
       if (labelStyle) styles.push(labelStyle)
     }
     return styles
