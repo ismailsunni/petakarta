@@ -79,9 +79,9 @@ export default function MapControls({ onFit, onExport }) {
 
   return (
     <div ref={containerRef} className="absolute top-3 right-3 z-10 flex items-start gap-1.5">
-      <button onClick={onFit} className={BTN} title="Fit to layer">
+      <button onClick={onFit} className={BTN} title="Zoom to Map Extent">
         <FitIcon />
-        <Tooltip>Fit to layer</Tooltip>
+        <Tooltip>Zoom to Map Extent</Tooltip>
       </button>
 
       <button onClick={onExport} className={BTN} title="Export as PNG">

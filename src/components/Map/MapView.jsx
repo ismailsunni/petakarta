@@ -26,24 +26,44 @@ export default function MapView() {
   const selectedLayerId = useLayerTreeStore((s) => s.selectedLayerId)
   const layers = useLayerTreeStore((s) => s.layers)
 
+  const exportExtent = useLayerTreeStore((s) => s.exportExtent)
+
   useEffect(() => {
     exportFnRef.current = exportMap
   }, [exportMap, exportFnRef])
 
-  const fitToLayer = useCallback(() => {
+  const zoomToMapExtent = useCallback(() => {
     if (!map) return
-    // Find the selected layer or first admin layer to fit to
-    const selectedLayer = layers.find(l => l.id === selectedLayerId)
-    const adminLayer = selectedLayer?.type === 'admin'
-      ? selectedLayer
-      : layers.find(l => l.type === 'admin')
 
-    if (adminLayer?.adminConfig?.adminLayerId) {
-      const { bbox } = getLayer(adminLayer.adminConfig.adminLayerId)
-      const extent = transformExtent(bbox, 'EPSG:4326', 'EPSG:3857')
-      map.getView().fit(extent, { padding: FIT_PADDING, duration: 500 })
+    // If a specific layer is selected for export extent, zoom to it
+    if (exportExtent) {
+      const selectedLayer = layers.find(l => l.id === exportExtent)
+      if (selectedLayer) {
+        let bbox = null
+        if (selectedLayer.type === 'admin') {
+          const layerConfig = getLayer(selectedLayer.adminConfig?.adminLayerId)
+          bbox = layerConfig?.bbox
+        } else if (selectedLayer.userConfig?.bbox) {
+          bbox = selectedLayer.userConfig.bbox
+        }
+        if (bbox && bbox.length === 4) {
+          const extent = transformExtent(bbox, 'EPSG:4326', 'EPSG:3857')
+          map.getView().fit(extent, { padding: FIT_PADDING, duration: 500 })
+          return
+        }
+      }
     }
-  }, [map, selectedLayerId, layers])
+
+    // Otherwise zoom to first admin layer if available
+    const adminLayer = layers.find(l => l.type === 'admin')
+    if (adminLayer?.adminConfig?.adminLayerId) {
+      const layerConfig = getLayer(adminLayer.adminConfig.adminLayerId)
+      if (layerConfig?.bbox) {
+        const extent = transformExtent(layerConfig.bbox, 'EPSG:4326', 'EPSG:3857')
+        map.getView().fit(extent, { padding: FIT_PADDING, duration: 500 })
+      }
+    }
+  }, [map, exportExtent, layers])
 
   return (
     <div className="relative flex-1 h-full">
@@ -54,7 +74,7 @@ export default function MapView() {
       <MapAttribution />
       <Tooltip map={map} />
       <MapControls
-        onFit={fitToLayer}
+        onFit={zoomToMapExtent}
         onExport={() => exportMap(2)}
       />
       {viewMode === 'view' && (
