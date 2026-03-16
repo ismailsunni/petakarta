@@ -6,12 +6,8 @@ import { Style, Fill, Stroke, Circle as CircleStyle } from "ol/style";
 import { transformExtent } from "ol/proj";
 import useLayerTreeStore from "../store/layerTreeStore";
 import { FIT_PADDING } from "../utils/mapConstants";
-import {
-  getColorFromValue,
-  getCategoryColor,
-  interpolateRamp,
-} from "../utils/colorUtils";
-import { computeBreaks } from "../utils/classificationUtils";
+import { buildColorScale, getCategoryColor } from "../utils/colorUtils";
+import { getBreaks } from "../utils/classificationUtils";
 
 const BASE_Z_INDEX = 5;
 
@@ -83,12 +79,16 @@ function createValueBasedStyleFunction(userConfig, layerOpacity = 1) {
     return null;
   }
 
-  // Compute breaks for graduated mode
+  // Compute breaks and color scale for graduated mode
   let breaks = null;
+  let colorScale = null;
   if (styleMode === "graduated") {
-    const values = Object.values(featureValues).map(Number).filter((v) => !isNaN(v));
+    const values = Object.values(featureValues)
+      .map(Number)
+      .filter((v) => !isNaN(v));
     if (values.length > 0) {
-      breaks = manualBreaks || computeBreaks(values, numClasses, classMethod);
+      breaks = manualBreaks || getBreaks(values, classMethod, numClasses);
+      colorScale = buildColorScale(colorRamp, numClasses, false);
     }
   }
 
@@ -101,17 +101,20 @@ function createValueBasedStyleFunction(userConfig, layerOpacity = 1) {
     let fillColor = noDataColor;
 
     if (value !== undefined && value !== null) {
-      if (styleMode === "graduated" && breaks) {
+      if (styleMode === "graduated" && breaks && colorScale) {
         const numValue = Number(value);
         if (!isNaN(numValue)) {
-          fillColor = getColorFromValue(numValue, breaks, colorRamp);
+          // Find which class the value falls into and get corresponding color
+          fillColor = colorScale(numValue).hex();
         }
       } else if (styleMode === "categorized") {
         const strValue = String(value);
         // Use category color if defined, otherwise generate one
-        fillColor = categoryColors[strValue] || getCategoryColor(
-          Object.keys(featureValues).indexOf(String(featureIndex)) % 20
-        );
+        fillColor =
+          categoryColors[strValue] ||
+          getCategoryColor(
+            Object.keys(featureValues).indexOf(String(featureIndex)) % 20
+          );
       }
     }
 
@@ -194,7 +197,10 @@ export default function useUserLayers(map) {
         existing.olLayer.setZIndex(BASE_Z_INDEX + layer.order);
 
         // Update style (including opacity) - use value-based style if available
-        const valueBasedStyle = createValueBasedStyleFunction(userConfig, layer.opacity);
+        const valueBasedStyle = createValueBasedStyleFunction(
+          userConfig,
+          layer.opacity
+        );
         if (valueBasedStyle) {
           existing.olLayer.setStyle(valueBasedStyle);
         } else {
@@ -216,8 +222,12 @@ export default function useUserLayers(map) {
         const source = new VectorSource({ features });
 
         // Use value-based style if available, otherwise basic style
-        const valueBasedStyle = createValueBasedStyleFunction(userConfig, layer.opacity);
-        const style = valueBasedStyle || createOLStyle(userConfig.style, layer.opacity);
+        const valueBasedStyle = createValueBasedStyleFunction(
+          userConfig,
+          layer.opacity
+        );
+        const style =
+          valueBasedStyle || createOLStyle(userConfig.style, layer.opacity);
 
         const olLayer = new VectorLayer({
           source,

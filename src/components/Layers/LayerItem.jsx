@@ -3,15 +3,12 @@ import useLayerTreeStore from '../../store/layerTreeStore'
 
 export default function LayerItem({ layer, isFirst, isLast }) {
   const [expanded, setExpanded] = useState(false)
-  const selectedLayerId = useLayerTreeStore((s) => s.selectedLayerId)
-  const selectLayer = useLayerTreeStore((s) => s.selectLayer)
   const toggleVisibility = useLayerTreeStore((s) => s.toggleVisibility)
   const setOpacity = useLayerTreeStore((s) => s.setOpacity)
   const removeLayer = useLayerTreeStore((s) => s.removeLayer)
   const moveLayerUp = useLayerTreeStore((s) => s.moveLayerUp)
   const moveLayerDown = useLayerTreeStore((s) => s.moveLayerDown)
 
-  const isSelected = selectedLayerId === layer.id
   const isAdmin = layer.type === 'admin'
 
   const handleFitToLayer = useCallback(() => {
@@ -73,18 +70,9 @@ export default function LayerItem({ layer, isFirst, isLast }) {
   }
 
   return (
-    <div
-      className={`rounded border transition-colors ${
-        isSelected
-          ? 'border-accent bg-accent/5'
-          : 'border-border bg-paper hover:border-accent/50'
-      }`}
-    >
+    <div className="rounded border border-border bg-paper hover:border-accent/50 transition-colors">
       {/* Main row */}
-      <div
-        className="flex items-center gap-2 p-2 cursor-pointer"
-        onClick={() => selectLayer(layer.id)}
-      >
+      <div className="flex items-center gap-2 p-2">
         {/* Visibility toggle */}
         <button
           onClick={(e) => {
@@ -205,12 +193,6 @@ export default function LayerItem({ layer, isFirst, isLast }) {
         </div>
       )}
 
-      {/* Selection indicator */}
-      {isSelected && !expanded && (
-        <div className="px-2 pb-2 text-xs text-accent">
-          Selected for styling
-        </div>
-      )}
     </div>
   )
 }

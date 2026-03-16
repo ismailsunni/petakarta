@@ -147,11 +147,39 @@ function updateLayerStyle(olLayer, layer, layerConfig) {
   const config = layer.adminConfig;
   const featureValues = config.featureValues || {};
 
+  // Single style mode - use fill color
+  if (config.styleMode === "single") {
+    if (config.showFeatureLabels) {
+      olLayer.setStyle((feature) => [
+        new Style({
+          fill: new Fill({ color: config.fillColor || "#3498DB" }),
+          stroke: new Stroke({
+            color: config.strokeColor || "#ffffff",
+            width: config.strokeWidth || 0.8,
+          }),
+        }),
+        makeLabelStyle(feature, layerConfig),
+      ]);
+    } else {
+      olLayer.setStyle(
+        new Style({
+          fill: new Fill({ color: config.fillColor || "#3498DB" }),
+          stroke: new Stroke({
+            color: config.strokeColor || "#ffffff",
+            width: config.strokeWidth || 0.8,
+          }),
+        })
+      );
+    }
+    return;
+  }
+
+  // No feature values - use no-data style
   if (!featureValues || Object.keys(featureValues).length === 0) {
     if (config.showFeatureLabels) {
       olLayer.setStyle((feature) => [
         new Style({
-          fill: new Fill({ color: "#d4d0c8" }),
+          fill: new Fill({ color: config.noDataColor || "#d4d0c8" }),
           stroke: new Stroke({
             color: config.strokeColor || "#ffffff",
             width: config.strokeWidth || 0.8,

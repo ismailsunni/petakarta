@@ -201,6 +201,16 @@ function AdminLayerStylePanel({
         <h3 className="text-sm font-medium mb-2">Style Mode</h3>
         <div className="flex rounded border border-border overflow-hidden">
           <button
+            onClick={() => handleModeChange('single')}
+            className={`flex-1 px-3 py-1.5 text-xs font-medium transition-colors ${
+              config.styleMode === 'single'
+                ? 'bg-accent text-white'
+                : 'bg-paper text-muted hover:text-ink'
+            }`}
+          >
+            Single
+          </button>
+          <button
             onClick={() => handleModeChange('graduated')}
             className={`flex-1 px-3 py-1.5 text-xs font-medium transition-colors ${
               config.styleMode === 'graduated'
@@ -222,6 +232,27 @@ function AdminLayerStylePanel({
           </button>
         </div>
       </div>
+
+      {/* Single style mode - fill color */}
+      {config.styleMode === 'single' && (
+        <div>
+          <h3 className="text-sm font-medium mb-2">Fill Color</h3>
+          <div className="flex gap-2 items-center">
+            <input
+              type="color"
+              value={config.fillColor || '#3498DB'}
+              onChange={(e) => handleUpdate({ fillColor: e.target.value })}
+              className="w-8 h-8 rounded border border-border cursor-pointer"
+            />
+            <input
+              type="text"
+              value={config.fillColor || '#3498DB'}
+              onChange={(e) => handleUpdate({ fillColor: e.target.value })}
+              className="flex-1 rounded border border-border bg-paper px-2 py-1 text-sm font-mono"
+            />
+          </div>
+        </div>
+      )}
 
       {config.styleMode === 'graduated' && (
         <>
