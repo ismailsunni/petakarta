@@ -35,9 +35,13 @@ export default function MapView() {
   const zoomToMapExtent = useCallback(() => {
     if (!map) return
 
+    // Get current state from store (in case layers changed)
+    const currentLayers = useLayerTreeStore.getState().layers
+    const currentExportExtent = useLayerTreeStore.getState().exportExtent
+
     // If a specific layer is selected for export extent, zoom to it
-    if (exportExtent) {
-      const selectedLayer = layers.find(l => l.id === exportExtent)
+    if (currentExportExtent) {
+      const selectedLayer = currentLayers.find(l => l.id === currentExportExtent)
       if (selectedLayer) {
         let bbox = null
         if (selectedLayer.type === 'admin') {
@@ -55,7 +59,7 @@ export default function MapView() {
     }
 
     // Otherwise zoom to first admin layer if available
-    const adminLayer = layers.find(l => l.type === 'admin')
+    const adminLayer = currentLayers.find(l => l.type === 'admin')
     if (adminLayer?.adminConfig?.adminLayerId) {
       const layerConfig = getLayer(adminLayer.adminConfig.adminLayerId)
       if (layerConfig?.bbox) {
@@ -63,7 +67,14 @@ export default function MapView() {
         map.getView().fit(extent, { padding: FIT_PADDING, duration: 500 })
       }
     }
-  }, [map, exportExtent, layers])
+  }, [map])
+
+  // Listen for zoomToMapExtent event (triggered when project loads)
+  useEffect(() => {
+    const handleZoomToExtent = () => zoomToMapExtent()
+    window.addEventListener('zoomToMapExtent', handleZoomToExtent)
+    return () => window.removeEventListener('zoomToMapExtent', handleZoomToExtent)
+  }, [zoomToMapExtent])
 
   return (
     <div className="relative flex-1 h-full">

@@ -42,6 +42,11 @@ function MapEditor() {
           activeProjectPublic: data.is_public ?? false,
         })
         setShareLoading(false)
+        
+        // Dispatch event to zoom to map extent after loading
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('zoomToMapExtent'))
+        }, 100)
       })
     }
   }, [])

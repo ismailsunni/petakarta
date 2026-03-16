@@ -126,6 +126,24 @@ export async function downloadDataset(storagePath) {
     return { data: null, error: { message: "Supabase not configured" } };
   }
 
+  // Try to get public URL first (for public buckets)
+  const { data: publicUrlData } = supabase.storage
+    .from(BUCKET_NAME)
+    .getPublicUrl(storagePath);
+
+  if (publicUrlData?.publicUrl) {
+    try {
+      const response = await fetch(publicUrlData.publicUrl);
+      if (response.ok) {
+        const geojson = await response.json();
+        return { data: geojson, error: null };
+      }
+    } catch {
+      // Fall through to authenticated download
+    }
+  }
+
+  // Fall back to authenticated download
   const { data, error } = await supabase.storage
     .from(BUCKET_NAME)
     .download(storagePath);
