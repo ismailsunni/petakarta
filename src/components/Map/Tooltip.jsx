@@ -1,7 +1,8 @@
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Overlay from 'ol/Overlay'
 import useLayerTreeStore from '../../store/layerTreeStore'
+import { getLayer } from '../../utils/adminLayers'
 
 const formatValue = (v) => {
   if (v == null || v === '') return 'No data'
@@ -11,15 +12,40 @@ const formatValue = (v) => {
 }
 
 /**
- * Get featureValues from the selected admin layer or first admin layer with data
+ * Find all admin layer features at a pixel
  */
-const getFeatureValues = () => {
-  const { layers, selectedLayerId } = useLayerTreeStore.getState()
-  const selectedLayer = layers.find(l => l.id === selectedLayerId)
-  const adminLayer = selectedLayer?.type === 'admin'
-    ? selectedLayer
-    : layers.find(l => l.type === 'admin' && l.adminConfig?.featureValues && Object.keys(l.adminConfig.featureValues).length > 0)
-  return adminLayer?.adminConfig?.featureValues || {}
+const getAllAdminFeatures = (map, pixel) => {
+  const { layers } = useLayerTreeStore.getState()
+  const results = []
+  const seenLayerIds = new Set()
+
+  map.forEachFeatureAtPixel(pixel, (feature) => {
+    for (const layer of layers) {
+      if (layer.type !== 'admin') continue
+      if (seenLayerIds.has(layer.id)) continue
+
+      const layerConfig = getLayer(layer.adminConfig?.adminLayerId)
+      if (!layerConfig) continue
+
+      const featureId = feature.get(layerConfig.featureIdField)
+      if (featureId !== undefined) {
+        const featureName = feature.get(layerConfig.featureNameField)
+        const featureValues = layer.adminConfig?.featureValues || {}
+        const value = featureValues[featureId]
+
+        results.push({
+          layerName: layer.name,
+          featureId,
+          featureName,
+          value,
+        })
+        seenLayerIds.add(layer.id)
+        break // This feature matched this layer, move to next feature
+      }
+    }
+  })
+
+  return results
 }
 
 export default function Tooltip({ map }) {
@@ -27,6 +53,10 @@ export default function Tooltip({ map }) {
   const clickRef = useRef(null)
   const hoverOverlayRef = useRef(null)
   const clickOverlayRef = useRef(null)
+
+  // State for dynamic content
+  const [hoverData, setHoverData] = useState([])
+  const [clickData, setClickData] = useState([])
 
   // Set up OL Overlays once the map is ready
   useEffect(() => {
@@ -63,55 +93,24 @@ export default function Tooltip({ map }) {
   useEffect(() => {
     if (!map) return
 
-    const getProvinceFeature = (pixel) => {
-      let found = null
-      map.forEachFeatureAtPixel(pixel, (f) => {
-        if (f.get('ADM1_PCODE')) {
-          found = f
-          return true
-        }
-      })
-      return found
-    }
-
-    const updateTooltipContent = (el, name, value, pcode) => {
-      const nameEl = el.querySelector('[data-name]')
-      const valueEl = el.querySelector('[data-value]')
-      if (nameEl) nameEl.textContent = name
-      if (valueEl) {
-        valueEl.textContent = formatValue(value)
-        valueEl.className = `text-sm font-mono leading-tight mt-0.5 ${value == null ? 'text-paper/50' : ''}`
-      }
-    }
-
-    const updateClickContent = (el, name, value, pcode) => {
-      const nameEl = el.querySelector('[data-click-name]')
-      const pcodeEl = el.querySelector('[data-click-pcode]')
-      const valueEl = el.querySelector('[data-click-value]')
-      if (nameEl) nameEl.textContent = name
-      if (pcodeEl) pcodeEl.textContent = pcode
-      if (valueEl) valueEl.textContent = formatValue(value)
-    }
-
     const handlePointerMove = (evt) => {
       const hoverOverlay = hoverOverlayRef.current
       if (!hoverOverlay) return
 
       if (evt.dragging) {
         hoverOverlay.setPosition(undefined)
+        setHoverData([])
         return
       }
 
-      const feature = getProvinceFeature(evt.pixel)
-      if (feature) {
-        const name = feature.get('province_name')
-        const pcode = feature.get('ADM1_PCODE')
-        const value = getFeatureValues()[pcode]
-        updateTooltipContent(hoverRef.current, name, value, pcode)
+      const features = getAllAdminFeatures(map, evt.pixel)
+      if (features.length > 0) {
+        setHoverData(features)
         hoverOverlay.setPosition(evt.coordinate)
         map.getTargetElement().style.cursor = 'pointer'
       } else {
         hoverOverlay.setPosition(undefined)
+        setHoverData([])
         map.getTargetElement().style.cursor = ''
       }
     }
@@ -120,15 +119,13 @@ export default function Tooltip({ map }) {
       const clickOverlay = clickOverlayRef.current
       if (!clickOverlay) return
 
-      const feature = getProvinceFeature(evt.pixel)
-      if (feature) {
-        const name = feature.get('province_name')
-        const pcode = feature.get('ADM1_PCODE')
-        const value = getFeatureValues()[pcode]
-        updateClickContent(clickRef.current, name, value, pcode)
+      const features = getAllAdminFeatures(map, evt.pixel)
+      if (features.length > 0) {
+        setClickData(features)
         clickOverlay.setPosition(evt.coordinate)
       } else {
         clickOverlay.setPosition(undefined)
+        setClickData([])
       }
     }
 
@@ -142,35 +139,50 @@ export default function Tooltip({ map }) {
 
   const dismissClick = useCallback(() => {
     clickOverlayRef.current?.setPosition(undefined)
+    setClickData([])
   }, [])
 
   return createPortal(
     <>
-      {/* Hover tooltip — OL Overlay element, portaled to body so OL can move it without breaking React's DOM tree */}
+      {/* Hover tooltip — OL Overlay element */}
       <div ref={hoverRef} className="pointer-events-none">
-        <div className="bg-ink/95 text-paper rounded-md px-3 py-2 shadow-lg whitespace-nowrap backdrop-blur-sm">
-          <div data-name className="text-xs font-medium leading-tight" />
-          <div data-value className="text-sm font-mono leading-tight mt-0.5" />
-        </div>
+        {hoverData.length > 0 && (
+          <div className="bg-ink/95 text-paper rounded-md px-3 py-2 shadow-lg whitespace-nowrap backdrop-blur-sm">
+            {hoverData.map((item, i) => (
+              <div key={i} className={i > 0 ? 'mt-2 pt-2 border-t border-paper/20' : ''}>
+                <div className="text-xs font-medium leading-tight">{item.featureName}</div>
+                <div className={`text-sm font-mono leading-tight mt-0.5 ${item.value == null ? 'text-paper/50' : ''}`}>
+                  {formatValue(item.value)}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Click info panel — OL Overlay element */}
       <div ref={clickRef}>
-        <div className="bg-paper/95 backdrop-blur-sm border border-border rounded-lg px-4 py-3 shadow-lg max-w-xs">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <div data-click-name className="text-sm font-medium" />
-              <div data-click-pcode className="text-xs text-muted mt-0.5" />
-              <div data-click-value className="text-lg font-mono mt-1" />
+        {clickData.length > 0 && (
+          <div className="bg-paper/95 backdrop-blur-sm border border-border rounded-lg px-4 py-3 shadow-lg max-w-xs">
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-2">
+                {clickData.map((item, i) => (
+                  <div key={i} className={i > 0 ? 'pt-2 border-t border-border' : ''}>
+                    <div className="text-sm font-medium">{item.featureName}</div>
+                    <div className="text-xs text-muted mt-0.5">{item.featureId}</div>
+                    <div className="text-lg font-mono mt-1">{formatValue(item.value)}</div>
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={dismissClick}
+                className="text-muted hover:text-ink text-sm leading-none shrink-0"
+              >
+                &times;
+              </button>
             </div>
-            <button
-              onClick={dismissClick}
-              className="text-muted hover:text-ink text-sm leading-none"
-            >
-              &times;
-            </button>
           </div>
-        </div>
+        )}
       </div>
     </>,
     document.body
