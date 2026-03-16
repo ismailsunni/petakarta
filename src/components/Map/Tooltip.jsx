@@ -35,6 +35,7 @@ const getAllAdminFeatures = (map, pixel) => {
 
         results.push({
           layerName: layer.name,
+          layerTitle: layer.title || layer.name,
           featureId,
           featureName,
           value,
@@ -150,6 +151,9 @@ export default function Tooltip({ map }) {
           <div className="bg-ink/95 text-paper rounded-md px-3 py-2 shadow-lg whitespace-nowrap backdrop-blur-sm">
             {hoverData.map((item, i) => (
               <div key={i} className={i > 0 ? 'mt-2 pt-2 border-t border-paper/20' : ''}>
+                {hoverData.length > 1 && (
+                  <div className="text-[10px] text-paper/60 leading-tight mb-0.5">{item.layerTitle}</div>
+                )}
                 <div className="text-xs font-medium leading-tight">{item.featureName}</div>
                 <div className={`text-sm font-mono leading-tight mt-0.5 ${item.value == null ? 'text-paper/50' : ''}`}>
                   {formatValue(item.value)}
@@ -168,6 +172,9 @@ export default function Tooltip({ map }) {
               <div className="space-y-2">
                 {clickData.map((item, i) => (
                   <div key={i} className={i > 0 ? 'pt-2 border-t border-border' : ''}>
+                    {clickData.length > 1 && (
+                      <div className="text-[10px] text-muted leading-tight mb-0.5">{item.layerTitle}</div>
+                    )}
                     <div className="text-sm font-medium">{item.featureName}</div>
                     <div className="text-xs text-muted mt-0.5">{item.featureId}</div>
                     <div className="text-lg font-mono mt-1">{formatValue(item.value)}</div>

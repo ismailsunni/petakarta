@@ -75,6 +75,7 @@ const useLayerTreeStore = create(
           id: `admin-${adminLayerId}-${Date.now()}`,
           type: "admin",
           name: layerConfig.name,
+          title: "", // User-editable title for tooltips/legend
           visible: true,
           opacity: 1,
           order: maxOrder + 1,
@@ -119,6 +120,7 @@ const useLayerTreeStore = create(
           id: `user-${dataset.id}-${Date.now()}`,
           type: "user",
           name: dataset.name,
+          title: "", // User-editable title for tooltips/legend
           visible: true,
           opacity: 1,
           order: maxOrder + 1,
@@ -170,6 +172,17 @@ const useLayerTreeStore = create(
         set((state) => ({
           layers: state.layers.map((l) =>
             l.id === layerId ? { ...l, opacity } : l
+          ),
+        }));
+      },
+
+      /**
+       * Set layer title
+       */
+      setLayerTitle: (layerId, title) => {
+        set((state) => ({
+          layers: state.layers.map((l) =>
+            l.id === layerId ? { ...l, title } : l
           ),
         }));
       },

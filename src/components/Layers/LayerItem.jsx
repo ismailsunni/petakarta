@@ -5,9 +5,12 @@ export default function LayerItem({ layer, isFirst, isLast }) {
   const [expanded, setExpanded] = useState(false)
   const toggleVisibility = useLayerTreeStore((s) => s.toggleVisibility)
   const setOpacity = useLayerTreeStore((s) => s.setOpacity)
+  const setLayerTitle = useLayerTreeStore((s) => s.setLayerTitle)
   const removeLayer = useLayerTreeStore((s) => s.removeLayer)
   const moveLayerUp = useLayerTreeStore((s) => s.moveLayerUp)
   const moveLayerDown = useLayerTreeStore((s) => s.moveLayerDown)
+
+  const [localTitle, setLocalTitle] = useState(layer.title || '')
 
   const isAdmin = layer.type === 'admin'
 
@@ -134,6 +137,21 @@ export default function LayerItem({ layer, isFirst, isLast }) {
       {/* Expanded controls */}
       {expanded && (
         <div className="px-2 pb-2 pt-0 border-t border-border space-y-2">
+          {/* Title input */}
+          <div>
+            <label className="text-xs text-muted">Title (for tooltip/legend)</label>
+            <input
+              type="text"
+              value={localTitle}
+              onChange={(e) => setLocalTitle(e.target.value)}
+              onBlur={() => setLayerTitle(layer.id, localTitle)}
+              onKeyDown={(e) => e.key === 'Enter' && setLayerTitle(layer.id, localTitle)}
+              placeholder={layer.name}
+              className="mt-1 w-full rounded border border-border bg-paper px-2 py-1 text-sm"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+
           {/* Opacity slider */}
           <div>
             <label className="text-xs text-muted">Opacity: {Math.round(layer.opacity * 100)}%</label>
