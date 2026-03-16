@@ -55,7 +55,7 @@ function createStyleFromConfig(userConfig, layerOpacity = 1) {
 
   // Polygon or default - support labels
   if (showFeatureLabels && labelColumn) {
-    return (feature, resolution) => {
+    return (feature) => {
       const styles = [
         new Style({
           fill: new Fill({ color: fillColorWithAlpha }),
@@ -65,7 +65,7 @@ function createStyleFromConfig(userConfig, layerOpacity = 1) {
           }),
         }),
       ];
-      const labelStyle = makeLabelStyle(feature, labelColumn, resolution);
+      const labelStyle = makeLabelStyle(feature, labelColumn);
       if (labelStyle) {
         styles.push(labelStyle);
       }
@@ -159,7 +159,7 @@ function createValueBasedStyleFunction(userConfig, layerOpacity = 1) {
 
     // Add label if enabled and column is set
     if (showFeatureLabels && labelColumn) {
-      const labelStyle = makeLabelStyle(feature, labelColumn, resolution);
+      const labelStyle = makeLabelStyle(feature, labelColumn);
       if (labelStyle) {
         styles.push(labelStyle);
       }
