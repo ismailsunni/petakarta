@@ -12,48 +12,50 @@ import { getBreaks } from "../utils/classificationUtils";
 const BASE_Z_INDEX = 5;
 
 /**
- * Create an OpenLayers style from a layer style config
+ * Create an OpenLayers style from userConfig (unified style properties)
  */
-function createOLStyle(styleConfig, layerOpacity = 1) {
-  const { type, fill, fillOpacity, stroke, strokeWidth, radius } = styleConfig;
+function createStyleFromConfig(userConfig, layerOpacity = 1) {
+  const geometryType = userConfig.geometryType?.toLowerCase() || "";
+  const {
+    fillColor = "#3498DB",
+    strokeColor = "#ffffff",
+    strokeWidth = 0.8,
+    pointRadius = 6,
+    noDataColor = "#e0e0e0",
+  } = userConfig;
 
-  // Apply layer opacity to fill opacity
-  const effectiveFillOpacity = (fillOpacity ?? 0.6) * layerOpacity;
-  const fillColor = fill ? hexToRgba(fill, effectiveFillOpacity) : undefined;
-  const strokeColor = stroke ? hexToRgba(stroke, layerOpacity) : undefined;
+  const fillColorWithAlpha = hexToRgba(fillColor, 0.8 * layerOpacity);
+  const strokeColorWithAlpha = hexToRgba(strokeColor, layerOpacity);
 
-  const strokeStyle = stroke
-    ? new Stroke({
-        color: strokeColor,
-        width: strokeWidth ?? 2,
-      })
-    : undefined;
-
-  if (type === "point") {
+  if (geometryType.includes("point")) {
     return new Style({
       image: new CircleStyle({
-        radius: radius ?? 6,
-        fill: fill ? new Fill({ color: fillColor }) : undefined,
-        stroke: strokeStyle,
+        radius: pointRadius,
+        fill: new Fill({ color: fillColorWithAlpha }),
+        stroke: new Stroke({
+          color: strokeColorWithAlpha,
+          width: strokeWidth,
+        }),
       }),
     });
   }
 
-  if (type === "line") {
+  if (geometryType.includes("line")) {
     return new Style({
-      stroke:
-        strokeStyle ||
-        new Stroke({
-          color: hexToRgba(stroke || "#3498DB", layerOpacity),
-          width: strokeWidth ?? 3,
-        }),
+      stroke: new Stroke({
+        color: strokeColorWithAlpha,
+        width: strokeWidth,
+      }),
     });
   }
 
   // Polygon or default
   return new Style({
-    fill: fill ? new Fill({ color: fillColor }) : undefined,
-    stroke: strokeStyle,
+    fill: new Fill({ color: fillColorWithAlpha }),
+    stroke: new Stroke({
+      color: strokeColorWithAlpha,
+      width: strokeWidth,
+    }),
   });
 }
 
@@ -204,7 +206,7 @@ export default function useUserLayers(map) {
         if (valueBasedStyle) {
           existing.olLayer.setStyle(valueBasedStyle);
         } else {
-          const style = createOLStyle(userConfig.style, layer.opacity);
+          const style = createStyleFromConfig(userConfig, layer.opacity);
           existing.olLayer.setStyle(style);
         }
       } else if (userConfig?.geojson) {
@@ -227,7 +229,7 @@ export default function useUserLayers(map) {
           layer.opacity
         );
         const style =
-          valueBasedStyle || createOLStyle(userConfig.style, layer.opacity);
+          valueBasedStyle || createStyleFromConfig(userConfig, layer.opacity);
 
         const olLayer = new VectorLayer({
           source,

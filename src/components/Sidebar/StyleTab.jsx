@@ -19,7 +19,6 @@ export default function StyleTab() {
   const selectedLayerId = useLayerTreeStore((s) => s.selectedLayerId)
   const selectLayer = useLayerTreeStore((s) => s.selectLayer)
   const updateAdminConfig = useLayerTreeStore((s) => s.updateAdminConfig)
-  const updateUserStyle = useLayerTreeStore((s) => s.updateUserStyle)
   const updateUserConfig = useLayerTreeStore((s) => s.updateUserConfig)
   const mapTitle = useLayerTreeStore((s) => s.mapTitle)
   const legendTitle = useLayerTreeStore((s) => s.legendTitle)
@@ -113,7 +112,6 @@ export default function StyleTab() {
       layers={layers}
       selectedLayerId={selectedLayerId}
       selectLayer={selectLayer}
-      updateUserStyle={updateUserStyle}
       updateUserConfig={updateUserConfig}
       localMapTitle={localMapTitle}
       setLocalMapTitle={setLocalMapTitle}
@@ -391,15 +389,7 @@ function UserLayerStylePanel({
   ...annotationProps
 }) {
   const config = layer.userConfig
-  const style = config.style
   const layerId = layer.id
-
-  const handleStyleChange = useCallback(
-    (key, value) => {
-      updateUserStyle(layerId, { [key]: value })
-    },
-    [layerId, updateUserStyle]
-  )
 
   const handleConfigUpdate = useCallback(
     (updates) => {
@@ -420,8 +410,6 @@ function UserLayerStylePanel({
   const isLine = geometryType.includes('line')
   const isPoint = geometryType.includes('point')
 
-  // Determine if value-based styling is available
-  const hasValues = config.valueColumn && Object.keys(config.featureValues || {}).length > 0
   const styleMode = config.styleMode || 'single'
 
   // Extract unique values for categorized mode
@@ -473,13 +461,13 @@ function UserLayerStylePanel({
         </select>
       </div>
 
-      {/* Data Configuration for User Layer */}
+      {/* Data Configuration for User Layer (polygons only) */}
       {isPolygon && (
         <UserDataPanel layer={layer} onValueColumnChange={handleValueColumnChange} />
       )}
 
-      {/* Style Mode - only show when values are available and polygon */}
-      {hasValues && isPolygon && (
+      {/* Style Mode - always show for polygons */}
+      {isPolygon && (
         <div>
           <h3 className="text-sm font-medium mb-2">Style Mode</h3>
           <div className="flex rounded border border-border overflow-hidden">
@@ -517,8 +505,29 @@ function UserLayerStylePanel({
         </div>
       )}
 
+      {/* Single style mode - fill color */}
+      {isPolygon && styleMode === 'single' && (
+        <div>
+          <h3 className="text-sm font-medium mb-2">Fill Color</h3>
+          <div className="flex gap-2 items-center">
+            <input
+              type="color"
+              value={config.fillColor || '#3498DB'}
+              onChange={(e) => handleConfigUpdate({ fillColor: e.target.value })}
+              className="w-8 h-8 rounded border border-border cursor-pointer"
+            />
+            <input
+              type="text"
+              value={config.fillColor || '#3498DB'}
+              onChange={(e) => handleConfigUpdate({ fillColor: e.target.value })}
+              className="flex-1 rounded border border-border bg-paper px-2 py-1 text-sm font-mono"
+            />
+          </div>
+        </div>
+      )}
+
       {/* Graduated styling options */}
-      {hasValues && isPolygon && styleMode === 'graduated' && (
+      {isPolygon && styleMode === 'graduated' && (
         <>
           {/* Color Ramp */}
           <div>
@@ -565,11 +574,11 @@ function UserLayerStylePanel({
       )}
 
       {/* Categorized styling options */}
-      {hasValues && isPolygon && styleMode === 'categorized' && (
+      {isPolygon && styleMode === 'categorized' && (
         <div>
           <h3 className="text-sm font-medium mb-2">Category Colors</h3>
           {uniqueValues.length === 0 ? (
-            <p className="text-xs text-muted">No values available</p>
+            <p className="text-xs text-muted">No data values yet. Select a value column to see categories.</p>
           ) : (
             <div className="space-y-1.5 max-h-64 overflow-y-auto">
               {uniqueValues.map((val) => (
@@ -588,129 +597,8 @@ function UserLayerStylePanel({
         </div>
       )}
 
-      {/* Single/basic styling options - show when single mode or no values */}
-      {(!hasValues || styleMode === 'single' || !isPolygon) && (
-        <>
-          {/* Fill Color */}
-          {(isPolygon || isPoint) && (
-            <div>
-              <label className="block text-xs text-muted mb-1">Fill Color</label>
-              <div className="flex gap-2 items-center">
-                <input
-                  type="color"
-                  value={style.fill || '#3498DB'}
-                  onChange={(e) => handleStyleChange('fill', e.target.value)}
-                  className="w-8 h-8 rounded border border-border cursor-pointer"
-                />
-                <input
-                  type="text"
-                  value={style.fill || '#3498DB'}
-                  onChange={(e) => handleStyleChange('fill', e.target.value)}
-                  className="flex-1 rounded border border-border bg-paper px-2 py-1 text-sm font-mono"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Fill Opacity */}
-          {isPolygon && (
-            <div>
-              <label className="block text-xs text-muted mb-1">
-                Fill Opacity: {Math.round((style.fillOpacity ?? 0.6) * 100)}%
-              </label>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.05"
-                value={style.fillOpacity ?? 0.6}
-                onChange={(e) => handleStyleChange('fillOpacity', parseFloat(e.target.value))}
-                className="w-full"
-              />
-            </div>
-          )}
-
-          {/* Stroke Color */}
-          <div>
-            <label className="block text-xs text-muted mb-1">Stroke Color</label>
-            <div className="flex gap-2 items-center">
-              <input
-                type="color"
-                value={style.stroke || '#2980B9'}
-                onChange={(e) => handleStyleChange('stroke', e.target.value)}
-                className="w-8 h-8 rounded border border-border cursor-pointer"
-              />
-              <input
-                type="text"
-                value={style.stroke || '#2980B9'}
-                onChange={(e) => handleStyleChange('stroke', e.target.value)}
-                className="flex-1 rounded border border-border bg-paper px-2 py-1 text-sm font-mono"
-              />
-            </div>
-          </div>
-
-          {/* Stroke Width */}
-          <div>
-            <label className="block text-xs text-muted mb-1">
-              Stroke Width: {style.strokeWidth ?? 2}px
-            </label>
-            <input
-              type="range"
-              min="0"
-              max="10"
-              step="0.5"
-              value={style.strokeWidth ?? 2}
-              onChange={(e) => handleStyleChange('strokeWidth', parseFloat(e.target.value))}
-              className="w-full"
-            />
-          </div>
-
-          {/* Point Radius */}
-          {isPoint && (
-            <div>
-              <label className="block text-xs text-muted mb-1">
-                Point Size: {style.radius ?? 6}px
-              </label>
-              <input
-                type="range"
-                min="2"
-                max="20"
-                step="1"
-                value={style.radius ?? 6}
-                onChange={(e) => handleStyleChange('radius', parseInt(e.target.value))}
-                className="w-full"
-              />
-            </div>
-          )}
-
-          {/* Quick Presets */}
-          <div>
-            <label className="block text-xs text-muted mb-2">Quick Presets</label>
-            <div className="flex flex-wrap gap-2">
-              {getPresets(config.geometryType).map((preset) => (
-                <button
-                  key={preset.name}
-                  onClick={() => {
-                    Object.entries(preset.style).forEach(([key, value]) => {
-                      handleStyleChange(key, value)
-                    })
-                  }}
-                  className="px-2 py-1 text-xs rounded border border-border hover:border-accent transition-colors flex items-center gap-1.5"
-                >
-                  <span
-                    className="w-3 h-3 rounded-sm"
-                    style={{ backgroundColor: preset.style.fill || preset.style.stroke }}
-                  />
-                  {preset.name}
-                </button>
-              ))}
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* Appearance - always show for stroke settings in graduated/categorized mode */}
-      {hasValues && isPolygon && styleMode !== 'single' && (
+      {/* Appearance - for polygons */}
+      {isPolygon && (
         <div>
           <h3 className="text-sm font-medium mb-2">Appearance</h3>
           <div className="space-y-2">
@@ -719,7 +607,7 @@ function UserLayerStylePanel({
                 <span className="text-xs text-muted">Stroke</span>
                 <input
                   type="color"
-                  value={config.strokeColor || '#333333'}
+                  value={config.strokeColor || '#ffffff'}
                   onChange={(e) => handleConfigUpdate({ strokeColor: e.target.value })}
                   className="w-6 h-6 rounded border border-border cursor-pointer"
                 />
@@ -728,7 +616,7 @@ function UserLayerStylePanel({
                 <span className="text-xs text-muted">Width</span>
                 <input
                   type="number"
-                  value={config.strokeWidth || 1}
+                  value={config.strokeWidth || 0.8}
                   onChange={(e) => handleConfigUpdate({ strokeWidth: Number(e.target.value) })}
                   min={0}
                   max={5}
@@ -748,6 +636,110 @@ function UserLayerStylePanel({
               />
             </label>
           </div>
+        </div>
+      )}
+
+      {/* Line styling */}
+      {isLine && (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-xs text-muted mb-1">Stroke Color</label>
+            <div className="flex gap-2 items-center">
+              <input
+                type="color"
+                value={config.strokeColor || '#3498DB'}
+                onChange={(e) => handleConfigUpdate({ strokeColor: e.target.value })}
+                className="w-8 h-8 rounded border border-border cursor-pointer"
+              />
+              <input
+                type="text"
+                value={config.strokeColor || '#3498DB'}
+                onChange={(e) => handleConfigUpdate({ strokeColor: e.target.value })}
+                className="flex-1 rounded border border-border bg-paper px-2 py-1 text-sm font-mono"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs text-muted mb-1">
+              Stroke Width: {config.strokeWidth ?? 3}px
+            </label>
+            <input
+              type="range"
+              min="1"
+              max="10"
+              step="0.5"
+              value={config.strokeWidth ?? 3}
+              onChange={(e) => handleConfigUpdate({ strokeWidth: parseFloat(e.target.value) })}
+              className="w-full"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Point styling */}
+      {isPoint && (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-xs text-muted mb-1">Fill Color</label>
+            <div className="flex gap-2 items-center">
+              <input
+                type="color"
+                value={config.fillColor || '#3498DB'}
+                onChange={(e) => handleConfigUpdate({ fillColor: e.target.value })}
+                className="w-8 h-8 rounded border border-border cursor-pointer"
+              />
+              <input
+                type="text"
+                value={config.fillColor || '#3498DB'}
+                onChange={(e) => handleConfigUpdate({ fillColor: e.target.value })}
+                className="flex-1 rounded border border-border bg-paper px-2 py-1 text-sm font-mono"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs text-muted mb-1">
+              Point Size: {config.pointRadius ?? 6}px
+            </label>
+            <input
+              type="range"
+              min="2"
+              max="20"
+              step="1"
+              value={config.pointRadius ?? 6}
+              onChange={(e) => handleConfigUpdate({ pointRadius: parseInt(e.target.value) })}
+              className="w-full"
+            />
+          </div>
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-2 text-sm flex-1">
+              <span className="text-xs text-muted">Stroke</span>
+              <input
+                type="color"
+                value={config.strokeColor || '#2980B9'}
+                onChange={(e) => handleConfigUpdate({ strokeColor: e.target.value })}
+                className="w-6 h-6 rounded border border-border cursor-pointer"
+              />
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <span className="text-xs text-muted">Width</span>
+              <input
+                type="number"
+                value={config.strokeWidth || 1}
+                onChange={(e) => handleConfigUpdate({ strokeWidth: Number(e.target.value) })}
+                min={0}
+                max={5}
+                step={0.5}
+                className="w-16 rounded border border-border bg-paper px-2 py-1 text-sm font-mono"
+              />
+            </label>
+          </div>
+        </div>
+      )}
+
+      <AnnotationControls {...annotationProps} />
+    </div>
+  )
+}
         </div>
       )}
 
@@ -1143,34 +1135,4 @@ function UserDataPanel({ layer, onValueColumnChange }) {
       )}
     </div>
   )
-}
-
-function getPresets(geometryType) {
-  const normalized = geometryType?.toLowerCase() || ''
-
-  if (normalized.includes('polygon')) {
-    return [
-      { name: 'Blue', style: { fill: '#3498DB', fillOpacity: 0.6, stroke: '#2980B9', strokeWidth: 2 } },
-      { name: 'Green', style: { fill: '#2ECC71', fillOpacity: 0.6, stroke: '#27AE60', strokeWidth: 2 } },
-      { name: 'Red', style: { fill: '#E74C3C', fillOpacity: 0.6, stroke: '#C0392B', strokeWidth: 2 } },
-      { name: 'Purple', style: { fill: '#9B59B6', fillOpacity: 0.6, stroke: '#8E44AD', strokeWidth: 2 } },
-    ]
-  }
-
-  if (normalized.includes('line')) {
-    return [
-      { name: 'Blue', style: { stroke: '#3498DB', strokeWidth: 3 } },
-      { name: 'Red', style: { stroke: '#E74C3C', strokeWidth: 3 } },
-      { name: 'Green', style: { stroke: '#2ECC71', strokeWidth: 3 } },
-      { name: 'Black', style: { stroke: '#2C3E50', strokeWidth: 2 } },
-    ]
-  }
-
-  // Points
-  return [
-    { name: 'Blue', style: { fill: '#3498DB', stroke: '#2980B9', strokeWidth: 1, radius: 6 } },
-    { name: 'Red', style: { fill: '#E74C3C', stroke: '#C0392B', strokeWidth: 1, radius: 6 } },
-    { name: 'Green', style: { fill: '#2ECC71', stroke: '#27AE60', strokeWidth: 1, radius: 6 } },
-    { name: 'Large', style: { fill: '#9B59B6', stroke: '#8E44AD', strokeWidth: 2, radius: 10 } },
-  ]
 }
