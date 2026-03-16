@@ -69,31 +69,40 @@ export default function GalleryPage() {
           <p className="text-sm text-red-600 mb-4">{error}</p>
         )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {projects.map((project) => (
-            <div
-              key={project.id}
-              className="rounded-lg border border-border bg-paper shadow-sm overflow-hidden"
-            >
-              <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
-                <iframe
-                  src={`${baseUrl}?project=${project.id}&embed=true`}
-                  title={project.name || 'Untitled'}
-                  className="absolute inset-0 w-full h-full"
-                  loading="lazy"
-                />
+          {projects.map((project) => {
+            const state = project.state_json || {}
+            const mapTitle = state.mapTitle || project.name || 'Untitled'
+            const mapDescription = state.mapDescription || ''
+            return (
+              <div
+                key={project.id}
+                className="rounded-lg border border-border bg-paper shadow-sm overflow-hidden"
+              >
+                <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                  <iframe
+                    src={`${baseUrl}?project=${project.id}&embed=true`}
+                    title={mapTitle}
+                    className="absolute inset-0 w-full h-full"
+                    loading="lazy"
+                  />
+                </div>
+                <div className="px-4 py-3">
+                  <a
+                    href={`${baseUrl}?project=${project.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-medium hover:text-accent transition-colors block"
+                  >
+                    {mapTitle}
+                  </a>
+                  {mapDescription && (
+                    <p className="text-xs text-muted mt-1 line-clamp-2">{mapDescription}</p>
+                  )}
+                </div>
               </div>
-              <div className="px-4 py-3">
-                <a
-                  href={`${baseUrl}?project=${project.id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm font-medium truncate hover:text-accent transition-colors block"
-                >
-                  {project.name || 'Untitled'}
-                </a>
-              </div>
-            </div>
-          ))}
+            )
+          })}
+        </div>
         </div>
 
         {/* Sentinel for infinite scroll */}

@@ -58,7 +58,7 @@ export async function listPublicProjects({ limit = 10, offset = 0 } = {}) {
   if (!supabase) return { data: [], error: null, count: 0 };
   const { data, error, count } = await supabase
     .from("projects")
-    .select("id, name, is_public, created_at, updated_at", { count: "exact" })
+    .select("id, name, is_public, created_at, updated_at, state_json", { count: "exact" })
     .eq("is_public", true)
     .order("updated_at", { ascending: false })
     .range(offset, offset + limit - 1);
