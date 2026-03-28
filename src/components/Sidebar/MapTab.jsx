@@ -101,7 +101,13 @@ export default function MapTab() {
         <h3 className="text-sm font-medium mb-2">Map Info</h3>
         <div className="space-y-2">
           <label className="block">
-            <span className="text-xs text-muted">Map title</span>
+            <span className="flex items-center justify-between text-xs text-muted">
+              Map title
+              <label className="flex items-center gap-1 cursor-pointer select-none" onClick={(e) => e.stopPropagation()}>
+                <input type="checkbox" checked={showTitle} onChange={(e) => update({ showTitle: e.target.checked })} className="accent-accent w-3 h-3" />
+                <span className="text-[10px]">show</span>
+              </label>
+            </span>
             <input
               type="text"
               value={localMapTitle}
@@ -124,7 +130,13 @@ export default function MapTab() {
             />
           </label>
           <label className="block">
-            <span className="text-xs text-muted">Legend title</span>
+            <span className="flex items-center justify-between text-xs text-muted">
+              Legend title
+              <label className="flex items-center gap-1 cursor-pointer select-none" onClick={(e) => e.stopPropagation()}>
+                <input type="checkbox" checked={showLegend} onChange={(e) => update({ showLegend: e.target.checked })} className="accent-accent w-3 h-3" />
+                <span className="text-[10px]">show</span>
+              </label>
+            </span>
             <input
               type="text"
               value={localLegendTitle}
@@ -136,7 +148,13 @@ export default function MapTab() {
             />
           </label>
           <label className="block">
-            <span className="text-xs text-muted">Attribution / Source</span>
+            <span className="flex items-center justify-between text-xs text-muted">
+              Attribution / Source
+              <label className="flex items-center gap-1 cursor-pointer select-none" onClick={(e) => e.stopPropagation()}>
+                <input type="checkbox" checked={showAttribution} onChange={(e) => update({ showAttribution: e.target.checked })} className="accent-accent w-3 h-3" />
+                <span className="text-[10px]">show</span>
+              </label>
+            </span>
             <input
               type="text"
               value={localAttribution}
@@ -148,41 +166,6 @@ export default function MapTab() {
             />
           </label>
         </div>
-      </div>
-
-      {/* Visibility Toggles */}
-      <div className="border-t border-border pt-4">
-        <h3 className="text-sm font-medium mb-2">Show on Map</h3>
-        <div className="space-y-2">
-          <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={showTitle}
-              onChange={(e) => update({ showTitle: e.target.checked })}
-              className="accent-accent"
-            />
-            Title
-          </label>
-          <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={showLegend}
-              onChange={(e) => update({ showLegend: e.target.checked })}
-              className="accent-accent"
-            />
-            Legend
-          </label>
-          <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={showAttribution}
-              onChange={(e) => update({ showAttribution: e.target.checked })}
-              className="accent-accent"
-            />
-            Attribution
-          </label>
-        </div>
-        <p className="text-xs text-muted mt-1">Controls visibility in shared/embedded views and exports.</p>
       </div>
 
       {/* Extent Section */}
