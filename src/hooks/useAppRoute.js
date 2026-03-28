@@ -11,7 +11,8 @@ export default function useAppRoute() {
       ? pathname.slice(base.length)
       : pathname.replace(/^\//, '')
     const slugMatch = pathAfterBase.match(/^p\/([^/]+)$/)
-    const projectSlug = slugMatch ? slugMatch[1] : null
+    // Also check ?slug= param (GitHub Pages 404.html redirect)
+    const projectSlug = slugMatch ? slugMatch[1] : params.get('slug')
 
     return {
       projectId: params.get('project'),
