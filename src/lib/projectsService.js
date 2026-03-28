@@ -96,7 +96,7 @@ export async function listPublicProjects({ limit = 10, offset = 0 } = {}) {
   const { data, error, count } = await supabase
     .from("projects")
     .select(
-      "id, name, visibility, slug, created_at, updated_at, state_json, thumbnail_url, profiles!projects_user_id_fkey(full_name, username)",
+      "id, name, visibility, slug, created_at, updated_at, state_json, thumbnail_url, profiles!projects_user_id_profiles_fkey(full_name, username)",
       { count: "exact" }
     )
     .eq("visibility", "public")
