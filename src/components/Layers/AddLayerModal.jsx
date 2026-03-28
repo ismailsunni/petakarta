@@ -3,7 +3,7 @@ import useLayerTreeStore from '../../store/layerTreeStore'
 import useAuthStore from '../../store/authStore'
 import { ADMIN_LAYERS } from '../../utils/adminLayers'
 import { CATALOG_LAYERS, CATALOG_CATEGORIES } from '../../data/catalogLayers'
-import { downloadDataset, fetchUserDatasets } from '../../lib/datasetsService'
+import { downloadDataset, fetchUserDatasets, uploadDataset } from '../../lib/datasetsService'
 import UsageIndicator from '../UI/UsageIndicator'
 
 const DATASET_LIMIT = 10
@@ -324,10 +324,38 @@ export default function AddLayerModal() {
           {activeTab === 'datasets' && (
             <div className="space-y-4">
               {user && !datasetsLoading && (
-                <div className="space-y-1">
+                <div className="space-y-2">
                   <UsageIndicator current={datasets.length} max={DATASET_LIMIT} label="datasets" />
-                  {datasets.length >= DATASET_LIMIT && (
+                  {datasets.length >= DATASET_LIMIT ? (
                     <p className="text-xs text-red-600">Limit reached. Delete a dataset to upload more.</p>
+                  ) : (
+                    <label className="flex items-center justify-center gap-2 border-2 border-dashed border-border rounded-lg py-3 cursor-pointer hover:border-accent/50 hover:bg-accent/5 transition-colors">
+                      <svg className="w-4 h-4 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M12 5v14M5 12h14" /></svg>
+                      <span className="text-sm text-muted">Upload GeoJSON</span>
+                      <input
+                        type="file"
+                        accept=".geojson,.json,application/geo+json,application/json"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0]
+                          if (!file || !user) return
+                          setLoading(true)
+                          setError('')
+                          const { data, error: upErr } = await uploadDataset(file, user.id)
+                          if (upErr) {
+                            setError(upErr.message)
+                            setLoading(false)
+                            return
+                          }
+                          // Add to datasets list and add to map
+                          setDatasets(prev => [data, ...prev])
+                          const result = addUserLayer(data, data.geojson)
+                          if (result?.error) setError(result.error.message)
+                          setLoading(false)
+                          e.target.value = ''
+                        }}
+                      />
+                    </label>
                   )}
                 </div>
               )}
