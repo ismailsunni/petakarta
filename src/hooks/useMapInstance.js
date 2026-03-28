@@ -4,14 +4,14 @@ import View from 'ol/View'
 import TileLayer from 'ol/layer/Tile'
 import { INDONESIA_EXTENT_3857, INDONESIA_PAN_EXTENT, FIT_PADDING } from '../utils/mapConstants'
 import { createBasemapSource } from '../utils/basemapSources'
-import useMapStore from '../store/mapStore'
+import useLayerTreeStore from '../store/layerTreeStore'
 import 'ol/ol.css'
 
 export default function useMapInstance(targetRef) {
   const mapRef = useRef(null)
   const tileLayerRef = useRef(null)
   const [ready, setReady] = useState(false)
-  const basemap = useMapStore((s) => s.basemap)
+  const basemap = useLayerTreeStore((s) => s.basemap)
 
   useEffect(() => {
     if (!targetRef.current || mapRef.current) return
@@ -33,7 +33,7 @@ export default function useMapInstance(targetRef) {
     map.getView().fit(INDONESIA_EXTENT_3857, { padding: FIT_PADDING })
 
     // Apply stored basemap (may differ from default 'osm')
-    const currentBasemap = useMapStore.getState().basemap
+    const currentBasemap = useLayerTreeStore.getState().basemap
     if (currentBasemap !== 'osm') {
       if (currentBasemap === 'none') {
         tileLayer.setVisible(false)

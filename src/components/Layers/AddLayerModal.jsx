@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import useLayerTreeStore from '../../store/layerTreeStore'
-import useDatasetsStore from '../../store/datasetsStore'
 import useAuthStore from '../../store/authStore'
 import { ADMIN_LAYERS } from '../../utils/adminLayers'
-import { downloadDataset } from '../../lib/datasetsService'
+import { downloadDataset, fetchUserDatasets } from '../../lib/datasetsService'
 
 export default function AddLayerModal() {
   const [activeTab, setActiveTab] = useState('admin')
@@ -17,16 +16,19 @@ export default function AddLayerModal() {
   const existingLayers = useLayerTreeStore((s) => s.layers)
 
   const user = useAuthStore((s) => s.user)
-  const datasets = useDatasetsStore((s) => s.datasets)
-  const datasetsLoading = useDatasetsStore((s) => s.datasetsLoading)
-  const loadDatasets = useDatasetsStore((s) => s.loadDatasets)
+  const [datasets, setDatasets] = useState([])
+  const [datasetsLoading, setDatasetsLoading] = useState(false)
 
   // Load datasets when switching to My Datasets tab
   useEffect(() => {
     if (activeTab === 'datasets' && user && datasets.length === 0) {
-      loadDatasets(user.id)
+      setDatasetsLoading(true)
+      fetchUserDatasets(user.id).then(({ data }) => {
+        setDatasets(data || [])
+        setDatasetsLoading(false)
+      })
     }
-  }, [activeTab, user, datasets.length, loadDatasets])
+  }, [activeTab, user, datasets.length])
 
   // Filter admin layers by search
   const filteredAdminLayers = ADMIN_LAYERS.filter((layer) => {

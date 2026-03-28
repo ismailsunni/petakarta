@@ -1,30 +1,11 @@
 import { useState, useEffect } from 'react'
-import useMapStore from '../../store/mapStore'
 
-export default function ClassBreakEditor() {
-  const numClasses = useMapStore((s) => s.numClasses)
-  const manualBreaks = useMapStore((s) => s.manualBreaks)
-  const featureValues = useMapStore((s) => s.featureValues)
-  const update = useMapStore((s) => s.update)
+export default function ClassBreakEditor({ breaks, onChange }) {
+  const [inputs, setInputs] = useState(() => (breaks || []).map(String))
 
-  const [inputs, setInputs] = useState([])
-
-  // Initialize inputs from current breaks or value range
   useEffect(() => {
-    if (manualBreaks.length === numClasses + 1) {
-      setInputs(manualBreaks.map(String))
-    } else if (featureValues && Object.keys(featureValues).length > 0) {
-      const values = Object.values(featureValues)
-      const min = Math.min(...values)
-      const max = Math.max(...values)
-      const step = (max - min) / numClasses
-      const breaks = []
-      for (let i = 0; i <= numClasses; i++) {
-        breaks.push((min + step * i).toFixed(2))
-      }
-      setInputs(breaks)
-    }
-  }, [numClasses, featureValues])
+    setInputs((breaks || []).map(String))
+  }, [breaks])
 
   const handleChange = (index, value) => {
     const next = [...inputs]
@@ -39,7 +20,7 @@ export default function ClassBreakEditor() {
     for (let i = 1; i < parsed.length; i++) {
       if (parsed[i] <= parsed[i - 1]) return
     }
-    update({ manualBreaks: parsed })
+    onChange(parsed)
   }
 
   return (

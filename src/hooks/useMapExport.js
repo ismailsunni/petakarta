@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import html2canvas from 'html2canvas'
-import useMapStore from '../store/mapStore'
+import useLayerTreeStore from '../store/layerTreeStore'
 import { INDONESIA_EXTENT_3857, FIT_PADDING } from '../utils/mapConstants'
 
 export default function useMapExport(map) {
@@ -24,8 +24,8 @@ export default function useMapExport(map) {
     const cropW = Math.round(br[0] - tl[0])
     const cropH = Math.round(br[1] - tl[1])
 
-    const mapTitle = useMapStore.getState().mapTitle
-    const attribution = useMapStore.getState().attribution
+    const mapTitle = useLayerTreeStore.getState().mapTitle
+    const attribution = useLayerTreeStore.getState().attribution
     const titleHeight = mapTitle ? 40 * resolution : 0
     const attributionHeight = attribution ? 24 * resolution : 0
 
@@ -93,7 +93,7 @@ export default function useMapExport(map) {
         })
 
         // Position legend in the output image based on its legendPosition setting
-        const legendPosition = useMapStore.getState().legendPosition
+        const legendPosition = useLayerTreeStore.getState().legendPosition
         const pad = 12 * resolution
         const lw = legendCanvas.width
         const lh = legendCanvas.height

@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react'
-import useMapStore from '../../store/mapStore'
 import { PRESET_GROUPS, getSwatchColors } from '../../utils/colorUtils'
 
 function SwatchBar({ presetKey, count = 7 }) {
@@ -13,10 +12,7 @@ function SwatchBar({ presetKey, count = 7 }) {
   )
 }
 
-export default function ColorRampPicker() {
-  const colorPreset = useMapStore((s) => s.colorPreset)
-  const colorReversed = useMapStore((s) => s.colorReversed)
-  const update = useMapStore((s) => s.update)
+export default function ColorRampPicker({ value, reversed, onChange }) {
   const [open, setOpen] = useState(false)
   const containerRef = useRef(null)
 
@@ -33,7 +29,7 @@ export default function ColorRampPicker() {
   }, [open])
 
   const handleSelect = (key) => {
-    update({ colorPreset: key })
+    onChange(key, reversed)
     setOpen(false)
   }
 
@@ -45,9 +41,9 @@ export default function ColorRampPicker() {
           className="w-full flex items-center gap-2 rounded border border-border bg-paper px-2 py-1.5 text-sm hover:border-muted transition-colors"
         >
           <div className="flex-1">
-            <SwatchBar presetKey={colorPreset} />
+            <SwatchBar presetKey={value} />
           </div>
-          <span className="text-xs text-muted shrink-0">{colorPreset}</span>
+          <span className="text-xs text-muted shrink-0">{value}</span>
           <svg className={`w-3 h-3 text-muted transition-transform ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
@@ -66,7 +62,7 @@ export default function ColorRampPicker() {
                     key={key}
                     onClick={() => handleSelect(key)}
                     className={`w-full flex items-center gap-2 px-2 py-1.5 text-sm hover:bg-canvas transition-colors ${
-                      colorPreset === key ? 'bg-accent/10' : ''
+                      value === key ? 'bg-accent/10' : ''
                     }`}
                   >
                     <div className="flex-1">
@@ -84,8 +80,8 @@ export default function ColorRampPicker() {
       <label className="flex items-center gap-2 text-sm">
         <input
           type="checkbox"
-          checked={colorReversed}
-          onChange={(e) => update({ colorReversed: e.target.checked })}
+          checked={reversed}
+          onChange={(e) => onChange(value, e.target.checked)}
         />
         Reverse colors
       </label>

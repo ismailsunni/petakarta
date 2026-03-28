@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react'
-import useMapStore from '../../store/mapStore'
 import useLayerTreeStore from '../../store/layerTreeStore'
 import { BASEMAP_OPTIONS } from '../../utils/basemapSources'
 
@@ -55,8 +54,8 @@ export default function MapControls({ onFit, onExport }) {
   const containerRef = useRef(null)
   const [showBasemaps, setShowBasemaps] = useState(false)
   const [copied, setCopied] = useState(false)
-  const basemap = useMapStore((s) => s.basemap)
-  const update = useMapStore((s) => s.update)
+  const basemap = useLayerTreeStore((s) => s.basemap)
+  const update = useLayerTreeStore((s) => s.update)
   const activeProjectId = useLayerTreeStore((s) => s.activeProjectId)
 
   useEffect(() => {

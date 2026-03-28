@@ -1,9 +1,9 @@
-import useMapStore from '../../store/mapStore'
+import useLayerTreeStore from '../../store/layerTreeStore'
 
-const TAB_LABELS = { data: 'Data', style: 'Style', export: 'Export' }
+const TAB_LABELS = { layers: 'Layers', style: 'Style', map: 'Map' }
 
 export default function MobileFAB({ onClick }) {
-  const activeTab = useMapStore((s) => s.activeTab)
+  const activeTab = useLayerTreeStore((s) => s.activeTab)
 
   return (
     <button

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import ErrorBoundary from './components/ErrorBoundary'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import MapView from './components/Map/MapView'
@@ -102,5 +103,9 @@ export default function App() {
   const { page } = useAppRoute()
   if (page === 'gallery') return <GalleryPage />
   if (page === 'about') return <AboutPage />
-  return <MapEditor />
+  return (
+    <ErrorBoundary>
+      <MapEditor />
+    </ErrorBoundary>
+  )
 }
