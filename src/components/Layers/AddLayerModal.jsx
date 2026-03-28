@@ -233,23 +233,24 @@ export default function AddLayerModal() {
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-border overflow-x-auto">
+        <div className="flex border-b border-border overflow-x-auto scrollbar-hide">
           {[
-            { id: 'admin', label: 'Admin Layers' },
-            { id: 'datasets', label: 'My Datasets' },
-            { id: 'catalog', label: 'Catalog' },
-            { id: 'custom', label: 'Custom URL' },
+            { id: 'admin', label: 'Admin', icon: '🗺️' },
+            { id: 'datasets', label: 'Data', icon: '📁' },
+            { id: 'catalog', label: 'Catalog', icon: '📚' },
+            { id: 'custom', label: 'URL', icon: '🔗' },
           ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => { setActiveTab(tab.id); setError(null) }}
-              className={`flex-1 py-2.5 text-sm font-medium transition-colors whitespace-nowrap ${
+              className={`flex-1 min-w-0 py-2.5 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap px-2 ${
                 activeTab === tab.id
                   ? 'text-accent border-b-2 border-accent'
                   : 'text-muted hover:text-ink'
               }`}
             >
-              {tab.label}
+              <span className="sm:hidden">{tab.icon}</span>
+              <span className="hidden sm:inline">{tab.icon} {tab.label}</span>
             </button>
           ))}
         </div>
