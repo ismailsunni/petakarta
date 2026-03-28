@@ -1,11 +1,8 @@
 import { useEffect, useState } from 'react'
 import ErrorBoundary from './components/ErrorBoundary'
 import Header from './components/Header'
-import Footer from './components/Footer'
 import MapView from './components/Map/MapView'
-import Sidebar from './components/Sidebar/Sidebar'
-import BottomSheet from './components/Mobile/BottomSheet'
-import MobileFAB from './components/Mobile/MobileFAB'
+import FloatingPanel from './components/Panel/FloatingPanel'
 import GalleryPage from './components/Gallery/GalleryPage'
 import AboutPage from './components/About/AboutPage'
 import useAuthStore from './store/authStore'
@@ -20,7 +17,6 @@ function MapEditor() {
   const hasSharedProject = !!(projectId || projectSlug)
   const [shareLoading, setShareLoading] = useState(hasSharedProject)
   const [shareError, setShareError] = useState('')
-  const [sheetOpen, setSheetOpen] = useState(false)
 
   useEffect(() => {
     if (embed) {
@@ -92,22 +88,15 @@ function MapEditor() {
     <ExportProvider>
       <div className="flex flex-col h-full font-sans bg-canvas text-ink overflow-hidden">
         {showEditor && <Header />}
-        <main className="relative flex flex-1 min-h-0">
-          {showEditor && <Sidebar />}
+        <main className="relative flex-1 min-h-0">
           <MapView />
+          {showEditor && <FloatingPanel />}
           {shareLoading && (
             <div className="absolute inset-0 z-20 flex items-center justify-center bg-canvas">
               <p className="text-sm text-muted">Loading shared project...</p>
             </div>
           )}
         </main>
-        {showEditor && <Footer />}
-        {showEditor && (
-          <>
-            <MobileFAB onClick={() => setSheetOpen(true)} />
-            <BottomSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
-          </>
-        )}
       </div>
     </ExportProvider>
   )

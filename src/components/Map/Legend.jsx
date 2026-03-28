@@ -4,10 +4,14 @@ import { buildColorScale } from '../../utils/colorUtils'
 import { getBreaks } from '../../utils/classificationUtils'
 
 const POSITION_CLASSES = {
-  'top-left': 'top-12 left-3',
   'top-right': 'top-12 right-3',
-  'bottom-left': 'bottom-3 left-3',
   'bottom-right': 'bottom-3 right-3',
+}
+
+function getPositionClass(position, panelExpanded) {
+  if (position === 'top-left') return `top-12 ${panelExpanded ? 'left-[340px]' : 'left-3'}`
+  if (position === 'bottom-left') return `bottom-3 ${panelExpanded ? 'left-[340px]' : 'left-3'}`
+  return POSITION_CLASSES[position] ?? 'bottom-3 right-3'
 }
 
 const NEXT_POSITION = {
@@ -35,6 +39,7 @@ export default function Legend() {
   const selectedLayerId = useLayerTreeStore((s) => s.selectedLayerId)
   const legendTitle = useLayerTreeStore((s) => s.legendTitle)
   const legendPosition = useLayerTreeStore((s) => s.legendPosition)
+  const panelExpanded = useLayerTreeStore((s) => s.panelExpanded)
   const update = (patch) => useLayerTreeStore.setState(patch)
 
   // Find the selected admin layer or fall back to first admin layer with data
@@ -67,7 +72,7 @@ export default function Legend() {
     return (
       <div
         id="map-legend"
-        className={`absolute ${POSITION_CLASSES[legendPosition]} bg-white/90 backdrop-blur-sm border border-border rounded-lg p-3 min-w-[160px] shadow-md z-10 transition-all duration-300 pointer-events-auto`}
+        className={`absolute ${getPositionClass(legendPosition, panelExpanded)} bg-white/90 backdrop-blur-sm border border-border rounded-lg p-3 min-w-[160px] shadow-md z-10 transition-all duration-300 pointer-events-auto`}
       >
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-medium text-ink">
@@ -139,7 +144,7 @@ export default function Legend() {
   return (
     <div
       id="map-legend"
-      className={`absolute ${POSITION_CLASSES[legendPosition]} bg-white/90 backdrop-blur-sm border border-border rounded-lg p-3 min-w-[160px] shadow-md z-10 transition-all duration-300 pointer-events-auto`}
+      className={`absolute ${getPositionClass(legendPosition, panelExpanded)} bg-white/90 backdrop-blur-sm border border-border rounded-lg p-3 min-w-[160px] shadow-md z-10 transition-all duration-300 pointer-events-auto`}
     >
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-medium text-ink">

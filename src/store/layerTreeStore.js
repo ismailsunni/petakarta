@@ -69,6 +69,7 @@ const useLayerTreeStore = create(
 
       // UI state
       activeTab: "layers",
+      panelExpanded: true,
       viewMode: "edit",
 
       // Add Layer modal state
