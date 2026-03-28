@@ -1,5 +1,6 @@
 import useLayerTreeStore from '../../store/layerTreeStore'
 import LayerTreePanel from '../Layers/LayerTreePanel'
+import AddLayerPanel from '../Layers/AddLayerPanel'
 import StyleTab from '../Sidebar/StyleTab'
 import MapTab from '../Sidebar/MapTab'
 import ShareTab from '../Sidebar/ShareTab'
@@ -44,11 +45,21 @@ function ShareIcon() {
   )
 }
 
+function AddIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="8" cy="8" r="6" />
+      <path d="M8 5v6M5 8h6" />
+    </svg>
+  )
+}
+
 const TABS = [
   { key: 'layers', label: 'Layers', Icon: LayersIcon },
   { key: 'style', label: 'Style', Icon: StyleIcon },
   { key: 'map', label: 'Map', Icon: MapIcon },
   { key: 'share', label: 'Share', Icon: ShareIcon },
+  { key: 'add', label: 'Add', Icon: AddIcon },
 ]
 
 function TabContent({ activeTab }) {
@@ -58,6 +69,7 @@ function TabContent({ activeTab }) {
       {activeTab === 'style' && <StyleTab />}
       {activeTab === 'map' && <MapTab />}
       {activeTab === 'share' && <ShareTab />}
+      {activeTab === 'add' && <AddLayerPanel />}
     </>
   )
 }

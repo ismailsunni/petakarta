@@ -1,14 +1,13 @@
 import useLayerTreeStore from '../../store/layerTreeStore'
 import LayerItem from './LayerItem'
-import AddLayerModal from './AddLayerModal'
 
 export default function LayerTreePanel() {
   const layers = useLayerTreeStore((s) => s.layers)
-  const addLayerModalOpen = useLayerTreeStore((s) => s.addLayerModalOpen)
-  const setAddLayerModalOpen = useLayerTreeStore((s) => s.setAddLayerModalOpen)
 
   // Sort by order descending (top layer first in UI, like QGIS)
   const sortedLayers = [...layers].sort((a, b) => b.order - a.order)
+
+  const openAddTab = () => useLayerTreeStore.setState({ activeTab: 'add', panelExpanded: true })
 
   return (
     <div className="space-y-4">
@@ -16,7 +15,7 @@ export default function LayerTreePanel() {
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium">Layers</h3>
         <button
-          onClick={() => setAddLayerModalOpen(true)}
+          onClick={openAddTab}
           className="flex items-center gap-1 text-xs text-accent hover:text-accentMuted transition-colors"
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -31,7 +30,7 @@ export default function LayerTreePanel() {
         <div className="text-center py-8 text-sm text-muted">
           <p>No layers added yet</p>
           <button
-            onClick={() => setAddLayerModalOpen(true)}
+            onClick={openAddTab}
             className="mt-2 text-accent hover:underline"
           >
             Add your first layer
@@ -56,9 +55,6 @@ export default function LayerTreePanel() {
           <p>Layers on top are drawn last (in front).</p>
         </div>
       )}
-
-      {/* Add Layer Modal */}
-      {addLayerModalOpen && <AddLayerModal />}
     </div>
   )
 }
