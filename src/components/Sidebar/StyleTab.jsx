@@ -330,7 +330,31 @@ function AdminLayerStylePanel({
           </label>
 
           {config.showFeatureLabels && (
-            <AdminLabelColumnSelector layer={layer} handleUpdate={handleUpdate} />
+            <>
+              <AdminLabelColumnSelector layer={layer} handleUpdate={handleUpdate} />
+              <div className="ml-6 mt-2 space-y-2">
+                <div>
+                  <span className="text-xs text-muted">Font size: {config.labelFontSize ?? 11}px</span>
+                  <input
+                    type="range"
+                    min={8}
+                    max={18}
+                    value={config.labelFontSize ?? 11}
+                    onChange={(e) => handleUpdate({ labelFontSize: Number(e.target.value) })}
+                    className="w-full mt-1 accent-accent"
+                  />
+                </div>
+                <label className="flex items-center gap-2 text-xs text-muted">
+                  Label color
+                  <input
+                    type="color"
+                    value={config.labelColor ?? '#1a1a2e'}
+                    onChange={(e) => handleUpdate({ labelColor: e.target.value })}
+                    className="w-6 h-6 rounded border border-border cursor-pointer"
+                  />
+                </label>
+              </div>
+            </>
           )}
         </div>
       </div>
@@ -603,7 +627,31 @@ function UserLayerStylePanel({
             </label>
 
             {config.showFeatureLabels && (
-              <UserLabelColumnSelector layer={layer} handleConfigUpdate={handleConfigUpdate} />
+              <>
+                <UserLabelColumnSelector layer={layer} handleConfigUpdate={handleConfigUpdate} />
+                <div className="ml-6 mt-2 space-y-2">
+                  <div>
+                    <span className="text-xs text-muted">Font size: {config.labelFontSize ?? 11}px</span>
+                    <input
+                      type="range"
+                      min={8}
+                      max={18}
+                      value={config.labelFontSize ?? 11}
+                      onChange={(e) => handleConfigUpdate({ labelFontSize: Number(e.target.value) })}
+                      className="w-full mt-1 accent-accent"
+                    />
+                  </div>
+                  <label className="flex items-center gap-2 text-xs text-muted">
+                    Label color
+                    <input
+                      type="color"
+                      value={config.labelColor ?? '#1a1a2e'}
+                      onChange={(e) => handleConfigUpdate({ labelColor: e.target.value })}
+                      className="w-6 h-6 rounded border border-border cursor-pointer"
+                    />
+                  </label>
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -642,6 +690,18 @@ function UserLayerStylePanel({
               onChange={(e) => handleConfigUpdate({ strokeWidth: parseFloat(e.target.value) })}
               className="w-full"
             />
+          </div>
+          <div>
+            <label className="block text-xs text-muted mb-1">Line Style</label>
+            <select
+              value={config.lineDash || 'solid'}
+              onChange={(e) => handleConfigUpdate({ lineDash: e.target.value })}
+              className="w-full rounded border border-border bg-paper px-2 py-1.5 text-sm"
+            >
+              <option value="solid">Solid</option>
+              <option value="dashed">Dashed</option>
+              <option value="dotted">Dotted</option>
+            </select>
           </div>
         </div>
       )}

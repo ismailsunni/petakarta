@@ -14,6 +14,15 @@ import { makeLabelStyle } from "../utils/styleUtils";
 const BASE_Z_INDEX = 5;
 
 /**
+ * Convert lineDash string to OL lineDash array
+ */
+function getLineDashArray(lineDash) {
+  if (lineDash === 'dashed') return [8, 4]
+  if (lineDash === 'dotted') return [2, 4]
+  return undefined // solid
+}
+
+/**
  * Create an OpenLayers style from userConfig (unified style properties)
  */
 function createStyleFromConfig(userConfig, layerOpacity = 1) {
@@ -26,10 +35,14 @@ function createStyleFromConfig(userConfig, layerOpacity = 1) {
     noDataColor = "#e0e0e0",
     showFeatureLabels = false,
     labelColumn = "",
+    lineDash = 'solid',
+    labelFontSize = 11,
+    labelColor = '#1a1a2e',
   } = userConfig;
 
   const fillColorWithAlpha = hexToRgba(fillColor, 0.8 * layerOpacity);
   const strokeColorWithAlpha = hexToRgba(strokeColor, layerOpacity);
+  const lineDashArray = getLineDashArray(lineDash);
 
   if (geometryType.includes("point")) {
     return new Style({
@@ -49,6 +62,7 @@ function createStyleFromConfig(userConfig, layerOpacity = 1) {
       stroke: new Stroke({
         color: strokeColorWithAlpha,
         width: strokeWidth,
+        lineDash: lineDashArray,
       }),
     });
   }
@@ -65,7 +79,7 @@ function createStyleFromConfig(userConfig, layerOpacity = 1) {
           }),
         }),
       ];
-      const labelStyle = makeLabelStyle(feature, labelColumn);
+      const labelStyle = makeLabelStyle(feature, labelColumn, labelFontSize, labelColor);
       if (labelStyle) {
         styles.push(labelStyle);
       }
@@ -99,6 +113,8 @@ function createValueBasedStyleFunction(userConfig, layerOpacity = 1) {
     noDataColor = "#e0e0e0",
     showFeatureLabels = false,
     labelColumn = "",
+    labelFontSize = 11,
+    labelColor = '#1a1a2e',
   } = userConfig;
 
   // No values - return null to use default style
@@ -159,7 +175,7 @@ function createValueBasedStyleFunction(userConfig, layerOpacity = 1) {
 
     // Add label if enabled and column is set
     if (showFeatureLabels && labelColumn) {
-      const labelStyle = makeLabelStyle(feature, labelColumn);
+      const labelStyle = makeLabelStyle(feature, labelColumn, labelFontSize, labelColor);
       if (labelStyle) {
         styles.push(labelStyle);
       }
@@ -197,27 +213,43 @@ export default function useUserLayers(map) {
   useEffect(() => {
     for (const layer of userLayers) {
       const { id, userConfig } = layer;
-      // Check if layer has storagePath but no geojson (happens after page refresh)
-      if (
-        userConfig?.storagePath &&
-        !userConfig?.geojson &&
-        !fetchingRef.current.has(id)
-      ) {
-        fetchingRef.current.add(id);
-        downloadDataset(userConfig.storagePath)
-          .then(({ data, error }) => {
-            if (data && !error) {
+      if (!userConfig?.geojson && !fetchingRef.current.has(id)) {
+        if (userConfig?.remoteUrl) {
+          // Remote GeoJSON layer — fetch from URL
+          fetchingRef.current.add(id);
+          fetch(userConfig.remoteUrl)
+            .then(async (res) => {
+              if (!res.ok) throw new Error(`HTTP ${res.status}`);
+              const data = await res.json();
               setUserLayerGeojson(id, data);
-            } else {
+            })
+            .catch((err) => {
               console.error(
-                `Failed to re-fetch geojson for layer ${layer.name}:`,
-                error
+                `Failed to re-fetch remote GeoJSON for layer ${layer.name}:`,
+                err
               );
-            }
-          })
-          .finally(() => {
-            fetchingRef.current.delete(id);
-          });
+            })
+            .finally(() => {
+              fetchingRef.current.delete(id);
+            });
+        } else if (userConfig?.storagePath) {
+          // Supabase storage layer — fetch via downloadDataset
+          fetchingRef.current.add(id);
+          downloadDataset(userConfig.storagePath)
+            .then(({ data, error }) => {
+              if (data && !error) {
+                setUserLayerGeojson(id, data);
+              } else {
+                console.error(
+                  `Failed to re-fetch geojson for layer ${layer.name}:`,
+                  error
+                );
+              }
+            })
+            .finally(() => {
+              fetchingRef.current.delete(id);
+            });
+        }
       }
     }
   }, [userLayers, setUserLayerGeojson]);

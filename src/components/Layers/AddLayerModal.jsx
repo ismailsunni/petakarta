@@ -18,6 +18,7 @@ export default function AddLayerModal() {
   const addAdminLayer = useLayerTreeStore((s) => s.addAdminLayer)
   const addUserLayer = useLayerTreeStore((s) => s.addUserLayer)
   const addCatalogLayer = useLayerTreeStore((s) => s.addCatalogLayer)
+  const addRemoteGeoJsonLayer = useLayerTreeStore((s) => s.addRemoteGeoJsonLayer)
   const existingLayers = useLayerTreeStore((s) => s.layers)
 
   const user = useAuthStore((s) => s.user)
@@ -143,10 +144,30 @@ export default function AddLayerModal() {
     }
   }, [addCatalogLayer])
 
-  const handleAddCustomLayer = useCallback(() => {
+  const handleAddCustomLayer = useCallback(async () => {
     setCustomError(null)
 
-    // Validate
+    if (customType === 'geojson') {
+      if (!customUrl.trim()) {
+        setCustomError('URL is required')
+        return
+      }
+      setLoading(true)
+      const result = await addRemoteGeoJsonLayer(
+        customDisplayName.trim() || 'Remote GeoJSON',
+        customUrl.trim()
+      )
+      setLoading(false)
+      if (result.error) {
+        setCustomError(result.error.message)
+      } else {
+        setCustomUrl('')
+        setCustomDisplayName('')
+      }
+      return
+    }
+
+    // Validate tile/WMS
     if (customType === 'xyz') {
       if (!customUrl.includes('{z}') || !customUrl.includes('{x}') || !customUrl.includes('{y}')) {
         setCustomError('XYZ URL must contain {z}, {x}, and {y} placeholders')
@@ -188,7 +209,7 @@ export default function AddLayerModal() {
       setCustomDisplayName('')
       setCustomAttribution('')
     }
-  }, [addCatalogLayer, customType, customUrl, customLayerName, customDisplayName, customAttribution])
+  }, [addCatalogLayer, addRemoteGeoJsonLayer, customType, customUrl, customLayerName, customDisplayName, customAttribution])
 
   const handleClose = useCallback(() => {
     setAddLayerModalOpen(false)
@@ -450,6 +471,7 @@ export default function AddLayerModal() {
                 >
                   <option value="xyz">XYZ Tile</option>
                   <option value="wms">WMS</option>
+                  <option value="geojson">GeoJSON</option>
                 </select>
               </div>
 
@@ -463,12 +485,17 @@ export default function AddLayerModal() {
                   placeholder={
                     customType === 'xyz'
                       ? 'https://example.com/tiles/{z}/{x}/{y}.png'
-                      : 'https://example.com/wms'
+                      : customType === 'geojson'
+                        ? 'https://example.com/data.geojson'
+                        : 'https://example.com/wms'
                   }
                   className="w-full rounded border border-border bg-paper px-3 py-2 text-sm placeholder:text-muted/60"
                 />
                 {customType === 'xyz' && (
                   <p className="text-xs text-muted mt-1">Must include {'{z}'}, {'{x}'}, {'{y}'} placeholders</p>
+                )}
+                {customType === 'geojson' && (
+                  <p className="text-xs text-muted mt-1">Must return a GeoJSON FeatureCollection or Feature</p>
                 )}
               </div>
 
@@ -498,17 +525,19 @@ export default function AddLayerModal() {
                 />
               </div>
 
-              {/* Attribution */}
-              <div>
-                <label className="block text-xs font-medium text-muted mb-1">Attribution <span className="text-muted/60">(optional)</span></label>
-                <input
-                  type="text"
-                  value={customAttribution}
-                  onChange={(e) => setCustomAttribution(e.target.value)}
-                  placeholder="© Data Provider"
-                  className="w-full rounded border border-border bg-paper px-3 py-2 text-sm placeholder:text-muted/60"
-                />
-              </div>
+              {/* Attribution (not needed for GeoJSON) */}
+              {customType !== 'geojson' && (
+                <div>
+                  <label className="block text-xs font-medium text-muted mb-1">Attribution <span className="text-muted/60">(optional)</span></label>
+                  <input
+                    type="text"
+                    value={customAttribution}
+                    onChange={(e) => setCustomAttribution(e.target.value)}
+                    placeholder="© Data Provider"
+                    className="w-full rounded border border-border bg-paper px-3 py-2 text-sm placeholder:text-muted/60"
+                  />
+                </div>
+              )}
 
               <button
                 onClick={handleAddCustomLayer}

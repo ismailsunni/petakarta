@@ -149,6 +149,9 @@ function updateLayerStyle(olLayer, layer, layerConfig) {
   // Determine label field: use labelColumn if set, otherwise default to featureNameField
   const labelField = config.labelColumn || layerConfig.featureNameField;
 
+  const labelFontSize = config.labelFontSize ?? 11;
+  const labelColor = config.labelColor ?? "#1a1a2e";
+
   // Single style mode - use fill color
   if (config.styleMode === "single") {
     if (config.showFeatureLabels) {
@@ -162,7 +165,7 @@ function updateLayerStyle(olLayer, layer, layerConfig) {
             }),
           }),
         ];
-        const labelStyle = makeLabelStyle(feature, labelField);
+        const labelStyle = makeLabelStyle(feature, labelField, labelFontSize, labelColor);
         if (labelStyle) styles.push(labelStyle);
         return styles;
       });
@@ -193,7 +196,7 @@ function updateLayerStyle(olLayer, layer, layerConfig) {
             }),
           }),
         ];
-        const labelStyle = makeLabelStyle(feature, labelField);
+        const labelStyle = makeLabelStyle(feature, labelField, labelFontSize, labelColor);
         if (labelStyle) styles.push(labelStyle);
         return styles;
       });
@@ -222,6 +225,8 @@ function updateLayerStyle(olLayer, layer, layerConfig) {
           noDataColor: config.noDataColor,
           showFeatureLabels: config.showFeatureLabels,
           labelColumn: config.labelColumn,
+          labelFontSize,
+          labelColor,
         })
       : buildGraduatedStyleFn({
           valueMap: featureValues,
@@ -236,6 +241,8 @@ function updateLayerStyle(olLayer, layer, layerConfig) {
           noDataColor: config.noDataColor,
           showFeatureLabels: config.showFeatureLabels,
           labelColumn: config.labelColumn,
+          labelFontSize,
+          labelColor,
         });
 
   olLayer.setStyle(styleFunction || DEFAULT_STYLE);

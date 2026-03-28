@@ -20,7 +20,27 @@ const DEFAULT_ADMIN_STYLE = {
   noDataColor: "#e0e0e0",
   showFeatureLabels: false,
   labelColumn: "", // empty means use default featureNameField
+  labelFontSize: 11,
+  labelColor: "#1a1a2e",
 };
+
+/**
+ * Validate that a parsed object is a GeoJSON FeatureCollection or Feature
+ * @param {unknown} data
+ * @returns {{ valid: boolean, error?: string }}
+ */
+export function validateRemoteGeoJson(data) {
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
+    return { valid: false, error: "Invalid JSON: not an object" };
+  }
+  if (data.type !== "FeatureCollection" && data.type !== "Feature") {
+    return {
+      valid: false,
+      error: `Invalid GeoJSON: expected type "FeatureCollection" or "Feature", got "${data.type}"`,
+    };
+  }
+  return { valid: true };
+}
 
 const useLayerTreeStore = create(
   persist(
@@ -134,6 +154,64 @@ const useLayerTreeStore = create(
           addLayerModalOpen: false,
         }))
         return { data: newLayer }
+      },
+
+      /**
+       * Add a remote GeoJSON URL as a user layer (no Supabase storage)
+       */
+      addRemoteGeoJsonLayer: async (name, url) => {
+        let geojson;
+        try {
+          const response = await fetch(url);
+          if (!response.ok) {
+            return { error: { message: `Failed to fetch URL: ${response.status} ${response.statusText}` } };
+          }
+          geojson = await response.json();
+        } catch (err) {
+          return { error: { message: `Failed to fetch GeoJSON: ${err.message}` } };
+        }
+
+        const validation = validateRemoteGeoJson(geojson);
+        if (!validation.valid) {
+          return { error: { message: validation.error } };
+        }
+
+        const { layers } = get();
+        const maxOrder = layers.length > 0 ? Math.max(...layers.map((l) => l.order)) : -1;
+
+        // Detect geometry type from first feature
+        const firstFeature =
+          geojson.type === "FeatureCollection"
+            ? geojson.features?.[0]
+            : geojson;
+        const geometryType = firstFeature?.geometry?.type || "Polygon";
+
+        const newLayer = {
+          id: `user-remote-${Date.now()}`,
+          type: "user",
+          name: name || "Remote GeoJSON",
+          title: "",
+          visible: true,
+          opacity: 1,
+          order: maxOrder + 1,
+          userConfig: {
+            datasetId: null,
+            storagePath: null,
+            remoteUrl: url,
+            geojson,
+            geometryType,
+            bbox: null,
+            style: getDefaultStyle(geometryType),
+          },
+        };
+
+        set((state) => ({
+          layers: [...state.layers, newLayer],
+          selectedLayerId: newLayer.id,
+          addLayerModalOpen: false,
+        }));
+
+        return { data: newLayer };
       },
 
       /**
