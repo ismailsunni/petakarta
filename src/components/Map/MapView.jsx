@@ -74,10 +74,18 @@ export default function MapView() {
 
   // Listen for zoomToMapExtent event (triggered when project loads)
   useEffect(() => {
-    const handleZoomToExtent = () => zoomToMapExtent()
+    const handleZoomToExtent = () => {
+      if (map) map.updateSize()
+      zoomToMapExtent()
+    }
     window.addEventListener('zoomToMapExtent', handleZoomToExtent)
-    return () => window.removeEventListener('zoomToMapExtent', handleZoomToExtent)
-  }, [zoomToMapExtent])
+    // Also re-fit on resize (handles iframe embed sizing)
+    window.addEventListener('resize', handleZoomToExtent)
+    return () => {
+      window.removeEventListener('zoomToMapExtent', handleZoomToExtent)
+      window.removeEventListener('resize', handleZoomToExtent)
+    }
+  }, [map, zoomToMapExtent])
 
   // Listen for captureThumbnail event from Header
   useEffect(() => {

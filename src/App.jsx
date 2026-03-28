@@ -57,9 +57,10 @@ function MapEditor() {
         setShareLoading(false)
 
         // Dispatch event to zoom to map extent after loading
-        setTimeout(() => {
-          window.dispatchEvent(new CustomEvent('zoomToMapExtent'))
-        }, 100)
+        // Multiple attempts to handle iframe/embed sizing delays
+        setTimeout(() => window.dispatchEvent(new CustomEvent('zoomToMapExtent')), 100)
+        setTimeout(() => window.dispatchEvent(new CustomEvent('zoomToMapExtent')), 500)
+        setTimeout(() => window.dispatchEvent(new CustomEvent('zoomToMapExtent')), 1500)
       }
 
       doLoad()
