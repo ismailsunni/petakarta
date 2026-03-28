@@ -16,6 +16,7 @@ export default function MapTab() {
   const showTitle = useLayerTreeStore((s) => s.showTitle)
   const showLegend = useLayerTreeStore((s) => s.showLegend)
   const showAttribution = useLayerTreeStore((s) => s.showAttribution)
+  const legendLayerId = useLayerTreeStore((s) => s.legendLayerId)
   const exportExtent = useLayerTreeStore((s) => s.exportExtent)
   const currentViewExtentVersion = useLayerTreeStore((s) => s.currentViewExtentVersion)
   const update = useLayerTreeStore((s) => s.update)
@@ -130,23 +131,32 @@ export default function MapTab() {
             />
           </label>
           <label className="block">
-            <span className="flex items-center justify-between text-xs text-muted">
-              Legend title
-              <label className="flex items-center gap-1 cursor-pointer select-none" onClick={(e) => e.stopPropagation()}>
-                <input type="checkbox" checked={showLegend} onChange={(e) => update({ showLegend: e.target.checked })} className="accent-accent w-3 h-3" />
-                <span className="text-[10px]">show</span>
-              </label>
-            </span>
-            <input
-              type="text"
-              value={localLegendTitle}
-              onChange={(e) => setLocalLegendTitle(e.target.value)}
-              onBlur={() => update({ legendTitle: localLegendTitle })}
-              onKeyDown={(e) => e.key === 'Enter' && update({ legendTitle: localLegendTitle })}
-              placeholder="e.g. Million IDR"
-              className="mt-1 block w-full rounded border border-border bg-paper px-2 py-1 text-sm"
-            />
+            <span className="text-xs text-muted">Legend layer</span>
+            <select
+              value={legendLayerId || ''}
+              onChange={(e) => update({ legendLayerId: e.target.value || null, showLegend: !!e.target.value })}
+              className="mt-1 block w-full rounded border border-border bg-paper px-2 py-1.5 text-sm"
+            >
+              <option value="">None (hidden)</option>
+              {layers.filter(l => l.type === 'admin' && l.adminConfig?.featureValues && Object.keys(l.adminConfig.featureValues).length > 0).map(l => (
+                <option key={l.id} value={l.id}>{l.name}</option>
+              ))}
+            </select>
           </label>
+          {legendLayerId && (
+            <label className="block">
+              <span className="text-xs text-muted">Legend title</span>
+              <input
+                type="text"
+                value={localLegendTitle}
+                onChange={(e) => setLocalLegendTitle(e.target.value)}
+                onBlur={() => update({ legendTitle: localLegendTitle })}
+                onKeyDown={(e) => e.key === 'Enter' && update({ legendTitle: localLegendTitle })}
+                placeholder="e.g. Million IDR"
+                className="mt-1 block w-full rounded border border-border bg-paper px-2 py-1 text-sm"
+              />
+            </label>
+          )}
           <label className="block">
             <span className="flex items-center justify-between text-xs text-muted">
               Attribution / Source

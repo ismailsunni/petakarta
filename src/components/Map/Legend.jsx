@@ -36,21 +36,26 @@ export default function Legend() {
   }, [])
 
   const layers = useLayerTreeStore((s) => s.layers)
-  const selectedLayerId = useLayerTreeStore((s) => s.selectedLayerId)
+  const legendLayerId = useLayerTreeStore((s) => s.legendLayerId)
   const legendTitle = useLayerTreeStore((s) => s.legendTitle)
   const legendPosition = useLayerTreeStore((s) => s.legendPosition)
   const panelExpanded = useLayerTreeStore((s) => s.panelExpanded)
   const showLegend = useLayerTreeStore((s) => s.showLegend)
   const update = (patch) => useLayerTreeStore.setState(patch)
 
-  // Find the selected admin layer or fall back to first admin layer with data
-  const selectedLayer = layers.find(l => l.id === selectedLayerId)
-  const adminLayer = selectedLayer?.type === 'admin'
-    ? selectedLayer
-    : layers.find(l => l.type === 'admin' && l.adminConfig?.featureValues && Object.keys(l.adminConfig.featureValues).length > 0)
+  // Use explicitly selected legend layer
+  const legendLayer = legendLayerId ? layers.find(l => l.id === legendLayerId) : null
 
-  const config = adminLayer?.adminConfig
+  // Only show legend for admin layers with data
+  if (!legendLayer || legendLayer.type !== 'admin') return null
+
+  const config = legendLayer.adminConfig
   const featureValues = config?.featureValues
+
+  if (!featureValues || Object.keys(featureValues).length === 0) return null
+  if (tooSmall) return null
+  if (showLegend === false) return null
+
   const styleMode = config?.styleMode || 'graduated'
   const colorPreset = config?.colorPreset || 'Viridis'
   const colorReversed = config?.colorReversed || false
@@ -60,11 +65,6 @@ export default function Legend() {
   const categoryColors = config?.categoryColors || {}
   const noDataColor = config?.noDataColor || '#e0e0e0'
 
-  if (!featureValues || Object.keys(featureValues).length === 0) return null
-  if (tooSmall) return null
-  if (showLegend === false) return null
-
-  // Check if there are unmatched features (features with no data)
   const hasUnmatched = Object.values(featureValues).some(v => v === undefined || v === null || v === '')
 
   if (styleMode === 'categorized') {
@@ -115,6 +115,8 @@ export default function Legend() {
   }
 
   // Graduated mode
+  if (styleMode === 'single') return null
+
   const values = Object.values(featureValues)
     .map(Number)
     .filter((v) => !isNaN(v))
