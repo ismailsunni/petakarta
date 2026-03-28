@@ -217,8 +217,8 @@ export default function AddLayerModal() {
   }, [setAddLayerModalOpen])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-paper rounded-lg shadow-xl w-full max-w-lg max-h-[80vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/50">
+      <div className="bg-paper md:rounded-lg rounded-t-xl shadow-xl w-full md:max-w-lg max-h-[85vh] md:max-h-[80vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h2 className="text-lg font-medium">Add Layer</h2>
