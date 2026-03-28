@@ -62,9 +62,10 @@ export default function ShareTab() {
   const base = import.meta.env.BASE_URL
   const origin = window.location.origin
   const shareUrl = activeProjectSlug
-    ? `${origin}${base}p/${activeProjectSlug}`
+    ? `${origin}${base}?p=${activeProjectSlug}`
     : `${origin}${base}?project=${activeProjectId}`
-  const embedCode = `<iframe src="${shareUrl}?embed=true" width="${embedWidth}" height="${embedHeight}" frameborder="0"></iframe>`
+  const embedSrc = shareUrl.includes('?') ? `${shareUrl}&embed=true` : `${shareUrl}?embed=true`
+  const embedCode = `<iframe src="${embedSrc}" width="${embedWidth}" height="${embedHeight}" frameborder="0"></iframe>`
 
   const shareTitle = mapTitle || 'Check out this map on PetaKarta'
   const encodedUrl = encodeURIComponent(shareUrl)

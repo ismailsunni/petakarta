@@ -110,7 +110,7 @@ export default function ProjectsPanel({ onClose }) {
   const handleCopyLink = (project) => {
     const base = import.meta.env.BASE_URL
     const url = project.slug
-      ? `${window.location.origin}${base}p/${project.slug}`
+      ? `${window.location.origin}${base}?p=${project.slug}`
       : `${window.location.origin}${base}?project=${project.id}`
     navigator.clipboard.writeText(url)
     setCopied(project.id)

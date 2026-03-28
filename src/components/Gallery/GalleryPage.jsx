@@ -124,7 +124,7 @@ export default function GalleryPage() {
             const mapDescription = state.mapDescription || ''
             const author = project.profiles?.full_name || project.profiles?.username || null
             const projectUrl = project.slug
-              ? `${baseUrl}p/${project.slug}`
+              ? `${baseUrl}?p=${project.slug}`
               : `${baseUrl}?project=${project.id}`
             const thumbnailUrl = project.thumbnail_url || null
             const date = project.updated_at
