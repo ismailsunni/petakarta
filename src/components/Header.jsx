@@ -128,6 +128,7 @@ export default function Header() {
         activeProjectId: data.id,
         activeProjectName: data.name,
         activeProjectVisibility: data.visibility ?? 'private',
+        activeProjectSlug: data.slug ?? null,
       })
     }
     setSaving(false)

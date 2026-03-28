@@ -50,7 +50,14 @@ function MapEditor() {
           activeProjectId: data.id,
           activeProjectName: data.name || '',
           activeProjectVisibility: data.visibility ?? (data.is_public ? 'public' : 'private'),
+          activeProjectSlug: data.slug ?? null,
         })
+
+        if (data.name) {
+          document.title = `${data.name} — PetaKarta`
+          document.querySelector('meta[property="og:title"]')?.setAttribute('content', data.name)
+        }
+
         setShareLoading(false)
 
         // Dispatch event to zoom to map extent after loading

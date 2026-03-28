@@ -8,6 +8,9 @@ import {
   deleteProject,
   normalizeProjectState,
 } from '../../lib/projectsService'
+import UsageIndicator from '../UI/UsageIndicator'
+
+const PROJECT_LIMIT = 20
 
 const VISIBILITY_OPTIONS = [
   { value: 'private', label: 'Private', icon: '🔒' },
@@ -51,6 +54,7 @@ export default function ProjectsPanel({ onClose }) {
         activeProjectId: id,
         activeProjectName: data.name || '',
         activeProjectVisibility: data.visibility ?? (data.is_public ? 'public' : 'private'),
+        activeProjectSlug: data.slug ?? null,
       })
       onClose()
     }
@@ -120,6 +124,15 @@ export default function ProjectsPanel({ onClose }) {
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="font-display text-lg mb-4">My Projects</h2>
+
+        {!loading && (
+          <div className="mb-3 space-y-1">
+            <UsageIndicator current={projects.length} max={PROJECT_LIMIT} label="projects" />
+            {projects.length >= PROJECT_LIMIT && (
+              <p className="text-xs text-red-600">Project limit reached. Delete a project to create more.</p>
+            )}
+          </div>
+        )}
 
         {error && <p className="text-red-600 text-xs mb-3">{error}</p>}
 

@@ -3,6 +3,9 @@ import useLayerTreeStore from '../../store/layerTreeStore'
 import useAuthStore from '../../store/authStore'
 import { ADMIN_LAYERS } from '../../utils/adminLayers'
 import { downloadDataset, fetchUserDatasets } from '../../lib/datasetsService'
+import UsageIndicator from '../UI/UsageIndicator'
+
+const DATASET_LIMIT = 10
 
 export default function AddLayerModal() {
   const [activeTab, setActiveTab] = useState('admin')
@@ -208,6 +211,14 @@ export default function AddLayerModal() {
 
           {activeTab === 'datasets' && (
             <div className="space-y-4">
+              {user && !datasetsLoading && (
+                <div className="space-y-1">
+                  <UsageIndicator current={datasets.length} max={DATASET_LIMIT} label="datasets" />
+                  {datasets.length >= DATASET_LIMIT && (
+                    <p className="text-xs text-red-600">Limit reached. Delete a dataset to upload more.</p>
+                  )}
+                </div>
+              )}
               {!user ? (
                 <p className="text-center text-sm text-muted py-4">
                   Sign in to access your datasets

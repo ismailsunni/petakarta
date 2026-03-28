@@ -45,6 +45,7 @@ const useLayerTreeStore = create(
       activeProjectId: null,
       activeProjectName: "",
       activeProjectVisibility: 'private',
+      activeProjectSlug: null,
 
       // UI state
       activeTab: "layers",
@@ -341,6 +342,7 @@ const useLayerTreeStore = create(
           activeProjectId: null,
           activeProjectName: "",
           activeProjectVisibility: 'private',
+          activeProjectSlug: null,
           addLayerModalOpen: false,
         });
       },
@@ -357,6 +359,7 @@ const useLayerTreeStore = create(
               ? { ...l, userConfig: { ...l.userConfig, geojson: null } }
               : l
           ),
+          activeProjectSlug: null, // slug is set separately from DB response
         });
       },
 

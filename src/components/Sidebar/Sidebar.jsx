@@ -2,11 +2,13 @@ import useLayerTreeStore from '../../store/layerTreeStore'
 import LayerTreePanel from '../Layers/LayerTreePanel'
 import StyleTab from './StyleTab'
 import MapTab from './MapTab'
+import ShareTab from './ShareTab'
 
 const TABS = [
   { key: 'layers', label: 'Layers' },
   { key: 'style', label: 'Style' },
   { key: 'map', label: 'Map' },
+  { key: 'share', label: 'Share' },
 ]
 
 export default function Sidebar() {
@@ -34,6 +36,7 @@ export default function Sidebar() {
         {activeTab === 'layers' && <LayerTreePanel />}
         {activeTab === 'style' && <StyleTab />}
         {activeTab === 'map' && <MapTab />}
+        {activeTab === 'share' && <ShareTab />}
       </div>
     </aside>
   )
