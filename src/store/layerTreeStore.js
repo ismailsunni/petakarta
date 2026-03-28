@@ -220,6 +220,52 @@ const useLayerTreeStore = create(
       },
 
       /**
+       * Add a local GeoJSON layer (no auth, stored in localStorage)
+       */
+      addLocalGeoJsonLayer: (name, geojson) => {
+        const validation = validateRemoteGeoJson(geojson);
+        if (!validation.valid) {
+          return { error: { message: validation.error } };
+        }
+
+        const { layers } = get();
+        const maxOrder = layers.length > 0 ? Math.max(...layers.map((l) => l.order)) : -1;
+
+        const firstFeature =
+          geojson.type === "FeatureCollection"
+            ? geojson.features?.[0]
+            : geojson;
+        const geometryType = firstFeature?.geometry?.type || "Polygon";
+
+        const newLayer = {
+          id: `user-local-${Date.now()}`,
+          type: "user",
+          name: name || "Local GeoJSON",
+          title: "",
+          visible: true,
+          opacity: 1,
+          order: maxOrder + 1,
+          userConfig: {
+            datasetId: null,
+            storagePath: null,
+            remoteUrl: null,
+            geojson,
+            geometryType,
+            bbox: null,
+            style: getDefaultStyle(geometryType),
+          },
+        };
+
+        set((state) => ({
+          layers: [...state.layers, newLayer],
+          selectedLayerId: newLayer.id,
+          addLayerModalOpen: false,
+        }));
+
+        return { data: newLayer };
+      },
+
+      /**
        * Add a user layer from a dataset
        */
       addUserLayer: (dataset, geojson) => {
@@ -515,11 +561,15 @@ const useLayerTreeStore = create(
       name: "petakarta-layer-tree",
       version: 1,
       partialize: (state) => ({
-        layers: state.layers.map((l) =>
-          l.type === "user"
-            ? { ...l, userConfig: { ...l.userConfig, geojson: null } }
-            : l
-        ),
+        layers: state.layers.map((l) => {
+          if (l.type !== "user") return l;
+          // Local-only layers (no storagePath, no remoteUrl): keep geojson in localStorage
+          const isLocal = !l.userConfig?.storagePath && !l.userConfig?.remoteUrl;
+          return {
+            ...l,
+            userConfig: { ...l.userConfig, geojson: isLocal ? l.userConfig?.geojson : null },
+          };
+        }),
         selectedLayerId: state.selectedLayerId,
         mapTitle: state.mapTitle,
         mapDescription: state.mapDescription,

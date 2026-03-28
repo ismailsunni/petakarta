@@ -17,6 +17,7 @@ export default function AddLayerModal() {
   const setAddLayerModalOpen = useLayerTreeStore((s) => s.setAddLayerModalOpen)
   const addAdminLayer = useLayerTreeStore((s) => s.addAdminLayer)
   const addUserLayer = useLayerTreeStore((s) => s.addUserLayer)
+  const addLocalGeoJsonLayer = useLayerTreeStore((s) => s.addLocalGeoJsonLayer)
   const addCatalogLayer = useLayerTreeStore((s) => s.addCatalogLayer)
   const addRemoteGeoJsonLayer = useLayerTreeStore((s) => s.addRemoteGeoJsonLayer)
   const existingLayers = useLayerTreeStore((s) => s.layers)
@@ -323,15 +324,49 @@ export default function AddLayerModal() {
 
           {activeTab === 'datasets' && (
             <div className="space-y-4">
+              {/* Local file upload — works without auth */}
+              <div>
+                <h4 className="text-xs font-medium text-muted mb-1">Add from file (no sign-in needed)</h4>
+                <label className="flex items-center justify-center gap-2 border-2 border-dashed border-border rounded-lg py-3 cursor-pointer hover:border-accent/50 hover:bg-accent/5 transition-colors">
+                  <svg className="w-4 h-4 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M12 5v14M5 12h14" /></svg>
+                  <span className="text-sm text-muted">Load GeoJSON file</span>
+                  <input
+                    type="file"
+                    accept=".geojson,.json,application/geo+json,application/json"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      setLoading(true)
+                      setError('')
+                      try {
+                        const text = await file.text()
+                        const geojson = JSON.parse(text)
+                        const name = file.name.replace(/\.(geo)?json$/i, '')
+                        const result = addLocalGeoJsonLayer(name, geojson)
+                        if (result?.error) setError(result.error.message)
+                      } catch (err) {
+                        setError('Invalid GeoJSON file: ' + err.message)
+                      }
+                      setLoading(false)
+                      e.target.value = ''
+                    }}
+                  />
+                </label>
+                <p className="text-[10px] text-muted mt-1">Stored in your browser only. Max ~5 MB.</p>
+              </div>
+
+              {/* Cloud datasets — requires auth */}
               {user && !datasetsLoading && (
-                <div className="space-y-2">
+                <div className="space-y-2 border-t border-border pt-3">
+                  <h4 className="text-xs font-medium text-muted">Cloud datasets</h4>
                   <UsageIndicator current={datasets.length} max={DATASET_LIMIT} label="datasets" />
                   {datasets.length >= DATASET_LIMIT ? (
                     <p className="text-xs text-red-600">Limit reached. Delete a dataset to upload more.</p>
                   ) : (
                     <label className="flex items-center justify-center gap-2 border-2 border-dashed border-border rounded-lg py-3 cursor-pointer hover:border-accent/50 hover:bg-accent/5 transition-colors">
                       <svg className="w-4 h-4 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M12 5v14M5 12h14" /></svg>
-                      <span className="text-sm text-muted">Upload GeoJSON</span>
+                      <span className="text-sm text-muted">Upload to cloud</span>
                       <input
                         type="file"
                         accept=".geojson,.json,application/geo+json,application/json"
@@ -361,7 +396,7 @@ export default function AddLayerModal() {
               )}
               {!user ? (
                 <p className="text-center text-sm text-muted py-4">
-                  Sign in to access your datasets
+                  Sign in to save datasets to the cloud
                 </p>
               ) : datasetsLoading ? (
                 <div className="flex items-center justify-center py-4">
@@ -372,7 +407,7 @@ export default function AddLayerModal() {
                 </div>
               ) : datasets.length === 0 ? (
                 <p className="text-center text-sm text-muted py-4">
-                  No datasets uploaded yet. Upload a GeoJSON file to get started.
+                  No cloud datasets yet.
                 </p>
               ) : (
                 <div className="space-y-1">
