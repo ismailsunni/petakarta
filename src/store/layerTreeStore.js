@@ -58,6 +58,9 @@ const useLayerTreeStore = create(
       legendPosition: "bottom-right",
       attribution: "",
       basemap: "osm",
+      showTitle: true,
+      showLegend: true,
+      showAttribution: true,
       exportExtent: "", // "" (current view) or layer id
       currentViewExtentVersion: 0, // increment to trigger current view update
 
@@ -453,6 +456,9 @@ const useLayerTreeStore = create(
           legendPosition: "bottom-right",
           attribution: "",
           basemap: "osm",
+          showTitle: true,
+          showLegend: true,
+          showAttribution: true,
           activeProjectId: null,
           activeProjectName: "",
           activeProjectVisibility: 'private',
@@ -495,6 +501,9 @@ const useLayerTreeStore = create(
           legendPosition: state.legendPosition,
           attribution: state.attribution,
           basemap: state.basemap,
+          showTitle: state.showTitle,
+          showLegend: state.showLegend,
+          showAttribution: state.showAttribution,
           exportExtent: state.exportExtent,
         };
       },
@@ -515,6 +524,9 @@ const useLayerTreeStore = create(
         legendPosition: state.legendPosition,
         attribution: state.attribution,
         basemap: state.basemap,
+        showTitle: state.showTitle,
+        showLegend: state.showLegend,
+        showAttribution: state.showAttribution,
         exportExtent: state.exportExtent,
       }),
     }

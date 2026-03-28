@@ -40,6 +40,7 @@ export default function Legend() {
   const legendTitle = useLayerTreeStore((s) => s.legendTitle)
   const legendPosition = useLayerTreeStore((s) => s.legendPosition)
   const panelExpanded = useLayerTreeStore((s) => s.panelExpanded)
+  const showLegend = useLayerTreeStore((s) => s.showLegend)
   const update = (patch) => useLayerTreeStore.setState(patch)
 
   // Find the selected admin layer or fall back to first admin layer with data
@@ -61,6 +62,7 @@ export default function Legend() {
 
   if (!featureValues || Object.keys(featureValues).length === 0) return null
   if (tooSmall) return null
+  if (showLegend === false) return null
 
   // Check if there are unmatched features (features with no data)
   const hasUnmatched = Object.values(featureValues).some(v => v === undefined || v === null || v === '')

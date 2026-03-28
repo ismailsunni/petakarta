@@ -26,8 +26,10 @@ export default function useMapExport(map) {
     const cropW = Math.round(br[0] - tl[0])
     const cropH = Math.round(br[1] - tl[1])
 
-    const mapTitle = useLayerTreeStore.getState().mapTitle
-    const attribution = useLayerTreeStore.getState().attribution
+    const state = useLayerTreeStore.getState()
+    const mapTitle = state.showTitle !== false ? state.mapTitle : ''
+    const attribution = state.showAttribution !== false ? state.attribution : ''
+    const showLegend = state.showLegend !== false
     const titleHeight = mapTitle ? 40 * resolution : 0
     const attributionHeight = attribution ? 24 * resolution : 0
 
@@ -87,7 +89,7 @@ export default function useMapExport(map) {
 
     // Composite legend using html2canvas
     const legendEl = document.getElementById('map-legend')
-    if (legendEl) {
+    if (legendEl && showLegend) {
       try {
         const legendCanvas = await html2canvas(legendEl, {
           backgroundColor: null,

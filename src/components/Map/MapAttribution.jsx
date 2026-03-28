@@ -3,8 +3,9 @@ import useLayerTreeStore from '../../store/layerTreeStore'
 export default function MapAttribution() {
   const attribution = useLayerTreeStore((s) => s.attribution)
   const panelExpanded = useLayerTreeStore((s) => s.panelExpanded)
+  const showAttribution = useLayerTreeStore((s) => s.showAttribution)
 
-  if (!attribution) return null
+  if (!attribution || showAttribution === false) return null
 
   const leftClass = panelExpanded ? 'left-[340px]' : 'left-3'
 

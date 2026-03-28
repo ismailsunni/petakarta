@@ -13,6 +13,9 @@ export default function MapTab() {
   const mapDescription = useLayerTreeStore((s) => s.mapDescription)
   const legendTitle = useLayerTreeStore((s) => s.legendTitle)
   const attribution = useLayerTreeStore((s) => s.attribution)
+  const showTitle = useLayerTreeStore((s) => s.showTitle)
+  const showLegend = useLayerTreeStore((s) => s.showLegend)
+  const showAttribution = useLayerTreeStore((s) => s.showAttribution)
   const exportExtent = useLayerTreeStore((s) => s.exportExtent)
   const currentViewExtentVersion = useLayerTreeStore((s) => s.currentViewExtentVersion)
   const update = useLayerTreeStore((s) => s.update)
@@ -145,6 +148,41 @@ export default function MapTab() {
             />
           </label>
         </div>
+      </div>
+
+      {/* Visibility Toggles */}
+      <div className="border-t border-border pt-4">
+        <h3 className="text-sm font-medium mb-2">Show on Map</h3>
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={showTitle}
+              onChange={(e) => update({ showTitle: e.target.checked })}
+              className="accent-accent"
+            />
+            Title
+          </label>
+          <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={showLegend}
+              onChange={(e) => update({ showLegend: e.target.checked })}
+              className="accent-accent"
+            />
+            Legend
+          </label>
+          <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={showAttribution}
+              onChange={(e) => update({ showAttribution: e.target.checked })}
+              className="accent-accent"
+            />
+            Attribution
+          </label>
+        </div>
+        <p className="text-xs text-muted mt-1">Controls visibility in shared/embedded views and exports.</p>
       </div>
 
       {/* Extent Section */}

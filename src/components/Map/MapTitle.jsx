@@ -2,8 +2,9 @@ import useLayerTreeStore from '../../store/layerTreeStore'
 
 export default function MapTitle() {
   const mapTitle = useLayerTreeStore((s) => s.mapTitle)
+  const showTitle = useLayerTreeStore((s) => s.showTitle)
 
-  if (!mapTitle) return null
+  if (!mapTitle || showTitle === false) return null
 
   return (
     <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
