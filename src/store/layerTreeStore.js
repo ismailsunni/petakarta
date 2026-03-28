@@ -489,7 +489,7 @@ const useLayerTreeStore = create(
       /**
        * Open/close add layer modal
        */
-      setAddLayerModalOpen: (open) => set({ addLayerModalOpen: open }),
+      setAddLayerModalOpen: (open) => set({ addLayerModalOpen: open, ...(open ? { panelExpanded: false } : {}) }),
 
       /**
        * Reset all state
