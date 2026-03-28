@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import useLayerTreeStore from '../../store/layerTreeStore'
 import useAuthStore from '../../store/authStore'
 import { ADMIN_LAYERS } from '../../utils/adminLayers'
+import { CATALOG_LAYERS, CATALOG_CATEGORIES } from '../../data/catalogLayers'
 import { downloadDataset, fetchUserDatasets } from '../../lib/datasetsService'
 import UsageIndicator from '../UI/UsageIndicator'
 
@@ -16,11 +17,23 @@ export default function AddLayerModal() {
   const setAddLayerModalOpen = useLayerTreeStore((s) => s.setAddLayerModalOpen)
   const addAdminLayer = useLayerTreeStore((s) => s.addAdminLayer)
   const addUserLayer = useLayerTreeStore((s) => s.addUserLayer)
+  const addCatalogLayer = useLayerTreeStore((s) => s.addCatalogLayer)
   const existingLayers = useLayerTreeStore((s) => s.layers)
 
   const user = useAuthStore((s) => s.user)
   const [datasets, setDatasets] = useState([])
   const [datasetsLoading, setDatasetsLoading] = useState(false)
+
+  // Catalog tab state
+  const [catalogSearch, setCatalogSearch] = useState('')
+
+  // Custom URL tab state
+  const [customType, setCustomType] = useState('xyz')
+  const [customUrl, setCustomUrl] = useState('')
+  const [customLayerName, setCustomLayerName] = useState('')
+  const [customDisplayName, setCustomDisplayName] = useState('')
+  const [customAttribution, setCustomAttribution] = useState('')
+  const [customError, setCustomError] = useState(null)
 
   // Load datasets when switching to My Datasets tab
   useEffect(() => {
@@ -51,6 +64,24 @@ export default function AddLayerModal() {
     return acc
   }, {})
 
+  // Filter catalog layers by search
+  const filteredCatalogLayers = CATALOG_LAYERS.filter((layer) => {
+    if (!catalogSearch) return true
+    const q = catalogSearch.toLowerCase()
+    return (
+      layer.name.toLowerCase().includes(q) ||
+      layer.provider.toLowerCase().includes(q)
+    )
+  })
+
+  // Group catalog layers by category
+  const groupedCatalogLayers = filteredCatalogLayers.reduce((acc, layer) => {
+    const cat = layer.category
+    if (!acc[cat]) acc[cat] = []
+    acc[cat].push(layer)
+    return acc
+  }, {})
+
   // Check if admin layer is already added
   const isAdminLayerAdded = useCallback((adminLayerId) => {
     return existingLayers.some(l =>
@@ -62,6 +93,13 @@ export default function AddLayerModal() {
   const isDatasetAdded = useCallback((datasetId) => {
     return existingLayers.some(l =>
       l.type === 'user' && l.userConfig?.datasetId === datasetId
+    )
+  }, [existingLayers])
+
+  // Check if catalog layer is already added
+  const isCatalogLayerAdded = useCallback((catalogId) => {
+    return existingLayers.some(l =>
+      l.type === 'catalog' && l.catalogConfig?.catalogId === catalogId
     )
   }, [existingLayers])
 
@@ -97,6 +135,61 @@ export default function AddLayerModal() {
     setLoading(false)
   }, [addUserLayer])
 
+  const handleAddCatalogLayer = useCallback((entry) => {
+    setError(null)
+    const result = addCatalogLayer(entry)
+    if (result.error) {
+      setError(result.error.message)
+    }
+  }, [addCatalogLayer])
+
+  const handleAddCustomLayer = useCallback(() => {
+    setCustomError(null)
+
+    // Validate
+    if (customType === 'xyz') {
+      if (!customUrl.includes('{z}') || !customUrl.includes('{x}') || !customUrl.includes('{y}')) {
+        setCustomError('XYZ URL must contain {z}, {x}, and {y} placeholders')
+        return
+      }
+    } else if (customType === 'wms') {
+      if (!customUrl.trim()) {
+        setCustomError('URL is required')
+        return
+      }
+      if (!customLayerName.trim()) {
+        setCustomError('Layer name is required for WMS')
+        return
+      }
+    }
+
+    const customId = `custom-${Date.now()}`
+    const entry = {
+      id: customId,
+      name: customDisplayName.trim() || (customType === 'wms' ? customLayerName : 'Custom Layer'),
+      provider: 'Custom',
+      category: 'Custom',
+      type: customType,
+      url: customUrl.trim(),
+      layers: customLayerName.trim(),
+      format: customType === 'wms' ? 'image/png' : 'image/png',
+      attribution: customAttribution.trim(),
+      bbox: null,
+      cors: true,
+    }
+
+    const result = addCatalogLayer(entry)
+    if (result.error) {
+      setCustomError(result.error.message)
+    } else {
+      // Reset form
+      setCustomUrl('')
+      setCustomLayerName('')
+      setCustomDisplayName('')
+      setCustomAttribution('')
+    }
+  }, [addCatalogLayer, customType, customUrl, customLayerName, customDisplayName, customAttribution])
+
   const handleClose = useCallback(() => {
     setAddLayerModalOpen(false)
   }, [setAddLayerModalOpen])
@@ -118,27 +211,25 @@ export default function AddLayerModal() {
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-border">
-          <button
-            onClick={() => setActiveTab('admin')}
-            className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
-              activeTab === 'admin'
-                ? 'text-accent border-b-2 border-accent'
-                : 'text-muted hover:text-ink'
-            }`}
-          >
-            Admin Layers
-          </button>
-          <button
-            onClick={() => setActiveTab('datasets')}
-            className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
-              activeTab === 'datasets'
-                ? 'text-accent border-b-2 border-accent'
-                : 'text-muted hover:text-ink'
-            }`}
-          >
-            My Datasets
-          </button>
+        <div className="flex border-b border-border overflow-x-auto">
+          {[
+            { id: 'admin', label: 'Admin Layers' },
+            { id: 'datasets', label: 'My Datasets' },
+            { id: 'catalog', label: 'Catalog' },
+            { id: 'custom', label: 'Custom URL' },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => { setActiveTab(tab.id); setError(null) }}
+              className={`flex-1 py-2.5 text-sm font-medium transition-colors whitespace-nowrap ${
+                activeTab === tab.id
+                  ? 'text-accent border-b-2 border-accent'
+                  : 'text-muted hover:text-ink'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
         {/* Error message */}
@@ -271,6 +362,160 @@ export default function AddLayerModal() {
                   })}
                 </div>
               )}
+            </div>
+          )}
+
+          {activeTab === 'catalog' && (
+            <div className="space-y-4">
+              <input
+                type="text"
+                value={catalogSearch}
+                onChange={(e) => setCatalogSearch(e.target.value)}
+                placeholder="Search by name or provider..."
+                className="w-full rounded border border-border bg-paper px-3 py-2 text-sm placeholder:text-muted/60"
+              />
+
+              {CATALOG_CATEGORIES.filter(cat =>
+                groupedCatalogLayers[cat]?.length > 0
+              ).map((category) => (
+                <div key={category}>
+                  <h4 className="text-xs font-medium text-muted uppercase tracking-wide mb-2">
+                    {category}
+                  </h4>
+                  <div className="space-y-1">
+                    {groupedCatalogLayers[category].map((entry) => {
+                      const isAdded = isCatalogLayerAdded(entry.id)
+                      return (
+                        <div
+                          key={entry.id}
+                          className={`flex items-center justify-between p-2 rounded border ${
+                            isAdded
+                              ? 'border-accent/30 bg-accent/5 opacity-60'
+                              : 'border-border hover:border-accent/50'
+                          }`}
+                        >
+                          <div className="flex-1 min-w-0 mr-2">
+                            <p className="text-sm font-medium truncate">{entry.name}</p>
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <span className="text-xs text-muted bg-canvas px-1.5 py-0.5 rounded">
+                                {entry.provider}
+                              </span>
+                              <span className="text-xs text-muted bg-canvas px-1.5 py-0.5 rounded uppercase">
+                                {entry.type}
+                              </span>
+                            </div>
+                          </div>
+                          {isAdded ? (
+                            <span className="text-xs text-accent px-2 py-0.5 bg-accent/10 rounded shrink-0">
+                              Added
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => handleAddCatalogLayer(entry)}
+                              className="text-xs text-accent hover:text-accentMuted px-2 py-0.5 border border-accent/30 rounded hover:bg-accent/5 transition-colors shrink-0"
+                            >
+                              Add
+                            </button>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+
+              {filteredCatalogLayers.length === 0 && (
+                <p className="text-center text-sm text-muted py-4">
+                  No catalog layers match your search
+                </p>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'custom' && (
+            <div className="space-y-4">
+              {customError && (
+                <div className="p-2 rounded bg-red-50 border border-red-200 text-xs text-red-600">
+                  {customError}
+                </div>
+              )}
+
+              {/* Type select */}
+              <div>
+                <label className="block text-xs font-medium text-muted mb-1">Type</label>
+                <select
+                  value={customType}
+                  onChange={(e) => { setCustomType(e.target.value); setCustomError(null) }}
+                  className="w-full rounded border border-border bg-paper px-3 py-2 text-sm"
+                >
+                  <option value="xyz">XYZ Tile</option>
+                  <option value="wms">WMS</option>
+                </select>
+              </div>
+
+              {/* URL input */}
+              <div>
+                <label className="block text-xs font-medium text-muted mb-1">URL</label>
+                <input
+                  type="text"
+                  value={customUrl}
+                  onChange={(e) => setCustomUrl(e.target.value)}
+                  placeholder={
+                    customType === 'xyz'
+                      ? 'https://example.com/tiles/{z}/{x}/{y}.png'
+                      : 'https://example.com/wms'
+                  }
+                  className="w-full rounded border border-border bg-paper px-3 py-2 text-sm placeholder:text-muted/60"
+                />
+                {customType === 'xyz' && (
+                  <p className="text-xs text-muted mt-1">Must include {'{z}'}, {'{x}'}, {'{y}'} placeholders</p>
+                )}
+              </div>
+
+              {/* WMS layer name */}
+              {customType === 'wms' && (
+                <div>
+                  <label className="block text-xs font-medium text-muted mb-1">Layer Name <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
+                    value={customLayerName}
+                    onChange={(e) => setCustomLayerName(e.target.value)}
+                    placeholder="e.g. topp:states"
+                    className="w-full rounded border border-border bg-paper px-3 py-2 text-sm placeholder:text-muted/60"
+                  />
+                </div>
+              )}
+
+              {/* Display name */}
+              <div>
+                <label className="block text-xs font-medium text-muted mb-1">Display Name</label>
+                <input
+                  type="text"
+                  value={customDisplayName}
+                  onChange={(e) => setCustomDisplayName(e.target.value)}
+                  placeholder="My custom layer"
+                  className="w-full rounded border border-border bg-paper px-3 py-2 text-sm placeholder:text-muted/60"
+                />
+              </div>
+
+              {/* Attribution */}
+              <div>
+                <label className="block text-xs font-medium text-muted mb-1">Attribution <span className="text-muted/60">(optional)</span></label>
+                <input
+                  type="text"
+                  value={customAttribution}
+                  onChange={(e) => setCustomAttribution(e.target.value)}
+                  placeholder="© Data Provider"
+                  className="w-full rounded border border-border bg-paper px-3 py-2 text-sm placeholder:text-muted/60"
+                />
+              </div>
+
+              <button
+                onClick={handleAddCustomLayer}
+                className="w-full py-2 text-sm bg-accent text-white rounded hover:bg-accent/90 transition-colors"
+              >
+                Add Layer
+              </button>
             </div>
           )}
         </div>

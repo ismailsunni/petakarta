@@ -102,6 +102,41 @@ const useLayerTreeStore = create(
       },
 
       /**
+       * Add a catalog layer (XYZ tile or WMS)
+       */
+      addCatalogLayer: (catalogEntry) => {
+        const { layers } = get()
+        if (layers.some(l => l.type === 'catalog' && l.catalogConfig?.catalogId === catalogEntry.id)) {
+          return { error: { message: 'This catalog layer is already added' } }
+        }
+        const maxOrder = layers.length > 0 ? Math.max(...layers.map(l => l.order)) : -1
+        const newLayer = {
+          id: `catalog-${catalogEntry.id}-${Date.now()}`,
+          type: 'catalog',
+          name: catalogEntry.name,
+          title: '',
+          visible: true,
+          opacity: catalogEntry.type === 'xyz' ? 1 : 0.7,
+          order: maxOrder + 1,
+          catalogConfig: {
+            catalogId: catalogEntry.id,
+            type: catalogEntry.type,
+            url: catalogEntry.url,
+            layers: catalogEntry.layers || '',
+            format: catalogEntry.format || 'image/png',
+            attribution: catalogEntry.attribution || '',
+            bbox: catalogEntry.bbox || null,
+          },
+        }
+        set(state => ({
+          layers: [...state.layers, newLayer],
+          selectedLayerId: newLayer.id,
+          addLayerModalOpen: false,
+        }))
+        return { data: newLayer }
+      },
+
+      /**
        * Add a user layer from a dataset
        */
       addUserLayer: (dataset, geojson) => {

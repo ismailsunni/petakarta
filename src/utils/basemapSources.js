@@ -6,6 +6,9 @@ export const BASEMAP_OPTIONS = [
   { key: 'cartodb-positron', label: 'Positron (Light)' },
   { key: 'cartodb-dark', label: 'Dark Matter' },
   { key: 'cartodb-voyager', label: 'Voyager' },
+  { key: 'esri-imagery', label: 'Esri World Imagery' },
+  { key: 'esri-topo', label: 'Esri World Topo' },
+  { key: 'opentopomap', label: 'OpenTopoMap' },
   { key: 'none', label: 'No Basemap' },
 ]
 
@@ -30,6 +33,24 @@ export function createBasemapSource(key) {
       return cartoXYZ('dark_all')
     case 'cartodb-voyager':
       return cartoXYZ('rastertiles/voyager')
+    case 'esri-imagery':
+      return new XYZ({
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        attributions: 'Esri, Maxar, Earthstar Geographics',
+        maxZoom: 20,
+      })
+    case 'esri-topo':
+      return new XYZ({
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+        attributions: 'Esri',
+        maxZoom: 20,
+      })
+    case 'opentopomap':
+      return new XYZ({
+        url: 'https://tile.opentopomap.org/{z}/{x}/{y}.png',
+        attributions: 'OpenTopoMap (CC-BY-SA)',
+        maxZoom: 17,
+      })
     default:
       return null
   }
