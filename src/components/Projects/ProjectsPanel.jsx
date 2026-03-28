@@ -9,6 +9,12 @@ import {
   normalizeProjectState,
 } from '../../lib/projectsService'
 
+const VISIBILITY_OPTIONS = [
+  { value: 'private', label: 'Private', icon: '🔒' },
+  { value: 'unlisted', label: 'Unlisted', icon: '🔗' },
+  { value: 'public', label: 'Public', icon: '🌐' },
+]
+
 export default function ProjectsPanel({ onClose }) {
   const user = useAuthStore((s) => s.user)
   const storeActiveId = useLayerTreeStore((s) => s.activeProjectId)
@@ -44,7 +50,7 @@ export default function ProjectsPanel({ onClose }) {
       useLayerTreeStore.setState({
         activeProjectId: id,
         activeProjectName: data.name || '',
-        activeProjectPublic: data.is_public ?? false,
+        activeProjectVisibility: data.visibility ?? (data.is_public ? 'public' : 'private'),
       })
       onClose()
     }
@@ -57,22 +63,23 @@ export default function ProjectsPanel({ onClose }) {
       setError(delError.message)
     } else {
       if (storeActiveId === id) {
-        useLayerTreeStore.setState({ activeProjectId: null, activeProjectName: '', activeProjectPublic: false })
+        useLayerTreeStore.setState({ activeProjectId: null, activeProjectName: '', activeProjectVisibility: 'private' })
       }
       fetchProjects()
     }
   }
 
-  const handleTogglePublic = async (project) => {
+  const handleChangeVisibility = async (project, newVisibility) => {
     setError('')
-    const { error: toggleError } = await updateProject(project.id, {
-      is_public: !project.is_public,
+    const { error: updateError } = await updateProject(project.id, {
+      visibility: newVisibility,
+      is_public: newVisibility === 'public',
     })
-    if (toggleError) {
-      setError(toggleError.message)
+    if (updateError) {
+      setError(updateError.message)
     } else {
       if (project.id === storeActiveId) {
-        useLayerTreeStore.setState({ activeProjectPublic: !project.is_public })
+        useLayerTreeStore.setState({ activeProjectVisibility: newVisibility })
       }
       fetchProjects()
     }
@@ -96,11 +103,13 @@ export default function ProjectsPanel({ onClose }) {
     setRenamingId(null)
   }
 
-  const handleCopyLink = (id) => {
+  const handleCopyLink = (project) => {
     const base = import.meta.env.BASE_URL
-    const url = `${window.location.origin}${base}?project=${id}`
+    const url = project.slug
+      ? `${window.location.origin}${base}p/${project.slug}`
+      : `${window.location.origin}${base}?project=${project.id}`
     navigator.clipboard.writeText(url)
-    setCopied(id)
+    setCopied(project.id)
     setTimeout(() => setCopied(null), 2000)
   }
 
@@ -120,83 +129,92 @@ export default function ProjectsPanel({ onClose }) {
           <p className="text-sm text-muted">No saved projects yet.</p>
         ) : (
           <ul className="space-y-2">
-            {projects.map((p) => (
-              <li
-                key={p.id}
-                className={`rounded border px-3 py-2 text-sm ${
-                  p.id === storeActiveId ? 'border-accent bg-accent/5' : 'border-border'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    {renamingId === p.id ? (
-                      <input
-                        type="text"
-                        value={renameValue}
-                        onChange={(e) => setRenameValue(e.target.value)}
-                        onBlur={() => handleRenameSubmit(p.id)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleRenameSubmit(p.id)
-                          if (e.key === 'Escape') setRenamingId(null)
-                        }}
-                        autoFocus
-                        className="w-full rounded border border-border bg-canvas px-2 py-0.5 text-sm font-medium"
-                      />
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium truncate">{p.name}</p>
-                        {p.id === storeActiveId && (
-                          <span className="text-[10px] bg-accent/15 text-accent px-1.5 py-0.5 rounded font-medium shrink-0">
-                            Active
-                          </span>
-                        )}
-                      </div>
+            {projects.map((p) => {
+              const currentVisibility = p.visibility ?? (p.is_public ? 'public' : 'private')
+              const visOpt = VISIBILITY_OPTIONS.find((o) => o.value === currentVisibility) ?? VISIBILITY_OPTIONS[0]
+              const isShareable = currentVisibility === 'public' || currentVisibility === 'unlisted'
+              return (
+                <li
+                  key={p.id}
+                  className={`rounded border px-3 py-2 text-sm ${
+                    p.id === storeActiveId ? 'border-accent bg-accent/5' : 'border-border'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="min-w-0 flex-1">
+                      {renamingId === p.id ? (
+                        <input
+                          type="text"
+                          value={renameValue}
+                          onChange={(e) => setRenameValue(e.target.value)}
+                          onBlur={() => handleRenameSubmit(p.id)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleRenameSubmit(p.id)
+                            if (e.key === 'Escape') setRenamingId(null)
+                          }}
+                          autoFocus
+                          className="w-full rounded border border-border bg-canvas px-2 py-0.5 text-sm font-medium"
+                        />
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium truncate">{p.name}</p>
+                          {p.id === storeActiveId && (
+                            <span className="text-[10px] bg-accent/15 text-accent px-1.5 py-0.5 rounded font-medium shrink-0">
+                              Active
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      <p className="text-xs text-muted">
+                        {new Date(p.updated_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="flex gap-2 shrink-0 ml-2">
+                      <button
+                        onClick={() => handleLoad(p.id)}
+                        className="text-xs text-accent hover:underline"
+                      >
+                        Load
+                      </button>
+                      <button
+                        onClick={() => { setRenameValue(p.name); setRenamingId(p.id) }}
+                        className="text-xs text-muted hover:text-ink hover:underline"
+                      >
+                        Rename
+                      </button>
+                      <button
+                        onClick={() => handleDelete(p.id)}
+                        className="text-xs text-red-500 hover:underline"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 mt-1.5 pt-1.5 border-t border-border/50">
+                    <select
+                      value={currentVisibility}
+                      onChange={(e) => handleChangeVisibility(p, e.target.value)}
+                      className="text-xs text-muted bg-transparent border border-border/50 rounded px-1.5 py-0.5 cursor-pointer hover:border-border"
+                      title="Change visibility"
+                    >
+                      {VISIBILITY_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.icon} {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                    {isShareable && (
+                      <button
+                        onClick={() => handleCopyLink(p)}
+                        className="text-xs text-accent hover:underline"
+                      >
+                        {copied === p.id ? 'Copied!' : 'Copy share link'}
+                      </button>
                     )}
-                    <p className="text-xs text-muted">
-                      {new Date(p.updated_at).toLocaleDateString()}
-                    </p>
                   </div>
-                  <div className="flex gap-2 shrink-0 ml-2">
-                    <button
-                      onClick={() => handleLoad(p.id)}
-                      className="text-xs text-accent hover:underline"
-                    >
-                      Load
-                    </button>
-                    <button
-                      onClick={() => { setRenameValue(p.name); setRenamingId(p.id) }}
-                      className="text-xs text-muted hover:text-ink hover:underline"
-                    >
-                      Rename
-                    </button>
-                    <button
-                      onClick={() => handleDelete(p.id)}
-                      className="text-xs text-red-500 hover:underline"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 mt-1.5 pt-1.5 border-t border-border/50">
-                  <button
-                    onClick={() => handleTogglePublic(p)}
-                    className="flex items-center gap-1 text-xs text-muted hover:text-ink transition-colors"
-                    title={p.is_public ? 'Make private' : 'Make public'}
-                  >
-                    <span>{p.is_public ? '\u{1F310}' : '\u{1F512}'}</span>
-                    <span>{p.is_public ? 'Public' : 'Private'}</span>
-                  </button>
-                  {p.is_public && (
-                    <button
-                      onClick={() => handleCopyLink(p.id)}
-                      className="text-xs text-accent hover:underline"
-                    >
-                      {copied === p.id ? 'Copied!' : 'Copy share link'}
-                    </button>
-                  )}
-                </div>
-              </li>
-            ))}
+                </li>
+              )
+            })}
           </ul>
         )}
 

@@ -1,9 +1,11 @@
 import { create } from "zustand";
 import { supabase } from "../lib/supabase";
 import useLayerTreeStore from "./layerTreeStore";
+import { fetchProfile } from "../lib/profilesService";
 
 const useAuthStore = create((set) => ({
   user: null,
+  profile: null,
   loading: true,
 
   initialize: async () => {
@@ -15,10 +17,23 @@ const useAuthStore = create((set) => ({
     const {
       data: { session },
     } = await supabase.auth.getSession();
-    set({ user: session?.user ?? null, loading: false });
+    const user = session?.user ?? null;
+    set({ user, loading: false });
 
-    supabase.auth.onAuthStateChange((_event, session) => {
-      set({ user: session?.user ?? null });
+    if (user) {
+      const { data: profile } = await fetchProfile(user.id);
+      set({ profile });
+    }
+
+    supabase.auth.onAuthStateChange(async (_event, session) => {
+      const user = session?.user ?? null;
+      set({ user });
+      if (user) {
+        const { data: profile } = await fetchProfile(user.id);
+        set({ profile });
+      } else {
+        set({ profile: null });
+      }
     });
   },
 
@@ -51,7 +66,7 @@ const useAuthStore = create((set) => ({
   signOut: async () => {
     if (!supabase) return;
     await supabase.auth.signOut();
-    set({ user: null });
+    set({ user: null, profile: null });
     useLayerTreeStore.getState().reset();
   },
 }));

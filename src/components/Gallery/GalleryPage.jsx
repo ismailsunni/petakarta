@@ -73,6 +73,10 @@ export default function GalleryPage() {
             const state = project.state_json || {}
             const mapTitle = state.mapTitle || project.name || 'Untitled'
             const mapDescription = state.mapDescription || ''
+            const author = project.profiles?.full_name || project.profiles?.username || null
+            const projectUrl = project.slug
+              ? `${baseUrl}p/${project.slug}`
+              : `${baseUrl}?project=${project.id}`
             return (
               <div
                 key={project.id}
@@ -88,7 +92,7 @@ export default function GalleryPage() {
                 </div>
                 <div className="px-4 py-3">
                   <a
-                    href={`${baseUrl}?project=${project.id}`}
+                    href={projectUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm font-medium hover:text-accent transition-colors block"
@@ -97,6 +101,9 @@ export default function GalleryPage() {
                   </a>
                   {mapDescription && (
                     <p className="text-xs text-muted mt-1 line-clamp-2">{mapDescription}</p>
+                  )}
+                  {author && (
+                    <p className="text-xs text-muted mt-1">by {author}</p>
                   )}
                 </div>
               </div>

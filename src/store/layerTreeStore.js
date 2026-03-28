@@ -44,7 +44,7 @@ const useLayerTreeStore = create(
       // Project state
       activeProjectId: null,
       activeProjectName: "",
-      activeProjectPublic: false,
+      activeProjectVisibility: 'private',
 
       // UI state
       activeTab: "layers",
@@ -340,7 +340,7 @@ const useLayerTreeStore = create(
           basemap: "osm",
           activeProjectId: null,
           activeProjectName: "",
-          activeProjectPublic: false,
+          activeProjectVisibility: 'private',
           addLayerModalOpen: false,
         });
       },

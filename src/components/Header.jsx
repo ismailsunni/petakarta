@@ -4,14 +4,21 @@ import useLayerTreeStore from '../store/layerTreeStore'
 import { supabase } from '../lib/supabase'
 import AuthModal from './Auth/AuthModal'
 import ProjectsPanel from './Projects/ProjectsPanel'
+import ProfileModal from './Profile/ProfileModal'
 import {
   saveProject,
   updateProject,
 } from '../lib/projectsService'
 
+const VISIBILITY_OPTIONS = [
+  { value: 'private', label: 'Private', icon: '🔒' },
+  { value: 'unlisted', label: 'Unlisted', icon: '🔗' },
+  { value: 'public', label: 'Public', icon: '🌐' },
+]
+
 function SaveAsDialog({ onSave, onCancel }) {
   const [name, setName] = useState('')
-  const [isPublic, setIsPublic] = useState(false)
+  const [visibility, setVisibility] = useState('private')
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onCancel}>
@@ -25,25 +32,30 @@ function SaveAsDialog({ onSave, onCancel }) {
           placeholder="Project name..."
           value={name}
           onChange={(e) => setName(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && name.trim() && onSave(name.trim(), isPublic)}
+          onKeyDown={(e) => e.key === 'Enter' && name.trim() && onSave(name.trim(), visibility)}
           autoFocus
           className="w-full rounded border border-border bg-canvas px-3 py-1.5 text-sm mb-3"
         />
-        <label className="flex items-center gap-2 text-sm text-ink mb-4 cursor-pointer select-none">
-          <input
-            type="checkbox"
-            checked={isPublic}
-            onChange={(e) => setIsPublic(e.target.checked)}
-            className="accent-accent"
-          />
-          Make public (shareable via link)
-        </label>
+        <div className="mb-4">
+          <label className="text-xs text-muted block mb-1">Visibility</label>
+          <select
+            value={visibility}
+            onChange={(e) => setVisibility(e.target.value)}
+            className="w-full rounded border border-border bg-canvas px-3 py-1.5 text-sm"
+          >
+            {VISIBILITY_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.icon} {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
         <div className="flex justify-end gap-2">
           <button onClick={onCancel} className="text-sm text-muted hover:text-ink transition-colors px-2 py-1">
             Cancel
           </button>
           <button
-            onClick={() => name.trim() && onSave(name.trim(), isPublic)}
+            onClick={() => name.trim() && onSave(name.trim(), visibility)}
             disabled={!name.trim()}
             className="bg-accent text-paper px-3 py-1 rounded text-sm font-medium hover:bg-accentMuted transition-colors disabled:opacity-40"
           >
@@ -57,15 +69,17 @@ function SaveAsDialog({ onSave, onCancel }) {
 
 export default function Header() {
   const user = useAuthStore((s) => s.user)
+  const profile = useAuthStore((s) => s.profile)
   const loading = useAuthStore((s) => s.loading)
   const signOut = useAuthStore((s) => s.signOut)
   const activeProjectId = useLayerTreeStore((s) => s.activeProjectId)
   const activeProjectName = useLayerTreeStore((s) => s.activeProjectName)
-  const activeProjectPublic = useLayerTreeStore((s) => s.activeProjectPublic)
+  const activeProjectVisibility = useLayerTreeStore((s) => s.activeProjectVisibility)
   const [showAuth, setShowAuth] = useState(false)
   const [showProjects, setShowProjects] = useState(false)
   const [showSaveAs, setShowSaveAs] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
+  const [showProfile, setShowProfile] = useState(false)
   const [renaming, setRenaming] = useState(false)
   const [renameValue, setRenameValue] = useState('')
   const [saving, setSaving] = useState(false)
@@ -104,24 +118,30 @@ export default function Header() {
     setSaving(false)
   }, [user, activeProjectId])
 
-  const handleSaveAs = useCallback(async (name, isPublic) => {
+  const handleSaveAs = useCallback(async (name, visibility) => {
     if (!user) return
     setSaving(true)
     const state = useLayerTreeStore.getState().getProjectState()
-    const { data } = await saveProject(user.id, name, state, isPublic)
+    const { data } = await saveProject(user.id, name, state, visibility)
     if (data) {
-      useLayerTreeStore.setState({ activeProjectId: data.id, activeProjectName: data.name, activeProjectPublic: data.is_public ?? false })
+      useLayerTreeStore.setState({
+        activeProjectId: data.id,
+        activeProjectName: data.name,
+        activeProjectVisibility: data.visibility ?? 'private',
+      })
     }
     setSaving(false)
     setShowSaveAs(false)
   }, [user])
 
-  const handleTogglePublic = useCallback(async () => {
+  const handleChangeVisibility = useCallback(async (newVisibility) => {
     if (!activeProjectId) return
-    const next = !activeProjectPublic
-    await updateProject(activeProjectId, { is_public: next })
-    useLayerTreeStore.setState({ activeProjectPublic: next })
-  }, [activeProjectId, activeProjectPublic])
+    await updateProject(activeProjectId, {
+      visibility: newVisibility,
+      is_public: newVisibility === 'public',
+    })
+    useLayerTreeStore.setState({ activeProjectVisibility: newVisibility })
+  }, [activeProjectId])
 
   const handleRenameSubmit = useCallback(async () => {
     const trimmed = renameValue.trim()
@@ -151,6 +171,9 @@ export default function Header() {
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [user, handleSave])
+
+  const visibilityOption = VISIBILITY_OPTIONS.find((o) => o.value === activeProjectVisibility) ?? VISIBILITY_OPTIONS[0]
+  const displayName = profile?.full_name || profile?.username || user?.email
 
   return (
     <>
@@ -192,13 +215,18 @@ export default function Header() {
                 </button>
               )}
               {activeProjectId && (
-                <button
-                  onClick={handleTogglePublic}
-                  title={activeProjectPublic ? 'Public — click to make private' : 'Private — click to make public'}
-                  className="text-paper/60 hover:text-paper transition-colors text-base leading-none"
+                <select
+                  value={activeProjectVisibility}
+                  onChange={(e) => handleChangeVisibility(e.target.value)}
+                  title="Project visibility"
+                  className="bg-transparent text-paper/70 hover:text-paper border-none outline-none text-sm cursor-pointer"
                 >
-                  {activeProjectPublic ? '🌐' : '🔒'}
-                </button>
+                  {VISIBILITY_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value} className="bg-ink text-paper">
+                      {opt.icon} {opt.label}
+                    </option>
+                  ))}
+                </select>
               )}
               <button
                 onClick={handleSave}
@@ -236,6 +264,12 @@ export default function Header() {
                     >
                       My Projects
                     </button>
+                    <button
+                      onClick={() => { setShowProfile(true); setShowMenu(false) }}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-canvas transition-colors"
+                    >
+                      Profile
+                    </button>
                   </div>
                 )}
               </div>
@@ -262,7 +296,7 @@ export default function Header() {
           {supabase && !loading && (
             user ? (
               <>
-                <span className="text-xs text-paper/60 hidden sm:inline">{user.email}</span>
+                <span className="text-xs text-paper/60 hidden sm:inline">{displayName}</span>
                 <button
                   onClick={signOut}
                   className="text-sm text-paper/80 hover:text-paper transition-colors"
@@ -295,6 +329,7 @@ export default function Header() {
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
       {showProjects && <ProjectsPanel onClose={() => setShowProjects(false)} />}
       {showSaveAs && <SaveAsDialog onSave={handleSaveAs} onCancel={() => setShowSaveAs(false)} />}
+      {showProfile && <ProfileModal onClose={() => setShowProfile(false)} />}
     </>
   )
 }

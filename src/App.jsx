@@ -10,14 +10,15 @@ import GalleryPage from './components/Gallery/GalleryPage'
 import AboutPage from './components/About/AboutPage'
 import useAuthStore from './store/authStore'
 import useLayerTreeStore from './store/layerTreeStore'
-import { loadProject, normalizeProjectState } from './lib/projectsService'
+import { loadProject, loadProjectBySlug, normalizeProjectState } from './lib/projectsService'
 import { ExportProvider } from './contexts/ExportContext'
 import useAppRoute from './hooks/useAppRoute'
 
 function MapEditor() {
-  const { projectId, embed } = useAppRoute()
+  const { projectId, projectSlug, embed } = useAppRoute()
   const viewMode = useLayerTreeStore((s) => s.viewMode)
-  const [shareLoading, setShareLoading] = useState(!!projectId)
+  const hasSharedProject = !!(projectId || projectSlug)
+  const [shareLoading, setShareLoading] = useState(hasSharedProject)
   const [shareError, setShareError] = useState('')
   const [sheetOpen, setSheetOpen] = useState(false)
 
@@ -26,9 +27,17 @@ function MapEditor() {
       useLayerTreeStore.setState({ viewMode: 'view' })
     }
 
-    if (projectId) {
+    if (projectId || projectSlug) {
       useLayerTreeStore.setState({ viewMode: 'view' })
-      loadProject(projectId).then(({ data, error }) => {
+
+      const doLoad = async () => {
+        let data, error
+        if (projectSlug) {
+          ;({ data, error } = await loadProjectBySlug(projectSlug))
+        } else {
+          ;({ data, error } = await loadProject(projectId))
+        }
+
         if (error || !data?.state_json) {
           setShareError(error?.message || 'Project not found or is private.')
           setShareLoading(false)
@@ -40,15 +49,17 @@ function MapEditor() {
           viewMode: 'view',
           activeProjectId: data.id,
           activeProjectName: data.name || '',
-          activeProjectPublic: data.is_public ?? false,
+          activeProjectVisibility: data.visibility ?? (data.is_public ? 'public' : 'private'),
         })
         setShareLoading(false)
-        
+
         // Dispatch event to zoom to map extent after loading
         setTimeout(() => {
           window.dispatchEvent(new CustomEvent('zoomToMapExtent'))
         }, 100)
-      })
+      }
+
+      doLoad()
     }
   }, [])
 

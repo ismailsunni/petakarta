@@ -54,12 +54,52 @@ export function extractProjectState(storeState) {
   return state;
 }
 
+/**
+ * Generate a URL-friendly slug from a title
+ */
+export function generateSlug(title) {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .slice(0, 60)
+}
+
+/**
+ * Check if a slug is available
+ */
+export async function checkSlugAvailable(slug) {
+  if (!supabase) return { available: true }
+  const { data } = await supabase
+    .from('projects')
+    .select('id')
+    .eq('slug', slug)
+    .maybeSingle()
+  return { available: !data }
+}
+
+/**
+ * Find a unique slug, appending a suffix if needed
+ */
+async function findUniqueSlug(baseSlug) {
+  if (!baseSlug) return null
+  const { available } = await checkSlugAvailable(baseSlug)
+  if (available) return baseSlug
+  const withSuffix = `${baseSlug}-${Date.now().toString(36)}`
+  return withSuffix
+}
+
 export async function listPublicProjects({ limit = 10, offset = 0 } = {}) {
   if (!supabase) return { data: [], error: null, count: 0 };
   const { data, error, count } = await supabase
     .from("projects")
-    .select("id, name, is_public, created_at, updated_at, state_json", { count: "exact" })
-    .eq("is_public", true)
+    .select(
+      "id, name, visibility, slug, created_at, updated_at, state_json, profiles!projects_user_id_fkey(full_name, username)",
+      { count: "exact" }
+    )
+    .eq("visibility", "public")
     .order("updated_at", { ascending: false })
     .range(offset, offset + limit - 1);
   return { data: data ?? [], error, count };
@@ -69,7 +109,7 @@ export async function listProjects(userId) {
   if (!supabase) return { data: [], error: null };
   const { data, error } = await supabase
     .from("projects")
-    .select("id, name, is_public, created_at, updated_at")
+    .select("id, name, is_public, visibility, slug, created_at, updated_at")
     .eq("user_id", userId)
     .order("updated_at", { ascending: false });
   return { data: data ?? [], error };
@@ -85,15 +125,30 @@ export async function loadProject(id) {
   return { data, error };
 }
 
-export async function saveProject(userId, name, stateJson, isPublic = false) {
+export async function loadProjectBySlug(slug) {
   if (!supabase) return { data: null, error: null };
+  const { data, error } = await supabase
+    .from("projects")
+    .select("*")
+    .eq("slug", slug)
+    .in("visibility", ["public", "unlisted"])
+    .single();
+  return { data, error };
+}
+
+export async function saveProject(userId, name, stateJson, visibility = 'private') {
+  if (!supabase) return { data: null, error: null };
+  const baseSlug = generateSlug(name)
+  const slug = await findUniqueSlug(baseSlug)
   const { data, error } = await supabase
     .from("projects")
     .insert({
       user_id: userId,
       name,
       state_json: stateJson,
-      is_public: isPublic,
+      visibility,
+      is_public: visibility === 'public',
+      slug,
     })
     .select()
     .single();
