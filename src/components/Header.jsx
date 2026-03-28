@@ -106,17 +106,30 @@ export default function Header() {
     }
   }, [renaming])
 
+  const captureThumbnail = useCallback((projectId) => {
+    const handleCaptured = (e) => {
+      window.removeEventListener('thumbnailCaptured', handleCaptured)
+      const { dataUrl } = e.detail
+      if (dataUrl && projectId) {
+        updateProject(projectId, { thumbnail_url: dataUrl })
+      }
+    }
+    window.addEventListener('thumbnailCaptured', handleCaptured)
+    window.dispatchEvent(new CustomEvent('captureThumbnail', { detail: { projectId } }))
+  }, [])
+
   const handleSave = useCallback(async () => {
     if (!user) return
     setSaving(true)
     if (activeProjectId) {
       const state = useLayerTreeStore.getState().getProjectState()
       await updateProject(activeProjectId, { state_json: state })
+      captureThumbnail(activeProjectId)
     } else {
       setShowSaveAs(true)
     }
     setSaving(false)
-  }, [user, activeProjectId])
+  }, [user, activeProjectId, captureThumbnail])
 
   const handleSaveAs = useCallback(async (name, visibility) => {
     if (!user) return
@@ -130,10 +143,11 @@ export default function Header() {
         activeProjectVisibility: data.visibility ?? 'private',
         activeProjectSlug: data.slug ?? null,
       })
+      captureThumbnail(data.id)
     }
     setSaving(false)
     setShowSaveAs(false)
-  }, [user])
+  }, [user, captureThumbnail])
 
   const handleChangeVisibility = useCallback(async (newVisibility) => {
     if (!activeProjectId) return

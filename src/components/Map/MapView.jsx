@@ -6,6 +6,7 @@ import useCatalogLayers from '../../hooks/useCatalogLayers'
 import useMapExport from '../../hooks/useMapExport'
 import useLayerTreeStore from '../../store/layerTreeStore'
 import { useExportContext } from '../../contexts/ExportContext'
+import { captureMapThumbnail } from '../../utils/thumbnailUtils'
 import ExportBounds from './ExportBounds'
 import Legend from './Legend'
 import MapAttribution from './MapAttribution'
@@ -77,6 +78,16 @@ export default function MapView() {
     window.addEventListener('zoomToMapExtent', handleZoomToExtent)
     return () => window.removeEventListener('zoomToMapExtent', handleZoomToExtent)
   }, [zoomToMapExtent])
+
+  // Listen for captureThumbnail event from Header
+  useEffect(() => {
+    const handleCapture = async () => {
+      const dataUrl = await captureMapThumbnail(map)
+      window.dispatchEvent(new CustomEvent('thumbnailCaptured', { detail: { dataUrl } }))
+    }
+    window.addEventListener('captureThumbnail', handleCapture)
+    return () => window.removeEventListener('captureThumbnail', handleCapture)
+  }, [map])
 
   return (
     <div className="relative flex-1 h-full">

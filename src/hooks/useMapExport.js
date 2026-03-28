@@ -2,10 +2,12 @@ import { useCallback } from 'react'
 import html2canvas from 'html2canvas'
 import useLayerTreeStore from '../store/layerTreeStore'
 import { INDONESIA_EXTENT_3857, FIT_PADDING } from '../utils/mapConstants'
+import { dpiToPixelRatio } from '../utils/exportUtils'
 
 export default function useMapExport(map) {
-  const exportMap = useCallback(async (resolution = 2) => {
+  const exportMap = useCallback(async (dpi = 144) => {
     if (!map) return
+    const resolution = dpiToPixelRatio(dpi)
 
     // Fit to Indonesia before export
     map.getView().fit(INDONESIA_EXTENT_3857, { padding: FIT_PADDING, duration: 0 })
@@ -130,7 +132,7 @@ export default function useMapExport(map) {
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `indonesia-map-${Date.now()}.png`
+      a.download = `petakarta-${dpi}dpi-${Date.now()}.png`
       a.click()
       URL.revokeObjectURL(url)
     })

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import useLayerTreeStore from '../../store/layerTreeStore'
 import { useExportContext } from '../../contexts/ExportContext'
 import { getLayer } from '../../utils/adminLayers'
+import { DPI_PRESETS } from '../../utils/exportUtils'
 
 export default function MapTab() {
   const exportFnRef = useExportContext()
@@ -16,7 +17,7 @@ export default function MapTab() {
   const currentViewExtentVersion = useLayerTreeStore((s) => s.currentViewExtentVersion)
   const update = useLayerTreeStore((s) => s.update)
 
-  const [resolution, setResolution] = useState(2)
+  const [dpi, setDpi] = useState(144)
   const [copied, setCopied] = useState(false)
 
   // Local state for text inputs
@@ -40,8 +41,10 @@ export default function MapTab() {
   })
 
   const handleExport = () => {
-    exportFnRef.current?.(resolution)
+    exportFnRef.current?.(dpi)
   }
+
+  const selectedPreset = DPI_PRESETS.find((p) => p.value === dpi) ?? DPI_PRESETS[1]
 
   const canShare = activeProjectId && activeProjectPublic
   const shareUrl = canShare
@@ -173,29 +176,17 @@ export default function MapTab() {
       <div className="border-t border-border pt-4">
         <h3 className="text-sm font-medium mb-2">Download Map</h3>
         <div>
-          <span className="text-xs text-muted">Resolution</span>
-          <div className="flex flex-col gap-1 mt-1">
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="radio"
-                name="resolution"
-                value={1}
-                checked={resolution === 1}
-                onChange={() => setResolution(1)}
-              />
-              Standard (1x)
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="radio"
-                name="resolution"
-                value={2}
-                checked={resolution === 2}
-                onChange={() => setResolution(2)}
-              />
-              High-res (2x)
-            </label>
-          </div>
+          <span className="text-xs text-muted">Export quality</span>
+          <select
+            value={dpi}
+            onChange={(e) => setDpi(Number(e.target.value))}
+            className="mt-1 w-full rounded border border-border bg-paper px-2 py-1.5 text-sm"
+          >
+            {DPI_PRESETS.map((p) => (
+              <option key={p.value} value={p.value}>{p.label}</option>
+            ))}
+          </select>
+          <p className="text-xs text-muted mt-1">Estimated size: {selectedPreset.hint}</p>
         </div>
         <button
           onClick={handleExport}
