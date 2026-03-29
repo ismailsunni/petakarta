@@ -85,7 +85,41 @@ export const CATALOG_LAYERS = [
   },
 ]
 
-export const CATALOG_CATEGORIES = [...new Set(CATALOG_LAYERS.map(l => l.category))]
+// Sample vector datasets (bundled GeoJSON)
+export const SAMPLE_DATASETS = [
+  {
+    id: 'sample-volcanoes',
+    name: 'Active Volcanoes',
+    provider: 'PetaKarta',
+    category: 'Sample Data',
+    geometryType: 'Point',
+    badge: 'Point',
+    file: 'samples/indonesia_volcanoes.geojson',
+    description: '20 active volcanoes across Indonesia',
+  },
+  {
+    id: 'sample-roads',
+    name: 'Major Roads & Toll Roads',
+    provider: 'PetaKarta',
+    category: 'Sample Data',
+    geometryType: 'LineString',
+    badge: 'Line',
+    file: 'samples/indonesia_major_roads.geojson',
+    description: '10 major road corridors',
+  },
+  {
+    id: 'sample-islands',
+    name: 'Major Island Groups',
+    provider: 'PetaKarta',
+    category: 'Sample Data',
+    geometryType: 'Polygon',
+    badge: 'Polygon',
+    file: 'samples/indonesia_island_groups.geojson',
+    description: '5 main island groups with area & population',
+  },
+]
+
+export const CATALOG_CATEGORIES = [...new Set([...CATALOG_LAYERS.map(l => l.category), ...SAMPLE_DATASETS.map(s => s.category)])]
 
 export function getCatalogLayer(id) {
   return CATALOG_LAYERS.find(l => l.id === id)

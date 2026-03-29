@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import useLayerTreeStore from '../../store/layerTreeStore'
 import useAuthStore from '../../store/authStore'
 import { ADMIN_LAYERS } from '../../utils/adminLayers'
-import { CATALOG_LAYERS } from '../../data/catalogLayers'
+import { CATALOG_LAYERS, SAMPLE_DATASETS } from '../../data/catalogLayers'
 import { downloadDataset, fetchUserDatasets, uploadDataset } from '../../lib/datasetsService'
 import UsageIndicator from '../UI/UsageIndicator'
 
@@ -35,6 +35,19 @@ function buildBrowseEntries() {
       catalogEntry: layer,
       provider: layer.provider,
       badge: layer.type.toUpperCase(),
+    })
+  }
+
+  // Sample datasets
+  for (const sample of SAMPLE_DATASETS) {
+    entries.push({
+      id: `sample:${sample.id}`,
+      name: sample.name,
+      category: sample.category,
+      sourceType: 'sample',
+      sampleData: sample,
+      provider: sample.provider,
+      badge: sample.badge,
     })
   }
 
@@ -169,23 +182,51 @@ export default function AddLayerPanel() {
     if (entry.sourceType === 'catalog') {
       return existingLayers.some(l => l.type === 'catalog' && l.catalogConfig?.catalogId === entry.catalogEntry.id)
     }
+    if (entry.sourceType === 'sample') {
+      return existingLayers.some(l => l.type === 'user' && l.userConfig?.sampleId === entry.sampleData.id)
+    }
     return false
   }, [existingLayers])
 
-  const handleAddBrowseEntry = useCallback((entry) => {
+  const handleAddBrowseEntry = useCallback(async (entry) => {
     setError(null)
     let result
     if (entry.sourceType === 'admin') {
       result = addAdminLayer(entry.adminLayerId)
-    } else {
+    } else if (entry.sourceType === 'catalog') {
       result = addCatalogLayer(entry.catalogEntry)
+    } else if (entry.sourceType === 'sample') {
+      // Fetch sample GeoJSON and add as local layer
+      setLoading(true)
+      try {
+        const url = import.meta.env.BASE_URL + entry.sampleData.file
+        const resp = await fetch(url)
+        if (!resp.ok) throw new Error(`Failed to load sample: ${resp.status}`)
+        const geojson = await resp.json()
+        result = addLocalGeoJsonLayer(entry.sampleData.name, geojson)
+        // Tag with sampleId so we can detect duplicates
+        if (result?.data) {
+          useLayerTreeStore.setState(state => ({
+            layers: state.layers.map(l =>
+              l.id === result.data.id
+                ? { ...l, userConfig: { ...l.userConfig, sampleId: entry.sampleData.id } }
+                : l
+            )
+          }))
+        }
+      } catch (err) {
+        setError(err.message)
+        setLoading(false)
+        return
+      }
+      setLoading(false)
     }
     if (result?.error) {
       setError(result.error.message)
     } else {
       switchToLayers()
     }
-  }, [addAdminLayer, addCatalogLayer])
+  }, [addAdminLayer, addCatalogLayer, addLocalGeoJsonLayer])
 
   const isDatasetAdded = useCallback((datasetId) => {
     return existingLayers.some(l => l.type === 'user' && l.userConfig?.datasetId === datasetId)
