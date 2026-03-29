@@ -1,0 +1,15 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {"type":"Feature","properties":{"name":"Trans-Java Toll Road","type":"Toll","island":"Java"},"geometry":{"type":"LineString","coordinates":[[106.15,-6.12],[106.63,-6.22],[106.85,-6.59],[107.62,-6.90],[108.22,-6.73],[109.68,-6.88],[110.42,-6.97],[110.85,-7.28],[111.53,-7.28],[112.75,-7.28]]}},
+    {"type":"Feature","properties":{"name":"Jakarta–Cikampek Elevated","type":"Toll","island":"Java"},"geometry":{"type":"LineString","coordinates":[[106.85,-6.22],[107.00,-6.32],[107.16,-6.38],[107.32,-6.42],[107.45,-6.43]]}},
+    {"type":"Feature","properties":{"name":"Semarang–Solo Toll","type":"Toll","island":"Java"},"geometry":{"type":"LineString","coordinates":[[110.42,-6.97],[110.55,-7.05],[110.72,-7.15],[110.82,-7.35],[110.85,-7.57]]}},
+    {"type":"Feature","properties":{"name":"Trans-Sumatra Toll","type":"Toll","island":"Sumatra"},"geometry":{"type":"LineString","coordinates":[[104.75,-5.45],[104.82,-4.95],[104.56,-4.35],[104.05,-3.80],[103.62,-3.30],[103.10,-2.75],[102.60,-2.20],[102.15,-1.60],[101.80,-0.95],[101.45,-0.50],[100.35,0.50]]}},
+    {"type":"Feature","properties":{"name":"Bali Mandara Toll","type":"Toll","island":"Bali"},"geometry":{"type":"LineString","coordinates":[[115.17,-8.72],[115.18,-8.71],[115.20,-8.69],[115.21,-8.67],[115.22,-8.66]]}},
+    {"type":"Feature","properties":{"name":"Makassar–Parepare","type":"National","island":"Sulawesi"},"geometry":{"type":"LineString","coordinates":[[119.42,-5.13],[119.50,-4.80],[119.55,-4.45],[119.60,-4.02],[119.63,-3.97]]}},
+    {"type":"Feature","properties":{"name":"Manado–Gorontalo","type":"National","island":"Sulawesi"},"geometry":{"type":"LineString","coordinates":[[124.85,1.49],[124.45,1.30],[124.05,1.05],[123.60,0.80],[123.06,0.54]]}},
+    {"type":"Feature","properties":{"name":"Jayapura–Wamena","type":"National","island":"Papua"},"geometry":{"type":"LineString","coordinates":[[140.72,-2.53],[140.45,-2.80],[140.10,-3.20],[139.80,-3.50],[139.35,-3.85],[139.00,-4.08]]}},
+    {"type":"Feature","properties":{"name":"Kupang–Atambua","type":"National","island":"Timor"},"geometry":{"type":"LineString","coordinates":[[123.58,-10.17],[124.05,-10.05],[124.50,-9.80],[124.90,-9.35],[125.05,-9.10]]}},
+    {"type":"Feature","properties":{"name":"Pontianak–Entikong","type":"National","island":"Kalimantan"},"geometry":{"type":"LineString","coordinates":[[109.34,-0.02],[109.50,0.10],[109.80,0.35],[110.00,0.60],[110.20,0.85],[110.22,1.01]]}}
+  ]
+}
