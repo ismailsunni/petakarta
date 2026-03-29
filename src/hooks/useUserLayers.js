@@ -45,25 +45,46 @@ function createStyleFromConfig(userConfig, layerOpacity = 1) {
   const lineDashArray = getLineDashArray(lineDash);
 
   if (geometryType.includes("point")) {
+    if (showFeatureLabels && labelColumn) {
+      return (feature) => {
+        const styles = [
+          new Style({
+            image: new CircleStyle({
+              radius: pointRadius,
+              fill: new Fill({ color: fillColorWithAlpha }),
+              stroke: new Stroke({ color: strokeColorWithAlpha, width: strokeWidth }),
+            }),
+          }),
+        ];
+        const labelStyle = makeLabelStyle(feature, labelColumn, labelFontSize, labelColor);
+        if (labelStyle) styles.push(labelStyle);
+        return styles;
+      };
+    }
     return new Style({
       image: new CircleStyle({
         radius: pointRadius,
         fill: new Fill({ color: fillColorWithAlpha }),
-        stroke: new Stroke({
-          color: strokeColorWithAlpha,
-          width: strokeWidth,
-        }),
+        stroke: new Stroke({ color: strokeColorWithAlpha, width: strokeWidth }),
       }),
     });
   }
 
   if (geometryType.includes("line")) {
+    if (showFeatureLabels && labelColumn) {
+      return (feature) => {
+        const styles = [
+          new Style({
+            stroke: new Stroke({ color: strokeColorWithAlpha, width: strokeWidth, lineDash: lineDashArray }),
+          }),
+        ];
+        const labelStyle = makeLabelStyle(feature, labelColumn, labelFontSize, labelColor);
+        if (labelStyle) styles.push(labelStyle);
+        return styles;
+      };
+    }
     return new Style({
-      stroke: new Stroke({
-        color: strokeColorWithAlpha,
-        width: strokeWidth,
-        lineDash: lineDashArray,
-      }),
+      stroke: new Stroke({ color: strokeColorWithAlpha, width: strokeWidth, lineDash: lineDashArray }),
     });
   }
 

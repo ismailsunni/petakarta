@@ -745,6 +745,36 @@ function UserLayerStylePanel({
           </div>
         </div>
       )}
+
+      {/* Labels — available for all geometry types */}
+      <div className="border-t border-border pt-4">
+        <h3 className="text-sm font-medium mb-2">Labels</h3>
+        <UserLabelColumnSelector layer={layer} handleConfigUpdate={handleConfigUpdate} />
+        {config.showFeatureLabels && (
+          <div className="mt-2 space-y-2">
+            <div>
+              <span className="text-xs text-muted">Font size: {config.labelFontSize ?? 11}px</span>
+              <input
+                type="range"
+                min={8}
+                max={18}
+                value={config.labelFontSize ?? 11}
+                onChange={(e) => handleConfigUpdate({ labelFontSize: Number(e.target.value) })}
+                className="w-full mt-1 accent-accent"
+              />
+            </div>
+            <label className="flex items-center gap-2 text-xs text-muted">
+              Label color
+              <input
+                type="color"
+                value={config.labelColor ?? '#1a1a2e'}
+                onChange={(e) => handleConfigUpdate({ labelColor: e.target.value })}
+                className="w-6 h-6 rounded border border-border cursor-pointer"
+              />
+            </label>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

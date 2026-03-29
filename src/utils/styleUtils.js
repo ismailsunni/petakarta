@@ -4,37 +4,68 @@ import { getBreaks, classifyValue } from './classificationUtils'
 
 export function makeLabelStyle(feature, labelField, labelFontSize = 11, labelColor = '#1a1a2e') {
   const geom = feature.getGeometry()
-  let labelPoint
-  if (geom.getType() === 'MultiPolygon') {
-    const polygons = geom.getPolygons()
-    let largest = polygons[0]
-    let maxArea = largest.getArea()
-    for (let i = 1; i < polygons.length; i++) {
-      const area = polygons[i].getArea()
-      if (area > maxArea) {
-        largest = polygons[i]
-        maxArea = area
-      }
-    }
-    labelPoint = largest.getInteriorPoint()
-  } else {
-    labelPoint = geom.getInteriorPoint()
-  }
+  if (!geom) return null
+  const geomType = geom.getType()
 
   const labelText = feature.get(labelField)
   if (!labelText) return null
 
-  return new Style({
-    geometry: labelPoint,
-    text: new Text({
-      text: String(labelText),
-      font: `${labelFontSize}px "IBM Plex Sans", sans-serif`,
-      fill: new Fill({ color: labelColor }),
-      stroke: new Stroke({ color: '#ffffff', width: 3 }),
-      overflow: false,
-      padding: [2, 4, 2, 4],
-    }),
-  })
+  // For polygons: place at interior point
+  if (geomType === 'MultiPolygon' || geomType === 'Polygon') {
+    let labelPoint
+    if (geomType === 'MultiPolygon') {
+      const polygons = geom.getPolygons()
+      let largest = polygons[0]
+      let maxArea = largest.getArea()
+      for (let i = 1; i < polygons.length; i++) {
+        const area = polygons[i].getArea()
+        if (area > maxArea) { largest = polygons[i]; maxArea = area }
+      }
+      labelPoint = largest.getInteriorPoint()
+    } else {
+      labelPoint = geom.getInteriorPoint()
+    }
+    return new Style({
+      geometry: labelPoint,
+      text: new Text({
+        text: String(labelText),
+        font: `${labelFontSize}px "IBM Plex Sans", sans-serif`,
+        fill: new Fill({ color: labelColor }),
+        stroke: new Stroke({ color: '#ffffff', width: 3 }),
+        overflow: true,
+      }),
+    })
+  }
+
+  // For points: offset label above the point
+  if (geomType === 'Point' || geomType === 'MultiPoint') {
+    return new Style({
+      text: new Text({
+        text: String(labelText),
+        font: `${labelFontSize}px "IBM Plex Sans", sans-serif`,
+        fill: new Fill({ color: labelColor }),
+        stroke: new Stroke({ color: '#ffffff', width: 3 }),
+        offsetY: -15,
+        overflow: true,
+      }),
+    })
+  }
+
+  // For lines: place label along the line
+  if (geomType === 'LineString' || geomType === 'MultiLineString') {
+    return new Style({
+      text: new Text({
+        text: String(labelText),
+        font: `${labelFontSize}px "IBM Plex Sans", sans-serif`,
+        fill: new Fill({ color: labelColor }),
+        stroke: new Stroke({ color: '#ffffff', width: 3 }),
+        placement: 'line',
+        overflow: true,
+      }),
+    })
+  }
+
+  return null
 }
 
 export function buildGraduatedStyleFn({
