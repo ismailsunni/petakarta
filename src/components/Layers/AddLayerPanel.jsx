@@ -44,6 +44,68 @@ function buildBrowseEntries() {
 const BROWSE_ENTRIES = buildBrowseEntries()
 const BROWSE_CATEGORIES = [...new Set(BROWSE_ENTRIES.map(e => e.category))]
 
+function BrowseGroup({ category, entries, isEntryAdded, onAdd, defaultOpen }) {
+  const [open, setOpen] = useState(defaultOpen)
+
+  // Auto-expand when searching
+  useEffect(() => { setOpen(defaultOpen) }, [defaultOpen])
+
+  return (
+    <div>
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between py-1.5 group"
+      >
+        <h4 className="text-xs font-medium text-muted uppercase tracking-wide">
+          {category}
+        </h4>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-muted">{entries.length}</span>
+          <svg
+            className={`w-3.5 h-3.5 text-muted transition-transform duration-150 ${open ? 'rotate-90' : ''}`}
+            viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
+          >
+            <path d="M9 18l6-6-6-6" />
+          </svg>
+        </div>
+      </button>
+      {open && (
+        <div className="space-y-1 mt-1 ml-1 pl-2 border-l-2 border-border/50">
+          {entries.map((entry) => {
+            const isAdded = isEntryAdded(entry)
+            return (
+              <div
+                key={entry.id}
+                className={`flex items-center justify-between p-2 rounded border ${
+                  isAdded ? 'border-accent/30 bg-accent/5' : 'border-border hover:border-accent/50'
+                }`}
+              >
+                <div className="flex-1 min-w-0 mr-2">
+                  <p className="text-sm font-medium truncate">{entry.name}</p>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <span className="text-[10px] text-muted bg-canvas px-1 py-0.5 rounded">{entry.provider}</span>
+                    <span className="text-[10px] text-muted bg-canvas px-1 py-0.5 rounded">{entry.badge}</span>
+                  </div>
+                </div>
+                {isAdded ? (
+                  <span className="text-xs text-accent px-2 py-0.5 bg-accent/10 rounded shrink-0">Added</span>
+                ) : (
+                  <button
+                    onClick={() => onAdd(entry)}
+                    className="text-xs text-accent hover:text-accentMuted px-2 py-0.5 border border-accent/30 rounded hover:bg-accent/5 transition-colors shrink-0"
+                  >
+                    Add
+                  </button>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function AddLayerPanel() {
   const [activeTab, setActiveTab] = useState('browse')
   const [searchQuery, setSearchQuery] = useState('')
@@ -231,46 +293,14 @@ export default function AddLayerPanel() {
             />
 
             {BROWSE_CATEGORIES.filter(cat => groupedEntries[cat]?.length > 0).map((category) => (
-              <div key={category}>
-                <h4 className="text-xs font-medium text-muted uppercase tracking-wide mb-2">
-                  {category}
-                </h4>
-                <div className="space-y-1">
-                  {groupedEntries[category].map((entry) => {
-                    const isAdded = isEntryAdded(entry)
-                    return (
-                      <div
-                        key={entry.id}
-                        className={`flex items-center justify-between p-2 rounded border ${
-                          isAdded ? 'border-accent/30 bg-accent/5' : 'border-border hover:border-accent/50'
-                        }`}
-                      >
-                        <div className="flex-1 min-w-0 mr-2">
-                          <p className="text-sm font-medium truncate">{entry.name}</p>
-                          <div className="flex items-center gap-1 mt-0.5">
-                            <span className="text-[10px] text-muted bg-canvas px-1 py-0.5 rounded">
-                              {entry.provider}
-                            </span>
-                            <span className="text-[10px] text-muted bg-canvas px-1 py-0.5 rounded">
-                              {entry.badge}
-                            </span>
-                          </div>
-                        </div>
-                        {isAdded ? (
-                          <span className="text-xs text-accent px-2 py-0.5 bg-accent/10 rounded shrink-0">Added</span>
-                        ) : (
-                          <button
-                            onClick={() => handleAddBrowseEntry(entry)}
-                            className="text-xs text-accent hover:text-accentMuted px-2 py-0.5 border border-accent/30 rounded hover:bg-accent/5 transition-colors shrink-0"
-                          >
-                            Add
-                          </button>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
+              <BrowseGroup
+                key={category}
+                category={category}
+                entries={groupedEntries[category]}
+                isEntryAdded={isEntryAdded}
+                onAdd={handleAddBrowseEntry}
+                defaultOpen={!!searchQuery}
+              />
             ))}
 
             {filteredEntries.length === 0 && (
