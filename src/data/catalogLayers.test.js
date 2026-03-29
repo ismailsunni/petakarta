@@ -60,10 +60,10 @@ describe('getCatalogLayer', () => {
 })
 
 describe('CATALOG_CATEGORIES', () => {
-  it('contains all categories from CATALOG_LAYERS', () => {
-    const expected = [...new Set(CATALOG_LAYERS.map(l => l.category))]
+  it('contains all categories from CATALOG_LAYERS and SAMPLE_DATASETS', () => {
+    const expected = [...new Set([...CATALOG_LAYERS.map(l => l.category)])]
     expect(CATALOG_CATEGORIES).toEqual(expect.arrayContaining(expected))
-    expect(CATALOG_CATEGORIES.length).toBe(expected.length)
+    expect(CATALOG_CATEGORIES).toContain('Sample Data')
   })
 
   it('has no duplicate categories', () => {

@@ -320,41 +320,31 @@ function AdminLayerStylePanel({
             />
           </label>
 
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={config.showFeatureLabels}
-              onChange={(e) => handleUpdate({ showFeatureLabels: e.target.checked })}
-            />
-            Show feature labels
-          </label>
+          <AdminLabelColumnSelector layer={layer} handleUpdate={handleUpdate} />
 
           {config.showFeatureLabels && (
-            <>
-              <AdminLabelColumnSelector layer={layer} handleUpdate={handleUpdate} />
-              <div className="ml-6 mt-2 space-y-2">
-                <div>
-                  <span className="text-xs text-muted">Font size: {config.labelFontSize ?? 11}px</span>
-                  <input
-                    type="range"
-                    min={8}
-                    max={18}
-                    value={config.labelFontSize ?? 11}
-                    onChange={(e) => handleUpdate({ labelFontSize: Number(e.target.value) })}
-                    className="w-full mt-1 accent-accent"
-                  />
-                </div>
-                <label className="flex items-center gap-2 text-xs text-muted">
-                  Label color
-                  <input
-                    type="color"
-                    value={config.labelColor ?? '#1a1a2e'}
-                    onChange={(e) => handleUpdate({ labelColor: e.target.value })}
-                    className="w-6 h-6 rounded border border-border cursor-pointer"
-                  />
-                </label>
+            <div className="space-y-2">
+              <div>
+                <span className="text-xs text-muted">Font size: {config.labelFontSize ?? 11}px</span>
+                <input
+                  type="range"
+                  min={8}
+                  max={18}
+                  value={config.labelFontSize ?? 11}
+                  onChange={(e) => handleUpdate({ labelFontSize: Number(e.target.value) })}
+                  className="w-full mt-1 accent-accent"
+                />
               </div>
-            </>
+              <label className="flex items-center gap-2 text-xs text-muted">
+                Label color
+                <input
+                  type="color"
+                  value={config.labelColor ?? '#1a1a2e'}
+                  onChange={(e) => handleUpdate({ labelColor: e.target.value })}
+                  className="w-6 h-6 rounded border border-border cursor-pointer"
+                />
+              </label>
+            </div>
           )}
         </div>
       </div>
@@ -617,41 +607,31 @@ function UserLayerStylePanel({
               />
             </label>
 
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={config.showFeatureLabels || false}
-                onChange={(e) => handleConfigUpdate({ showFeatureLabels: e.target.checked })}
-              />
-              Show feature labels
-            </label>
+            <UserLabelColumnSelector layer={layer} handleConfigUpdate={handleConfigUpdate} />
 
             {config.showFeatureLabels && (
-              <>
-                <UserLabelColumnSelector layer={layer} handleConfigUpdate={handleConfigUpdate} />
-                <div className="ml-6 mt-2 space-y-2">
-                  <div>
-                    <span className="text-xs text-muted">Font size: {config.labelFontSize ?? 11}px</span>
-                    <input
-                      type="range"
-                      min={8}
-                      max={18}
-                      value={config.labelFontSize ?? 11}
-                      onChange={(e) => handleConfigUpdate({ labelFontSize: Number(e.target.value) })}
-                      className="w-full mt-1 accent-accent"
-                    />
-                  </div>
-                  <label className="flex items-center gap-2 text-xs text-muted">
-                    Label color
-                    <input
-                      type="color"
-                      value={config.labelColor ?? '#1a1a2e'}
-                      onChange={(e) => handleConfigUpdate({ labelColor: e.target.value })}
-                      className="w-6 h-6 rounded border border-border cursor-pointer"
-                    />
-                  </label>
+              <div className="space-y-2">
+                <div>
+                  <span className="text-xs text-muted">Font size: {config.labelFontSize ?? 11}px</span>
+                  <input
+                    type="range"
+                    min={8}
+                    max={18}
+                    value={config.labelFontSize ?? 11}
+                    onChange={(e) => handleConfigUpdate({ labelFontSize: Number(e.target.value) })}
+                    className="w-full mt-1 accent-accent"
+                  />
                 </div>
-              </>
+                <label className="flex items-center gap-2 text-xs text-muted">
+                  Label color
+                  <input
+                    type="color"
+                    value={config.labelColor ?? '#1a1a2e'}
+                    onChange={(e) => handleConfigUpdate({ labelColor: e.target.value })}
+                    className="w-6 h-6 rounded border border-border cursor-pointer"
+                  />
+                </label>
+              </div>
             )}
           </div>
         </div>
@@ -795,17 +775,26 @@ function UserLabelColumnSelector({ layer, handleConfigUpdate }) {
     setAvailableColumns(cols)
   }, [config?.geojson])
 
-  const currentLabel = config.labelColumn || ''
+  const currentValue = config.showFeatureLabels ? (config.labelColumn || '') : ''
+
+  const handleChange = (e) => {
+    const value = e.target.value
+    if (value === '') {
+      handleConfigUpdate({ showFeatureLabels: false, labelColumn: '' })
+    } else {
+      handleConfigUpdate({ showFeatureLabels: true, labelColumn: value })
+    }
+  }
 
   return (
-    <div className="ml-6">
+    <div>
       <label className="block text-xs text-muted mb-1">Label column</label>
       <select
-        value={currentLabel}
-        onChange={(e) => handleConfigUpdate({ labelColumn: e.target.value })}
+        value={currentValue}
+        onChange={handleChange}
         className="w-full rounded border border-border bg-paper px-2 py-1 text-sm"
       >
-        <option value="">Select column...</option>
+        <option value="">None (no labels)</option>
         {availableColumns.map((col) => (
           <option key={col} value={col}>
             {col}
@@ -838,7 +827,7 @@ function AdminLabelColumnSelector({ layer, handleUpdate }) {
         // Get properties from first feature
         if (geojson.features && geojson.features.length > 0) {
           const props = geojson.features[0].properties || {}
-          const cols = Object.keys(props).filter(key => 
+          const cols = Object.keys(props).filter(key =>
             typeof props[key] === 'string' || typeof props[key] === 'number'
           )
           setAvailableColumns(cols)
@@ -851,26 +840,33 @@ function AdminLabelColumnSelector({ layer, handleUpdate }) {
     loadColumns()
   }, [layerConfig])
 
-  // Default to featureNameField if no labelColumn is set
-  const currentLabel = config.labelColumn || layerConfig?.featureNameField || ''
+  const currentValue = config.showFeatureLabels
+    ? (config.labelColumn || layerConfig?.featureNameField || '')
+    : ''
+
+  const handleChange = (e) => {
+    const value = e.target.value
+    if (value === '') {
+      handleUpdate({ showFeatureLabels: false, labelColumn: '' })
+    } else {
+      handleUpdate({ showFeatureLabels: true, labelColumn: value })
+    }
+  }
 
   return (
-    <div className="ml-6 mt-1">
+    <div>
       <label className="block text-xs text-muted mb-1">Label column</label>
       <select
-        value={currentLabel}
-        onChange={(e) => handleUpdate({ labelColumn: e.target.value })}
+        value={currentValue}
+        onChange={handleChange}
         className="w-full rounded border border-border bg-paper px-2 py-1 text-sm"
       >
-        {availableColumns.length === 0 ? (
-          <option value="">Loading...</option>
-        ) : (
-          availableColumns.map((col) => (
-            <option key={col} value={col}>
-              {col} {col === layerConfig?.featureNameField ? '(default)' : ''}
-            </option>
-          ))
-        )}
+        <option value="">None (no labels)</option>
+        {availableColumns.map((col) => (
+          <option key={col} value={col}>
+            {col} {col === layerConfig?.featureNameField ? '(default)' : ''}
+          </option>
+        ))}
       </select>
     </div>
   )

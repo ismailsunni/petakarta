@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import useLayerTreeStore from '../../store/layerTreeStore'
+import { getSwatchColors, getCategoryColor } from '../../utils/colorUtils'
 
 export default function LayerItem({ layer, isFirst, isLast }) {
   const [expanded, setExpanded] = useState(false)
@@ -55,19 +56,67 @@ export default function LayerItem({ layer, isFirst, isLast }) {
   }
 
   const getStylePreview = () => {
-    if (isAdmin) {
+    if (layer.type === 'catalog') {
       return (
-        <div className="w-4 h-4 rounded-sm border border-border bg-gradient-to-r from-blue-500 to-yellow-500" />
+        <div className="w-4 h-4 rounded-sm border border-border bg-gray-300" />
       )
     }
-    const style = layer.userConfig?.style || {}
+
+    if (layer.type === 'user') {
+      const config = layer.userConfig || {}
+      const geometryType = config.geometryType?.toLowerCase() || ''
+      const color = geometryType.includes('line')
+        ? (config.strokeColor || '#888')
+        : (config.fillColor || '#888')
+      return (
+        <div
+          className="w-4 h-4 rounded-sm border border-border"
+          style={{ backgroundColor: color }}
+        />
+      )
+    }
+
+    // Admin layer
+    const config = layer.adminConfig || {}
+    const styleMode = config.styleMode || 'graduated'
+    const hasData = config.featureValues && Object.keys(config.featureValues).length > 0
+
+    if (!hasData) {
+      return (
+        <div
+          className="w-4 h-4 rounded-sm border border-border"
+          style={{ backgroundColor: config.noDataColor || '#e0e0e0' }}
+        />
+      )
+    }
+
+    if (styleMode === 'single') {
+      return (
+        <div
+          className="w-4 h-4 rounded-sm border border-border"
+          style={{ backgroundColor: config.fillColor || '#3498DB' }}
+        />
+      )
+    }
+
+    if (styleMode === 'categorized') {
+      const colors = config.categoryColors || {}
+      const firstColor = Object.values(colors)[0] || getCategoryColor(0)
+      return (
+        <div
+          className="w-4 h-4 rounded-sm border border-border"
+          style={{ backgroundColor: firstColor }}
+        />
+      )
+    }
+
+    // graduated - show gradient bar
+    const swatchColors = getSwatchColors(config.colorPreset || 'Viridis', 3)
+    const gradientColors = config.colorReversed ? [...swatchColors].reverse() : swatchColors
     return (
       <div
         className="w-4 h-4 rounded-sm border border-border"
-        style={{
-          backgroundColor: style.fill || style.stroke || '#888',
-          opacity: style.fillOpacity ?? 1,
-        }}
+        style={{ background: `linear-gradient(to right, ${gradientColors.join(', ')})` }}
       />
     )
   }
@@ -107,7 +156,7 @@ export default function LayerItem({ layer, isFirst, isLast }) {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium truncate">{layer.name}</p>
           <p className="text-xs text-muted">
-            {isAdmin ? 'Admin' : 'User'} • {Math.round(layer.opacity * 100)}%
+            {layer.type === 'admin' ? 'Admin' : layer.type === 'catalog' ? 'Catalog' : 'User'} • {Math.round(layer.opacity * 100)}%
           </p>
         </div>
 
@@ -169,6 +218,17 @@ export default function LayerItem({ layer, isFirst, isLast }) {
 
           {/* Action buttons */}
           <div className="flex gap-2 flex-wrap">
+            {layer.type !== 'catalog' && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  useLayerTreeStore.setState({ selectedLayerId: layer.id, activeTab: 'style' })
+                }}
+                className="text-xs text-muted hover:text-accent transition-colors"
+              >
+                Style
+              </button>
+            )}
             <button
               onClick={(e) => {
                 e.stopPropagation()
